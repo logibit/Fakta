@@ -1,0 +1,3 @@
+﻿module Fakta.Tests.TestFactory
+
+()

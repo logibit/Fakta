@@ -1,0 +1,16 @@
+#build
+[Oo]bj/
+[Bb]in/
+packages/
+
+# globs
+*.DS_Store
+*.sln.cache
+*.suo
+*.cache
+*.pidb
+*.userprefs
+*.usertasks
+*.user
+*.tar.gz
+paket.exe

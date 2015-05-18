@@ -1,0 +1,28 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{AB0EED29-9476-4EF9-AAD8-9B789286C14B}"
+	ProjectSection(SolutionItems) = preProject
+		..\paket.dependencies = ..\paket.dependencies
+	EndProjectSection
+EndProject
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Fakta", "Fakta\Fakta.fsproj", "{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}"
+EndProject
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Fakta.Tests", "Fakta.Tests\Fakta.Tests.fsproj", "{555EA974-2DEB-4437-A6F3-A04D0073EB5D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{555EA974-2DEB-4437-A6F3-A04D0073EB5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{555EA974-2DEB-4437-A6F3-A04D0073EB5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{555EA974-2DEB-4437-A6F3-A04D0073EB5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{555EA974-2DEB-4437-A6F3-A04D0073EB5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

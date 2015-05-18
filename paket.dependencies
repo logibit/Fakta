@@ -1,0 +1,8 @@
+source https://nuget.org/api/v2
+
+nuget Chiron
+nuget FSharp.Core 3.1.2.1 framework: >= net45
+nuget FsCheck 1.0.4 framework: >= net45
+nuget Fuchu 0.6.0.0 framework: >= net40
+nuget Fuchu.FsCheck 0.6.0.0 framework: >= net45
+nuget Http.fs-prerelease framework: >= net45
