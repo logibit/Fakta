@@ -14,3 +14,7 @@ packages/
 *.user
 *.tar.gz
 paket.exe
+tools/consul
+tools/consul.zip
+tools/data/
+AssemblyVersionInfo.fs
