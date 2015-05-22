@@ -56,10 +56,13 @@ type KVPair =
     /// Flags are an opaque unsigned integer that can be attached to each entry. Clients can choose to use this however makes sense for their application.
     flags       : Flags
     /// Value is a Base64-encoded blob of data. Note that values cannot be larger than 512kB.
-    value       : byte [] option }
+    value       : byte [] }
 
   member x.hasFlags =
     x.flags <> 0UL
+
+  member x.utf8String =
+    UTF8.toString x.value
 
   static member Create(key : Key, value : byte []) =
     { createIndex = 0UL
@@ -67,7 +70,8 @@ type KVPair =
       lockIndex   = 0UL
       key         = key
       flags       = 0UL
-      value       = Some value }
+      value       = value }
+
 
   static member Create(key : Key, value : string) =
     KVPair.Create(key, Encoding.UTF8.GetBytes value)
@@ -79,7 +83,9 @@ type KVPair =
         lockIndex   = li
         key         = k
         flags       = fl
-        value       = v |> Option.map Convert.FromBase64String })
+        value       = match v with
+                      | None   -> [||]
+                      | Some v -> Convert.FromBase64String v })
     <!> Json.read "CreateIndex"
     <*> Json.read "ModifyIndex"
     <*> Json.read "LockIndex"
@@ -93,7 +99,7 @@ type KVPair =
     *> Json.write "LockIndex" kv.lockIndex
     *> Json.write "Key" kv.key
     *> Json.write "Flags" kv.flags
-    *> Json.write "Value" (kv.value |> Option.map Convert.ToBase64String)
+    *> Json.write "Value" (Convert.ToBase64String kv.value)
 
 type KVPairs = KVPair list
 /// Allows you to pass a list that is built into a single Key (string) in the end.
@@ -169,37 +175,29 @@ type QueryMeta =
     // How long did the request take
     requestTime : Duration }
 
-///  QueryOptions are used to parameterize a query 
-type QueryOptions =
-    /// Providing a datacenter overwrites the DC provided
-    /// by the Config
-  { datacenter        : string option
-    /// AllowStale allows any Consul server (non-leader) to service
-    /// a read. This allows for lower latency and higher throughput
-    allowStale        : bool
-    /// RequireConsistent forces the read to be fully consistent.
-    /// This is more expensive but prevents ever performing a stale
-    /// read.
-    requireConsistent : bool
-    /// WaitIndex is used to enable a blocking query. Waits
-    /// until the timeout or the next index is reached
-    waitIndex         : Index option
-    /// WaitTime is used to bound the duration of a wait.
-    /// Defaults to that of the Config, but can be overriden.
-    waitTime          : Duration option
-    /// Token is used to provide a per-request ACL token
-    /// which overrides the agent's default token.
-    token             : Token option }
+type ReadConsistency =
+  /// If not specified, the default is strongly consistent in almost all cases. However, there is a small window in which a new leader may be elected during which the old leader may service stale values. The trade-off is fast reads but potentially stale values. The condition resulting in stale reads is hard to trigger, and most clients should not need to worry about this case. Also, note that this race condition only applies to reads, not writes.
+  | Default
+  /// This mode is strongly consistent without caveats. It requires that a leader verify with a quorum of peers that it is still leader. This introduces an additional round-trip to all server nodes. The trade-off is increased latency due to an extra round trip. Most clients should not use this unless they cannot tolerate a stale read.
+  | Consistent
+  /// This mode allows any server to service the read regardless of whether it is the leader. This means reads can be arbitrarily stale; however, results are generally consistent to within 50 milliseconds of the leader. The trade-off is very fast and scalable reads with a higher likelihood of stale values. Since this mode allows reads without a leader, a cluster that is unavailable will still be able to respond to queries.
+  | Stale
 
-  member x.toKvs () =
-    [ if x.datacenter |> Option.fold (fun s t -> t <> "") false then
-        yield "dc", x.datacenter
-      if x.token |> Option.fold (fun s t -> t <> "") false then
-        yield "token", x.token
-      if x.waitIndex |> Option.fold (fun s t -> t <> 0UL) false then
-        yield "index", Some (x.waitIndex.ToString())
-      if x.waitTime |> Option.fold (fun s t -> t <> Duration.Zero) false then
-        yield "wait", Some (Duration.consulString (Option.get x.waitTime)) ]
+type QueryOption =
+  | ReadConsistency of ReadConsistency
+  /// WaitIndex is used to enable a blocking query. Waits
+  /// until the timeout or the next index is reached
+  /// WaitTime is used to bound the duration of a wait.
+  /// Defaults to that of the Config, but can be overriden.
+  | Wait of Index * Duration
+  /// Token is used to provide a per-request ACL token
+  /// which overrides the agent's default token.
+  | TokenOverride of Token
+  /// Providing a datacenter overwrites the DC provided
+  /// by the Config
+  | DataCenter of string
+
+type QueryOptions = QueryOption list
 
 type WriteMeta =
   { requestTime : Duration }
@@ -217,6 +215,7 @@ type WriteOptions =
 type Error =
   | Message of string
   | CASFailed
+  | KeyNotFound of Key
 
 type FaktaConfig =
     /// The base URIs that we have servers at
@@ -238,15 +237,6 @@ type FaktaConfig =
       credentials    = None
       waitTime       = DefaultLockWaitTime
       token          = None }
-
-type QueryOptions with
-  static member ofConfig (cfg : FaktaConfig) =
-    { datacenter        = cfg.datacenter
-      allowStale        = false
-      requireConsistent = true
-      waitIndex         = None
-      waitTime          = Some cfg.waitTime
-      token             = cfg.token }
 
 type WriteOptions with
   static member ofConfig (cfg : FaktaConfig) =

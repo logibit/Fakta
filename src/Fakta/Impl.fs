@@ -58,6 +58,11 @@ let acceptJson =
 let withIntroductions =
   withHeader (UserAgent "Fakta 0.1")
 
+let basicRequest meth =
+  createRequest meth
+  >> acceptJson
+  >> withIntroductions
+
 let getResponse (state : FaktaState) path (req : Request) =
   async {
     let data = Map [ "uri", box req.Url
@@ -83,8 +88,25 @@ let queryMeta dur (resp : Response) =
     knownLeader = bool.Parse (headerFor "X-Consul-Knownleader")
     requestTime = dur }
 
-let withBodyValueField (value : byte []) =
-  withBody (
-    BodyForm [ NameValue { name = "value"
-                           value = Convert.ToBase64String value } ]
-  )
+exception ConflictingConsistencyOptions
+
+let validate opts =
+  opts
+  |> List.filter (function ReadConsistency _ -> true | _ -> false)
+  |> List.length
+  |> fun n -> if n > 1 then raise ConflictingConsistencyOptions else opts
+
+let queryOptKvs : QueryOptions -> (string * string option) list =
+  validate
+  >> List.fold (fun acc -> function
+               | ReadConsistency Default    -> acc
+               | ReadConsistency Consistent -> ("consistent", None) :: acc
+               | ReadConsistency Stale      -> ("stale", None) :: acc
+               | Wait (index, dur) ->
+                    ("index", Some (index.ToString()))
+                 :: ("wait",  Some (Duration.consulString dur))
+                 :: acc
+               | TokenOverride token        -> ("token", Some token) :: acc
+               | DataCenter dc              -> ("dc", Some dc) :: acc
+               )
+              []
