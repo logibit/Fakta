@@ -103,10 +103,6 @@ let acquire (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Ch
     | x -> return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
   }
 
-/// CAS is used for a Check-And-Set operation. The Key, ModifyIndex, Flags and Value are respected. Returns true on success or false on failures. 
-let CAS (s : FaktaState) (p : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
-  raise (TBD "TODO")
-
 /// Delete is used to delete a single key
 let delete (state : FaktaState) (p : KVPair) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
   raise (TBD "TODO")
@@ -120,7 +116,7 @@ let deleteTree (state : FaktaState) (p : KVPair) (opts : WriteOptions) : Async<C
   raise (TBD "TODO")
 
 /// Put is used to write a new value. Only the Key, Flags and Value is respected.
-let put (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
+let put (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
   let getResponse = getResponse state "Fakta.KV.put"
   let req = mkPut state kvp
                   (mCas |> Option.fold (fun s t ->
@@ -136,11 +132,15 @@ let put (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteO
     | 200 ->
       let! body = Response.readBodyAsString response
       match body with
-      | "true" -> return Choice1Of2 { requestTime = dur }
-      | "false" -> return Choice2Of2 CASFailed
+      | "true" -> return Choice1Of2 (true, { requestTime = dur })
+      | "false" -> return Choice1Of2 (false, { requestTime = dur })
       | x -> return Choice2Of2 (Message x)
     | x -> return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
   }
+
+/// CAS is used for a Check-And-Set operation. The Key, ModifyIndex, Flags and Value are respected. Returns true on success or false on failures. 
+let CAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
+  put state kvp (Some kvp.modifyIndex) opts
 
 /// Release is used for a lock release operation. The Key, Flags, Value and
 /// Session are respected. Returns true on success or false on failures. 

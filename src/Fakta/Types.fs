@@ -358,7 +358,6 @@ type WriteOptions = WriteOption list
 
 type Error =
   | Message of string
-  | CASFailed
   | KeyNotFound of Key
 
 type FaktaConfig =
