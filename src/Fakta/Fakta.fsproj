@@ -16,6 +16,7 @@
     <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <ConsolePause>false</ConsolePause>
+    <DocumentationFile>bin\Debug\Fakta.xml</DocumentationFile>
     <PlatformTarget>
     </PlatformTarget>
   </PropertyGroup>
@@ -25,6 +26,7 @@
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <ConsolePause>false</ConsolePause>
+    <DocumentationFile>bin\Release\Fakta.xml</DocumentationFile>
     <GenerateTailCalls>true</GenerateTailCalls>
     <PlatformTarget>
     </PlatformTarget>

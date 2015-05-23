@@ -18,3 +18,4 @@ tools/consul
 tools/consul.zip
 tools/data/
 AssemblyVersionInfo.fs
+build/
