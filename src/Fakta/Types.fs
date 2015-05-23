@@ -47,6 +47,10 @@ type Port = uint16
 
 type Check = string
 
+type Node =
+  { node    : string
+    address : string }
+
 type ACLEntry =
   { createIndex : Index
     modifyIndex : Index
@@ -110,6 +114,33 @@ type AgentCheckRegistration =
     notes     : string // `json:",omitempty"`
     serviceId : Id // `json:",omitempty"`
     check     : AgentServiceCheck }
+
+type CatalogDeregistration =
+  { node       : string
+    address    : string
+    datacenter : string
+    serviceId  : string
+    checkId    : string }
+
+type CatalogNode =
+  { node     : Node
+    Services : Map<string, AgentService> }
+
+type CatalogRegistration =
+  { Node       : string
+    Address    : string
+    Datacenter : string
+    Service    : AgentService
+    Check      : AgentCheck }
+
+type CatalogService =
+  { node           : string
+    address        : string
+    serviceID      : string
+    serviceName    : string
+    serviceAddress : string
+    serviceTags    : string list
+    servicePort    : int }
 
 // [{"CreateIndex":10,"ModifyIndex":17,"LockIndex":0,"Key":"fortnox/apikey","Flags":0,"Value":"MTMzOA=="}]
 type KVPair =
@@ -211,10 +242,6 @@ type LockOptions =
     sessionName : string
     /// Optional, defaults to DefaultLockSessionTTL
     sessionTTL  : string }
-
-type Node =
-  { node    : string
-    address : string }
 
 type ServiceEntry =
   { node    : Node
