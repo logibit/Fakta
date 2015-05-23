@@ -6,6 +6,12 @@ module internal Fakta.Prelude
 
 let flip f a b = f b a
 
+module Map =
+  let put k v m =
+    match m |> Map.tryFind k with
+    | None -> m |> Map.add k v
+    | Some _ -> m |> Map.remove k |> Map.add k v
+
 module Duration =
   open NodaTime
   open System.Diagnostics
@@ -28,7 +34,7 @@ module Duration =
     }
 
   let consulString (d : Duration) =
-    sprintf "%f%s" (d.ToTimeSpan().TotalSeconds) "s"
+    sprintf "%d%s" (uint32 (d.ToTimeSpan().TotalSeconds)) "s"
 
 module UTF8 =
   open System.Text

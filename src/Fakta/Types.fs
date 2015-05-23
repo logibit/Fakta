@@ -4,6 +4,8 @@ module Fakta.Types
 open System
 open System.Text
 open NodaTime
+open Aether
+open Aether.Operators
 open Chiron
 open Chiron.Operators
 
@@ -163,12 +165,26 @@ type SessionBehaviour =
   /// Delete is useful for creating ephemeral key/value entries.
   | Delete
 
+  static member FromJson (_ : SessionBehaviour) =
+    (function
+    | "release" -> Json.init Release
+    | "delete " -> Json.init Delete
+    | other     -> Json.error (sprintf "'%s' is not a valid session behaviour" other))
+    =<< Json.getLensPartial Json.StringPLens
+
+  static member ToJson (sb : SessionBehaviour) =
+    Json.setLensPartial Json.StringPLens
+                        (match sb with
+                        | Release -> "release"
+                        | Delete  -> "delete")
+
 type SessionOption =
   | LockDelay of Duration
-  | Node of Node
+  | Node of string
   | Name of string
   | Checks of Check list
   | Behaviour of SessionBehaviour
+  /// A **minumum** of 10 seconds! Otherwise you'll get 400 or 500 Bad Request back.
   | TTL of Duration
 
 type SessionOptions = SessionOption list
@@ -186,7 +202,7 @@ type SessionEntry =
     /// Name can be used to provide a human-readable name for the Session.
     name        : string
     /// Node must refer to a node that is already registered, if specified. By default, the agent's own node name is used.
-    node        : Node
+    node        : string
     /// Checks is used to provide a list of associated health checks. It is highly recommended that, if you override this list, you include the default "serfHealth".
     checks      : string list
     /// LockDelay can be specified as a duration string using a "s" suffix for seconds. The default is 15s.

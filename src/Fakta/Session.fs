@@ -15,12 +15,26 @@ open Fakta.Impl
 /// Create makes a new session. Providing a session entry can customize the session.
 let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<Session * WriteMeta, Error>> =
   let getResponse = getResponse state "Fakta.Session.create"
+
+  let writeJsonBody : SessionOptions -> Json<unit> =
+    List.fold (fun acc -> function
+              | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
+              | Node node     -> acc *> Json.write "Node" node
+              | Name name     -> acc *> Json.write "Name" name
+              | Checks checks -> acc *> Json.write "Checks" checks
+              | Behaviour sb  -> acc *> Json.write "Behavior" sb
+              | TTL dur       -> acc *> Json.write "TTL" (Duration.consulString dur))
+              (fun json -> Value (), Json.Object Map.empty)
+
+  let reqBody = Json.format (snd (writeJsonBody sessionOpts (Json.Null ())))
+
   let req =
     UriBuilder.ofSession state.config "create"
     |> flip UriBuilder.mappendRange (writeOptsKvs opts)
     |> UriBuilder.uri
     |> basicRequest Put
     |> withConfigOpts state.config
+    |> withJsonBody reqBody
 
   async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
@@ -43,8 +57,24 @@ let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : Wri
   raise (TBD "TODO")
 
 /// Destroy invalides a given session
-let destroy (state : FaktaState) (session : Session) (wo : WriteOptions) : Async<Choice<WriteMeta, Error>> =
-  raise (TBD "TODO")
+let destroy (state : FaktaState) (session : Session) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
+  let getResponse = getResponse state "Fakta.Session.destroy"
+  
+  let req =
+    UriBuilder.ofSession state.config (sprintf "destroy/%s" session)
+    |> flip UriBuilder.mappendRange (writeOptsKvs opts)
+    |> UriBuilder.uri
+    |> basicRequest Put
+    |> withConfigOpts state.config
+
+  async {
+    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+    use resp = resp
+    match resp.StatusCode with
+    | 200 -> return Choice1Of2 { requestTime = dur }
+    | x   -> return Choice2Of2 (Message (sprintf "unkown status code %d" x))
+  }
+
 
 /// Info looks up a single session 
 let info (state : FaktaState) (id : Session) (qo : QueryOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> =

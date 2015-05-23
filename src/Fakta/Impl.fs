@@ -2,6 +2,7 @@
 
 open System
 open System.Net
+open System.Text
 open HttpFs.Client
 open NodaTime
 open Fakta
@@ -18,11 +19,11 @@ let keyFor (m : string) (k : Key) =
 
 type UriBuilder =
   { inner : System.UriBuilder
-    kvs   : (string * string option) list }
+    kvs   : Map<string, string option> }
 
   static member ofModuleAndPath (config : FaktaConfig) (mdle : string) (path : string) =
     { inner = UriBuilder(config.serverBaseUri, Path = keyFor mdle path)
-      kvs   = [] }
+      kvs   = Map.empty }
 
   static member ofKVKey (config : FaktaConfig) (k : Key) =
     UriBuilder.ofModuleAndPath config "kv" k
@@ -34,7 +35,8 @@ type UriBuilder =
 module UriBuilder =
   /// Build a query from the unencoded key-value pairs
   let private buildQuery =
-    List.map (fun (n, v) -> n, v |> Option.map Uri.EscapeUriString)
+    Map.toList
+    >> List.map (fun (n, v) -> n, v |> Option.map Uri.EscapeUriString)
     >> List.map (function
                 | n, None -> n
                 | n, Some ev -> String.Concat [ n; "="; ev ])
@@ -46,18 +48,19 @@ module UriBuilder =
 
   // mappend  :: Monoid a => a -> a -> a
   let mappend (ub : UriBuilder) (k, v) =
-    { ub with kvs = (k, v) :: ub.kvs }
+    { ub with kvs = ub.kvs |> Map.put k v }
 
   let mappendRange (ub : UriBuilder) kvs =
     List.fold mappend ub kvs
 
 let withQueryOpts (config : FaktaConfig) (ro : QueryOptions) (req : Request) =
-  req // TODO: complete query options
+  // TODO: complete query options
+  req
 
 let withConfigOpts (config : FaktaConfig) (req : Request) =
   config.credentials
   |> Option.fold (fun s creds -> withBasicAuthentication creds.username creds.password req) req
-   
+
 let acceptJson =
   withHeader (Accept "application/json")
 
@@ -68,6 +71,10 @@ let basicRequest meth =
   createRequest meth
   >> acceptJson
   >> withIntroductions
+
+let withJsonBody body =
+  withHeader (ContentType (ContentType.Create("application", "json")))
+  >> withBodyStringEncoded body (Encoding.UTF8)
 
 let getResponse (state : FaktaState) path (req : Request) =
   async {
