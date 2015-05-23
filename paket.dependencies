@@ -9,3 +9,4 @@ nuget Hopac
 nuget Hopac.Extras
 nuget Http.fs-prerelease framework: >= net45
 nuget NodaTime
+nuget NuGet.CommandLine
