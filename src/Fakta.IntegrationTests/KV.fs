@@ -41,10 +41,13 @@ let tests =
       let session, _ = ensureSuccess (Session.create state [SessionOption.Name "kv-interactions-test"] []) id
       let kvp = KVPair.CreateForAcquire(session, "service/foo-router/mutex/send-email", epInfo, 1337UL)
       try
-        let res, _ = ensureSuccess (KV.acquire state kvp []) id
-        if not res then Tests.failtest "failed to acquire lock"
+        try
+          let res, _ = ensureSuccess (KV.acquire state kvp []) id
+          if not res then Tests.failtest "failed to acquire lock"
+        finally
+          let res, _ = ensureSuccess (KV.release state kvp []) id
+          if not res then Tests.failtest "failed to release lock"
       finally
-        let res, _ = ensureSuccess (KV.release state kvp []) id
-        if not res then Tests.failtest "failed to release lock"
+        given (Session.destroy state session [])
         
   ]
