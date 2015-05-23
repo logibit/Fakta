@@ -47,6 +47,70 @@ type Port = uint16
 
 type Check = string
 
+type ACLEntry =
+  { createIndex : Index
+    modifyIndex : Index
+    id          : Id
+    name        : string
+    ``type``    : string
+    rules       : string }
+
+type AgentCheck =
+  { node        : string
+    checkID     : string
+    name        : string
+    status      : string
+    notes       : string
+    output      : string
+    serviceId   : string
+    serviceName : string }
+
+type AgentMember =
+  { name        : string
+    addr        : string
+    port        : uint16
+    tags        : Map<string, string>
+    status      : int
+    protocolMin : uint8
+    protocolMax : uint8
+    protocolCur : uint8
+    delegateMin : uint8
+    delegateMax : uint8
+    delegateCur : uint8 }
+
+type AgentService =
+  { id      : Id
+    service : string
+    tags    : string list
+    port    : Port
+    address : string }
+
+type AgentServiceCheck =
+  { script   : string // `json:",omitempty"`
+    interval : string // `json:",omitempty"`
+    timeout  : string // `json:",omitempty"`
+    ttl      : string // `json:",omitempty"`
+    http     : string // `json:",omitempty"`
+    status   : string  } // `json:",omitempty"`
+
+type AgentServiceChecks = AgentServiceCheck list
+
+type AgentServiceRegistration =
+  { id      : string //   `json:",omitempty"`
+    Name    : string //  `json:",omitempty"`
+    Tags    : string list // `json:",omitempty"`
+    Port    : int //     `json:",omitempty"`
+    Address : string //  `json:",omitempty"`
+    Check   : AgentServiceCheck
+    checks  : AgentServiceChecks }
+
+type AgentCheckRegistration =
+  { id        : Id // `json:",omitempty"`
+    name      : string //`json:",omitempty"`
+    notes     : string // `json:",omitempty"`
+    serviceId : Id // `json:",omitempty"`
+    check     : AgentServiceCheck }
+
 // [{"CreateIndex":10,"ModifyIndex":17,"LockIndex":0,"Key":"fortnox/apikey","Flags":0,"Value":"MTMzOA=="}]
 type KVPair =
     /// CreateIndex is the internal index value that represents when the entry
@@ -125,13 +189,6 @@ type KVPair =
 type KVPairs = KVPair list
 /// Allows you to pass a list that is built into a single Key (string) in the end.
 type Keys = string list
-
-type AgentService =
-  { id      : Id
-    service : string
-    tags    : string list
-    port    : Port
-    address : string }
 
 type HealthCheck =
   { node        : string
