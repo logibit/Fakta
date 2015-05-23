@@ -42,6 +42,9 @@ module UTF8 =
   let toString (bs : byte []) =
     Encoding.UTF8.GetString bs
 
+  let bytes (s : string) =
+    Encoding.UTF8.GetBytes s
+
 open System
 
 type Random with

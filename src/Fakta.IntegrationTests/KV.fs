@@ -1,11 +1,19 @@
 ﻿module Fakta.IntegrationTests.KV
 
 open System
+open System.Net
+open Chiron
+open Chiron.Operators
 open Fuchu
 open NodaTime
 
 open Fakta
 open Fakta.Logging
+
+type EPInfo =
+  { ep : IPEndPoint }
+  static member ToJson (epi : EPInfo) =
+    Json.write "endpoint" (epi.ep.ToString())
 
 [<Tests>]
 let tests =
@@ -27,4 +35,16 @@ let tests =
       given (KV.put state (KVPair.Create("monkey", "business")) None [])
       ensureSuccess (KV.get state "monkey" []) <| fun (kvp, _) ->
         Assert.Equal("monkeys do monkey business", "business", kvp.utf8String)
+
+    testCase "can acquire -> release" <| fun _ ->
+      let epInfo = { ep = IPEndPoint(IPAddress.IPv6Loopback, 8083) }
+      let session, _ = ensureSuccess (Session.create state [SessionOption.Name "kv-interactions-test"] []) id
+      let kvp = KVPair.CreateForAcquire(session, "service/foo-router/mutex/send-email", epInfo, 1337UL)
+      try
+        let res, _ = ensureSuccess (KV.acquire state kvp []) id
+        if not res then Tests.failtest "failed to acquire lock"
+      finally
+        let res, _ = ensureSuccess (KV.release state kvp []) id
+        if not res then Tests.failtest "failed to release lock"
+        
   ]

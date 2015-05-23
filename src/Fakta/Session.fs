@@ -12,7 +12,8 @@ open Fakta
 open Fakta.Logging
 open Fakta.Impl
 
-/// Create makes a new session. Providing a session entry can customize the session.
+/// Create makes a new session. Providing a session entry can customize the
+/// session. It is recommended you give a Name as the options.
 let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<Session * WriteMeta, Error>> =
   let getResponse = getResponse state "Fakta.Session.create"
 

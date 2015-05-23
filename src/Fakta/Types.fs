@@ -76,18 +76,23 @@ type KVPair =
   member x.utf8String =
     UTF8.toString x.value
 
-  static member Create(key : Key, value : byte []) =
+  static member Create(key : Key, value : byte [], ?flags) =
+    // TODO: validate that value <= 512 KiB
     { createIndex = 0UL
       modifyIndex = 0UL
       lockIndex   = 0UL
       key         = key
-      flags       = 0UL
+      flags       = defaultArg flags 0UL
       value       = value
       session     = None }
 
-
   static member Create(key : Key, value : string) =
     KVPair.Create(key, Encoding.UTF8.GetBytes value)
+
+  static member inline CreateForAcquire(session : Session, key : Key, value : 'T, ?flags) =
+    let json = Json.serialize value |> Json.format |> Encoding.UTF8.GetBytes
+    { KVPair.Create(key, json, defaultArg flags 0UL) with
+        session = Some session }
 
   static member FromJson (_ : KVPair) =
     (fun ci mi li k fl v s ->
