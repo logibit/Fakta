@@ -12,6 +12,11 @@ Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Fakta.Tests", "Fakta.Tests\
 EndProject
 Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Fakta.IntegrationTests", "Fakta.IntegrationTests\Fakta.IntegrationTests.fsproj", "{2A30287C-E355-45C1-902E-F1534667F760}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{5C99734E-923C-407F-AE06-90F465D73632}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

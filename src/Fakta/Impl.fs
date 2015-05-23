@@ -7,22 +7,28 @@ open NodaTime
 open Fakta
 open Fakta.Logging
 
-let Namespace = "/v1/kv"
+let APIVersion = "v1"
 
-let keyFor (k : Key) =
-  if k = "/" then Namespace + "/" else
-  String.concat "/" [ yield Namespace; yield k.TrimStart('/') ]
+let keyFor (m : string) (k : Key) =
+  let m', k' = m.Trim('/'), k.TrimStart('/') // valid to end with /
+  if k = "/" then
+    sprintf "/%s/%s/" APIVersion m'
+  else
+    sprintf "/%s/%s/%s" APIVersion m' k'
 
 type UriBuilder =
   { inner : System.UriBuilder
     kvs   : (string * string option) list }
 
-  static member ofKVKey (config : FaktaConfig) (k : Key) =
-    let uri = config.serverBaseUris.Head
-    let uriBuilder = System.UriBuilder uri
-    uriBuilder.Path <- keyFor k
-    { inner = uriBuilder
+  static member ofModuleAndPath (config : FaktaConfig) (mdle : string) (path : string) =
+    { inner = UriBuilder(config.serverBaseUri, Path = keyFor mdle path)
       kvs   = [] }
+
+  static member ofKVKey (config : FaktaConfig) (k : Key) =
+    UriBuilder.ofModuleAndPath config "kv" k
+
+  static member ofSession (config : FaktaConfig) (op : string) =
+    UriBuilder.ofModuleAndPath config "session" op
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module UriBuilder =
@@ -46,9 +52,9 @@ module UriBuilder =
     List.fold mappend ub kvs
 
 let withQueryOpts (config : FaktaConfig) (ro : QueryOptions) (req : Request) =
-  req
+  req // TODO: complete query options
 
-let withWriteOpts (config : FaktaConfig) (wo : WriteOptions) (req : Request) =
+let withConfigOpts (config : FaktaConfig) (req : Request) =
   config.credentials
   |> Option.fold (fun s creds -> withBasicAuthentication creds.username creds.password req) req
    
@@ -90,7 +96,7 @@ let queryMeta dur (resp : Response) =
 
 exception ConflictingConsistencyOptions
 
-let validate opts =
+let private validate opts =
   opts
   |> List.filter (function ReadConsistency _ -> true | _ -> false)
   |> List.length
@@ -106,7 +112,13 @@ let queryOptKvs : QueryOptions -> (string * string option) list =
                     ("index", Some (index.ToString()))
                  :: ("wait",  Some (Duration.consulString dur))
                  :: acc
-               | TokenOverride token        -> ("token", Some token) :: acc
-               | DataCenter dc              -> ("dc", Some dc) :: acc
+               | QueryOption.TokenOverride token -> ("token", Some token) :: acc
+               | QueryOption.DataCenter dc       -> ("dc", Some dc) :: acc
                )
               []
+
+let writeOptsKvs : WriteOptions -> (string * string option) list =
+  List.fold (fun acc -> function
+             | WriteOption.TokenOverride token        -> ("token", Some token) :: acc
+             | WriteOption.DataCenter dc              -> ("dc", Some dc) :: acc)
+            []

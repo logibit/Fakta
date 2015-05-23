@@ -39,7 +39,7 @@ let get (state : FaktaState) (key : Key) (opts : QueryOptions) : Async<Choice<KV
     |> flip UriBuilder.mappendRange (queryOptKvs opts)
     |> UriBuilder.uri
     |> basicRequest Get
-    |> withQueryOpts state.config opts
+    |> withConfigOpts state.config
 
   async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
@@ -69,7 +69,7 @@ let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Async<Choic
                                       yield "recurse", None ]
     |> UriBuilder.uri
     |> basicRequest Get
-    |> withQueryOpts state.config opts
+    |> withConfigOpts state.config
 
   async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
@@ -94,7 +94,7 @@ let put (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteO
       |> UriBuilder.mappendRange ub
     |> UriBuilder.uri
     |> basicRequest Put
-    |> withWriteOpts state.config opts
+    |> withConfigOpts state.config
     |> withBody (BodyRaw kvp.value)
 
   async {

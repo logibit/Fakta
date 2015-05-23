@@ -40,7 +40,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyVersionInfo.fs" />
+    <Compile Include="TestFactory.fs" />
     <Compile Include="KV.fs" />
+    <Compile Include="Session.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />

@@ -20,7 +20,7 @@ let DefaultLockWaitTime = Duration.FromSeconds 15L
 let DefaultLockRetryTime = Duration.FromSeconds 5L
 let LockFlagValue = 0x2ddccbc058a50c18UL
 
-/// Tells the programmer this feature has not been implemented yet
+/// Tells the programmer this feature has not been implemented yet.
 exception TBD of reason:string
 
 type HttpBasicAuth =
@@ -31,8 +31,8 @@ type Id = string
 
 type Key = string
 
-/// Token is used to provide a per-request ACL token
-/// which overrides the agent's default token.
+/// Token is used to provide a per-request ACL token which overrides the agent's
+/// default token.
 type Token = string
 
 type Flags = uint64
@@ -43,20 +43,30 @@ type Session = string
 
 type Port = uint16
 
+type Check = string
+
 // [{"CreateIndex":10,"ModifyIndex":17,"LockIndex":0,"Key":"fortnox/apikey","Flags":0,"Value":"MTMzOA=="}]
 type KVPair =
-    /// CreateIndex is the internal index value that represents when the entry was created.
+    /// CreateIndex is the internal index value that represents when the entry
+    /// was created.
   { createIndex : Index
-    /// ModifyIndex is the last index that modified this key. This index corresponds to the X-Consul-Index header value that is returned in responses, and it can be used to establish blocking queries by setting the "?index" query parameter. You can even perform blocking queries against entire subtrees of the KV store: if "?recurse" is provided, the returned X-Consul-Index corresponds to the latest ModifyIndex within the prefix, and a blocking query using that "?index" will wait until any key within that prefix is updated.
+    /// ModifyIndex is the last index that modified this key. This index
+    /// corresponds to the X-Consul-Index header value that is returned in responses, and it can be used to establish blocking queries by setting the "?index" query parameter. You can even perform blocking queries against entire subtrees of the KV store: if "?recurse" is provided, the returned X-Consul-Index corresponds to the latest ModifyIndex within the prefix, and a blocking query using that "?index" will wait until any key within that prefix is updated.
     modifyIndex : Index
-    /// LockIndex is the last index of a successful lock acquisition. If the lock is held, the Session key provides the session that owns the lock.
+    /// LockIndex is the last index of a successful lock acquisition. If the
+    /// lock is held, the Session key provides the session that owns the lock.
     lockIndex   : Index
     /// Key is simply the full path of the entry.
     key         : Key
-    /// Flags are an opaque unsigned integer that can be attached to each entry. Clients can choose to use this however makes sense for their application.
+    /// Flags are an opaque unsigned integer that can be attached to each entry.
+    /// Clients can choose to use this however makes sense for their application.
     flags       : Flags
-    /// Value is a Base64-encoded blob of data. Note that values cannot be larger than 512kB.
-    value       : byte [] }
+    /// Value is a Base64-encoded blob of data. Note that values cannot be
+    /// larger than 512kB.
+    value       : byte []
+    /// If this key has been acquired by a specific session, that session id is
+    /// given here.
+    session     : string option }
 
   member x.hasFlags =
     x.flags <> 0UL
@@ -70,14 +80,15 @@ type KVPair =
       lockIndex   = 0UL
       key         = key
       flags       = 0UL
-      value       = value }
+      value       = value
+      session     = None }
 
 
   static member Create(key : Key, value : string) =
     KVPair.Create(key, Encoding.UTF8.GetBytes value)
 
   static member FromJson (_ : KVPair) =
-    (fun ci mi li k fl v ->
+    (fun ci mi li k fl v s ->
       { createIndex = ci
         modifyIndex = mi
         lockIndex   = li
@@ -85,13 +96,15 @@ type KVPair =
         flags       = fl
         value       = match v with
                       | None   -> [||]
-                      | Some v -> Convert.FromBase64String v })
+                      | Some v -> Convert.FromBase64String v
+        session     = s })
     <!> Json.read "CreateIndex"
     <*> Json.read "ModifyIndex"
     <*> Json.read "LockIndex"
     <*> Json.read "Key"
     <*> Json.read "Flags"
     <*> Json.read "Value"
+    <*> Json.tryRead "Session"
 
   static member ToJson (kv : KVPair) =
     Json.write "CreateIndex" kv.createIndex
@@ -100,6 +113,7 @@ type KVPair =
     *> Json.write "Key" kv.key
     *> Json.write "Flags" kv.flags
     *> Json.write "Value" (Convert.ToBase64String kv.value)
+    *> Json.write "Session" kv.session
 
 type KVPairs = KVPair list
 /// Allows you to pass a list that is built into a single Key (string) in the end.
@@ -114,8 +128,8 @@ type AgentService =
 
 type HealthCheck =
   { node        : string
-    checkId     : string
-    name        : string
+    checkId     : Check  // either.... this is Check
+    name        : string // OR this is Check (see type abbrev above)
     status      : string
     notes       : string
     output      : string
@@ -143,15 +157,44 @@ type ServiceEntry =
     service : AgentService
     checks  : HealthCheck list }
 
+type SessionBehaviour =
+  /// Release; cause any locks that are held to be released.
+  | Release
+  /// Delete is useful for creating ephemeral key/value entries.
+  | Delete
+
+type SessionOption =
+  | LockDelay of Duration
+  | Node of Node
+  | Name of string
+  | Checks of Check list
+  | Behaviour of SessionBehaviour
+  | TTL of Duration
+
+type SessionOptions = SessionOption list
+
+/// SessionEntry represents a session in consul 
 type SessionEntry =
+    /// The epoch this session was created during. (You know if your session-based
+    /// lock in the KV module is valid if the tuple of (Key, LockIndex, Session),
+    /// which acts a unique "sequencer", matches the createIndex of this data
+    /// structure. See https://www.consul.io/docs/internals/sessions.html (towards
+    /// the bottom) for details.
   { createIndex : uint64
-    id          : string
+    /// The Guid/UUID of the session
+    id          : Guid
+    /// Name can be used to provide a human-readable name for the Session.
     name        : string
-    node        : string
+    /// Node must refer to a node that is already registered, if specified. By default, the agent's own node name is used.
+    node        : Node
+    /// Checks is used to provide a list of associated health checks. It is highly recommended that, if you override this list, you include the default "serfHealth".
     checks      : string list
+    /// LockDelay can be specified as a duration string using a "s" suffix for seconds. The default is 15s.
     lockDelay   : Duration
+    /// Behavior can be set to either release or delete. This controls the behavior when a session is invalidated. By default, this is release, causing any locks that are held to be released. Changing this to delete causes any locks that are held to be deleted. delete is useful for creating ephemeral key/value entries.
     behavior    : string
-    ttl         : string }
+    /// The TTL field is a duration string, and like LockDelay it can use "s" as a suffix for seconds. If specified, it must be between 10s and 3600s currently. When provided, the session is invalidated if it is not renewed before the TTL expires. See the session internals page for more documentation of this feature.
+    ttl         : Duration }
 
 type UserEvent =
   { id            : Id
@@ -202,15 +245,11 @@ type QueryOptions = QueryOption list
 type WriteMeta =
   { requestTime : Duration }
 
-type WriteOptions =
-  { datacenter : string option
-    token      : Token option }
+type WriteOption =
+  | DataCenter of string
+  | TokenOverride of Token
 
-  member x.toKvs () =
-    [ if x.datacenter |> Option.fold (fun s t -> t <> "") false then
-        yield "dc", Option.get x.datacenter
-      if x.token |> Option.fold (fun s t -> t <> "") false then
-        yield "token", Option.get x.token ]
+type WriteOptions = WriteOption list
 
 type Error =
   | Message of string
@@ -219,7 +258,7 @@ type Error =
 
 type FaktaConfig =
     /// The base URIs that we have servers at
-  { serverBaseUris : Uri list
+  { serverBaseUri  : Uri
     /// Datacenter to use. If not provided, the default agent datacenter is used.
     datacenter     : string option
     /// HttpAuth is the auth info to use for http access.
@@ -232,16 +271,11 @@ type FaktaConfig =
     token          : Token option
   }
   static member Default =
-    { serverBaseUris = [ Uri "http://127.0.0.1:8500" ]
+    { serverBaseUri  = Uri "http://127.0.0.1:8500"
       datacenter     = None
       credentials    = None
       waitTime       = DefaultLockWaitTime
       token          = None }
-
-type WriteOptions with
-  static member ofConfig (cfg : FaktaConfig) =
-    { datacenter = cfg.datacenter
-      token      = cfg.token }
 
 type FaktaState =
   { config : FaktaConfig

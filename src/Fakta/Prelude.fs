@@ -44,3 +44,11 @@ type Random with
     let buffer = Array.zeroCreate<byte> sizeof<UInt64>
     x.NextBytes buffer
     BitConverter.ToUInt64(buffer, 0)
+
+module Chiron =
+  open Chiron
+  module Json =
+    let inline maybeWrite key value =
+      match value with
+      | None -> fun json -> Value (), json
+      | _    -> Json.write key value
