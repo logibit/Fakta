@@ -66,30 +66,20 @@ let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Async<Choic
 
 ////////////////////// WRITING /////////////////////
 
-let private mkPut (state : FaktaState) (kvp : KVPair) fUri (opts : WriteOptions) (body : RequestBody) =
+let private mkReq methd (state : FaktaState) (kvp : KVPair) fUri (opts : WriteOptions) (body : RequestBody) = 
   UriBuilder.ofKVKey state.config kvp.key
   |> flip UriBuilder.mappendRange (configOptKvs state.config)
   |> flip UriBuilder.mappendRange (writeOptsKvs opts)
   |> fUri
   |> UriBuilder.uri
-  |> basicRequest Put
+  |> basicRequest methd
   |> withConfigOpts state.config
   |> withBody body
 
-/// Acquire is used for a lock acquisiton operation. The Key, Flags, Value and
-/// Session are respected. Returns true on success or false on failures.
-///
-/// The <body> (KVPair.Value) of the PUT should be a JSON object representing
-/// the local node. This value is opaque to Consul, but it should contain
-/// whatever information clients require to communicate with your application
-/// (e.g., it could be a JSON object that contains the node's name and the
-/// application's port).
-let acquire (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
-  if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
-  let getResponse = getResponse state "Fakta.KV.acquire"
-  let req = mkPut state kvp
-                  (flip UriBuilder.mappend ("acquire", kvp.session))
-                  opts (BodyRaw kvp.value)
+let private mkPut = mkReq HttpMethod.Put
+let private mkDel = mkReq HttpMethod.Delete
+
+let private boolResponse getResponse req =
   async {
     let! response, dur = Duration.timeAsync (fun () -> getResponse req)
     use response = response
@@ -103,40 +93,49 @@ let acquire (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Ch
     | x -> return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
   }
 
+/// Acquire is used for a lock acquisiton operation. The Key, Flags, Value and
+/// Session are respected. Returns true on success or false on failures.
+///
+/// The <body> (KVPair.Value) of the PUT should be a JSON object representing
+/// the local node. This value is opaque to Consul, but it should contain
+/// whatever information clients require to communicate with your application
+/// (e.g., it could be a JSON object that contains the node's name and the
+/// application's port).
+let acquire (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
+  if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
+  mkPut state kvp (flip UriBuilder.mappend ("acquire", kvp.session))
+        opts (BodyRaw kvp.value)
+  |> boolResponse (getResponse state "Fakta.KV.acquire")
+
 /// Delete is used to delete a single key
-let delete (state : FaktaState) (p : KVPair) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
-  raise (TBD "TODO")
+let delete (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
+  mkDel state kvp (mCas |> Option.fold (fun s t ->
+                                         flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
+                                       id)
+           opts (BodyRaw [||])
+  |> boolResponse (getResponse state "Fakta.KV.delete")
 
 /// DeleteCAS is used for a Delete Check-And-Set operation. The Key and ModifyIndex are respected. Returns true on success or false on failures. 
-let deleteCAS (state : FaktaState) (p : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
-  raise (TBD "TODO")
+let deleteCAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
+  delete state kvp (Some kvp.modifyIndex) opts
 
 /// DeleteTree is used to delete all keys under a prefix
-let deleteTree (state : FaktaState) (p : KVPair) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
-  raise (TBD "TODO")
+let deleteTree (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
+  mkDel state kvp (mCas |> Option.fold (fun s t ->
+                                         flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
+                                       id
+                   >> flip UriBuilder.mappend ("recurse", None))
+           opts (BodyRaw [||])
+  |> boolResponse (getResponse state "Fakta.KV.deleteTree")
 
 /// Put is used to write a new value. Only the Key, Flags and Value is respected.
 let put (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
-  let getResponse = getResponse state "Fakta.KV.put"
-  let req = mkPut state kvp
-                  (mCas |> Option.fold (fun s t ->
-                                          flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
-                                       id)
-                  opts
-                  (BodyRaw kvp.value)
-
-  async {
-    let! response, dur = Duration.timeAsync (fun () -> getResponse req)
-    use response = response
-    match response.StatusCode with
-    | 200 ->
-      let! body = Response.readBodyAsString response
-      match body with
-      | "true" -> return Choice1Of2 (true, { requestTime = dur })
-      | "false" -> return Choice1Of2 (false, { requestTime = dur })
-      | x -> return Choice2Of2 (Message x)
-    | x -> return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
-  }
+  mkPut state kvp
+        (mCas |> Option.fold (fun s t ->
+                               flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
+                             id)
+        opts (BodyRaw kvp.value)
+  |> boolResponse (getResponse state "Fakta.KV.put")
 
 /// CAS is used for a Check-And-Set operation. The Key, ModifyIndex, Flags and Value are respected. Returns true on success or false on failures. 
 let CAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
@@ -146,19 +145,5 @@ let CAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice
 /// Session are respected. Returns true on success or false on failures. 
 let release (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
   if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
-  let getResponse = getResponse state "Fakta.KV.put"
-  let req = mkPut state kvp 
-                  (flip UriBuilder.mappend ("release", kvp.session))
-                  opts (BodyRaw [||])
-  async {
-    let! response, dur = Duration.timeAsync (fun () -> getResponse req)
-    use response = response
-    match response.StatusCode with
-    | 200 ->
-      let! body = Response.readBodyAsString response
-      match body with
-      | "true"  -> return Choice1Of2 (true, { requestTime = dur })
-      | "false" -> return Choice1Of2 (false, { requestTime = dur })
-      | x       -> return Choice2Of2 (Message x)
-    | x -> return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
-  }
+  mkPut state kvp (flip UriBuilder.mappend ("release", kvp.session)) opts (BodyRaw [||])
+  |> boolResponse (getResponse state "Fakta.KV.release")

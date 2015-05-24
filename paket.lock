@@ -14,10 +14,11 @@ NUGET
       FSharp.Core (>= 3.1.2.1)
       FsCheck (>= 1.0.4)
       Fuchu (>= 0.6.0.0)
-    Hopac (0.0.0.45)
+    Hopac (0.0.0.46)
+      FSharp.Core (>= 3.1.2.1)
     Hopac.Extras (0.1.28)
       Hopac (>= 0.0.0.45)
-    Http.fs-prerelease (2.2.2) - framework: >= net45
+    Http.fs-prerelease (2.3.0) - framework: >= net45
       FSharp.Core (>= 3.1.2.1)
     NodaTime (1.3.1)
     NuGet.CommandLine (2.8.5)
