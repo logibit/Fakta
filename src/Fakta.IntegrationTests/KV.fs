@@ -49,5 +49,4 @@ let tests =
           if not res then Tests.failtest "failed to release lock"
       finally
         given (Session.destroy state session [])
-        
-  ] 
+  ]

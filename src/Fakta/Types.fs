@@ -386,3 +386,9 @@ type FaktaState =
     logger : Logger
     clock  : IClock
     random : Random }
+
+  static member Default =
+    { config = FaktaConfig.Default
+      logger = NoopLogger
+      clock  = SystemClock.Instance
+      random = Random () }
