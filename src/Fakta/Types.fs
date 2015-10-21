@@ -259,10 +259,10 @@ type SessionBehaviour =
     | "release" -> Json.init Release
     | "delete " -> Json.init Delete
     | other     -> Json.error (sprintf "'%s' is not a valid session behaviour" other))
-    =<< Json.getLensPartial Json.StringPLens
+    =<< Json.Lens.getPartial Json.String_
 
   static member ToJson (sb : SessionBehaviour) =
-    Json.setLensPartial Json.StringPLens
+    Json.Lens.setPartial Json.String_
                         (match sb with
                         | Release -> "release"
                         | Delete  -> "delete")

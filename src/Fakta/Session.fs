@@ -43,7 +43,7 @@ let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOpti
     match resp.StatusCode with
     | 200 ->
       let! body = Response.readBodyAsString resp
-      let id = Json.ObjectPLens >??> Aether.mapPLens "ID" >??> Json.StringPLens
+      let id = Json.Object_ >??> Aether.key_ "ID" >??> Json.String_
       match Json.tryParse body with
       | Choice1Of2 json ->
         match Lens.getPartial id json with
