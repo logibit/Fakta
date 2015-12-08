@@ -1,23 +1,26 @@
+FRAMEWORK: NET45
 NUGET
   remote: https://nuget.org/api/v2
   specs:
-    Aether (7.0.1)
+    Aether (7.0.2)
     Chiron (5.2.1)
       Aether (>= 7.0.1)
       FParsec (>= 1.0.2)
     FParsec (1.0.2)
-    FsCheck (1.0.4) - framework: >= net45
-    FSharp.Core (3.1.2.1) - framework: >= net45
-    Fuchu (0.6.0.0) - framework: >= net40
-    Fuchu.FsCheck (0.6.0.0) - framework: >= net45
-      FsCheck (>= 1.0.4)
+    FsCheck (2.2.3)
+      FSharp.Core (>= 3.1.2.5)
+    FSharp.Core (3.1.2.5)
+    Fuchu (1.0.2)
       FSharp.Core (>= 3.1.2.1)
-      Fuchu (>= 0.6.0.0)
-    Hopac (0.0.0.46)
+    Fuchu.FsCheck (1.0.2)
+      FsCheck (>= 2.2.2)
+      FSharp.Core (>= 3.1.2.5)
+      Fuchu (>= 1.0.2.0)
+    Hopac (0.1.0)
       FSharp.Core (>= 3.1.2.1)
-    Hopac.Extras (0.1.28)
-      Hopac (>= 0.0.0.45)
-    Http.fs-prerelease (2.3.0) - framework: >= net45
+    Hopac.Extras (0.1.32)
+      Hopac (>= 0.0.0.48)
+    Http.fs-prerelease (2.4.0)
       FSharp.Core (>= 3.1.2.1)
     NodaTime (1.3.1)
-    NuGet.CommandLine (2.8.5)
+    NuGet.CommandLine (3.3.0)
