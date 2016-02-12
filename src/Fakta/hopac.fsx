@@ -10,8 +10,6 @@ open System
 open Hopac.Extensions
 open Hopac.Extras
 open Hopac.Timer.Global
-open Hopac.Alt.Infixes
-open Hopac.Job.Infixes
 open Hopac.Infixes
 open Hopac
 

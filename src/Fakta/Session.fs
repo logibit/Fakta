@@ -43,10 +43,10 @@ let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOpti
     match resp.StatusCode with
     | 200 ->
       let! body = Response.readBodyAsString resp
-      let id = Json.Object_ >??> Aether.key_ "ID" >??> Json.String_
+      let id = Json.Object_ >?> Optics.Map.key_ "ID" >?> Json.String_
       match Json.tryParse body with
       | Choice1Of2 json ->
-        match Lens.getPartial id json with
+        match Optic.get id json with
         | Some id      -> return Choice1Of2 (id, { requestTime = dur })
         | None         -> return Choice2Of2 (Message "unexpected json result value")
       | Choice2Of2 err -> return Choice2Of2 (Message err)

@@ -259,13 +259,13 @@ type SessionBehaviour =
     | "release" -> Json.init Release
     | "delete " -> Json.init Delete
     | other     -> Json.error (sprintf "'%s' is not a valid session behaviour" other))
-    =<< Json.Lens.getPartial Json.String_
+    =<< Json.Optic.get Json.String_
 
   static member ToJson (sb : SessionBehaviour) =
-    Json.Lens.setPartial Json.String_
-                        (match sb with
-                        | Release -> "release"
-                        | Delete  -> "delete")
+    Json.Optic.set Json.String_
+                    (match sb with
+                    | Release -> "release"
+                    | Delete  -> "delete")
 
 type SessionOption =
   | LockDelay of Duration
