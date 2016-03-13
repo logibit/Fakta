@@ -359,6 +359,7 @@ type WriteOptions = WriteOption list
 type Error =
   | Message of string
   | KeyNotFound of Key
+  | ConnectionFailed of System.Net.WebException
 
 type FaktaConfig =
     /// The base URIs that we have servers at

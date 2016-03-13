@@ -22,17 +22,25 @@ let get (state : FaktaState) (key : Key) (opts : QueryOptions) : Async<Choice<KV
 
   async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-    use resp = resp
-    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
-      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
-    else
-      match resp.StatusCode with
-      | 404 -> return Choice2Of2 (KeyNotFound key)
-      | _ ->
-        let! body = Response.readBodyAsString resp
-        match Json.parse body |> Json.deserialize with
-        | [ x ] -> return Choice1Of2 (x, queryMeta dur resp)
-        | xs -> return failwithf "unexpected case %A" xs
+    match resp with
+    | Choice1Of2 resp ->
+      use resp = resp
+      if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+      else
+        match resp.StatusCode with
+        | 404 -> return Choice2Of2 (KeyNotFound key)
+        | _ ->
+          let! body = Response.readBodyAsString resp
+          match Json.parse body |> Json.deserialize with
+          | [ x ] ->
+            return Choice1Of2 (x, queryMeta dur resp)
+
+          | xs ->
+            return failwithf "unexpected case %A" xs
+
+    | Choice2Of2 exx ->
+      return Choice2Of2 (Error.ConnectionFailed exx)
   }
 
 let getRaw (state : FaktaState) (key : Key) (opts : QueryOptions) : Async<Choice<byte [] * QueryMeta, Error>> =
@@ -55,13 +63,18 @@ let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Async<Choic
 
   async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-    use resp = resp
-    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
-      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
-    else
-      let! body = Response.readBodyAsString resp
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
-      return Choice1Of2 (items, queryMeta dur resp)
+    match resp with
+    | Choice1Of2 resp ->
+      use resp = resp
+      if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+      else
+        let! body = Response.readBodyAsString resp
+        let items = if body = "" then [] else Json.deserialize (Json.parse body)
+        return Choice1Of2 (items, queryMeta dur resp)
+
+    | Choice2Of2 exx ->
+      return Choice2Of2 (Error.ConnectionFailed exx)
   }
 
 ////////////////////// WRITING /////////////////////
@@ -82,15 +95,28 @@ let private mkDel = mkReq HttpMethod.Delete
 let private boolResponse getResponse req =
   async {
     let! response, dur = Duration.timeAsync (fun () -> getResponse req)
-    use response = response
-    match response.StatusCode with
-    | 200 ->
-      let! body = Response.readBodyAsString response
-      match body with
-      | "true"  -> return Choice1Of2 (true, { requestTime = dur })
-      | "false" -> return Choice1Of2 (false, { requestTime = dur }) 
-      | x       -> return Choice2Of2 (Message x)
-    | x -> return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
+    match response with
+    | Choice1Of2 response ->
+      use response = response
+      match response.StatusCode with
+      | 200 ->
+        let! body = Response.readBodyAsString response
+        match body with
+        | "true" ->
+          return Choice1Of2 (true, { requestTime = dur })
+
+        | "false" ->
+          return Choice1Of2 (false, { requestTime = dur })
+
+        | x ->
+          return Choice2Of2 (Message x)
+
+      | x ->
+        return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
+
+
+    | Choice2Of2 exx ->
+      return Choice2Of2 (Error.ConnectionFailed exx)
   }
 
 /// Acquire is used for a lock acquisiton operation. The Key, Flags, Value and

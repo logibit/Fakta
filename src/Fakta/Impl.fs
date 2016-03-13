@@ -84,14 +84,17 @@ let getResponse (state : FaktaState) path (req : Request) =
       let data' = data |> Map.add "req" (box req)
       LogLine.mk state.clock path Verbose data' "-> request"
 
-    let! res = getResponse req
+    try
+      let! res = getResponse req
+      state.logger.Verbose <| fun _ ->
+        let data' = data |> Map.add "statusCode" (box res.StatusCode)
+                         |> Map.add "resp" (box res)
+        LogLine.mk state.clock path Verbose data' "<- response"
 
-    state.logger.Verbose <| fun _ ->
-      let data' = data |> Map.add "statusCode" (box res.StatusCode)
-                       |> Map.add "resp" (box res)
-      LogLine.mk state.clock path Verbose data' "<- response"
-
-    return res
+      return Choice1Of2 res
+    with
+    | :? System.Net.WebException as e ->
+      return Choice2Of2 e
   }
 
 let queryMeta dur (resp : Response) =

@@ -1,4 +1,4 @@
-﻿/// https://www.consul.io/docs/internals/sessions.html
+/// https://www.consul.io/docs/internals/sessions.html
 module Fakta.Session
 
 open System
@@ -39,18 +39,30 @@ let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOpti
 
   async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-    use resp = resp
-    match resp.StatusCode with
-    | 200 ->
-      let! body = Response.readBodyAsString resp
-      let id = Json.Object_ >?> Optics.Map.key_ "ID" >?> Json.String_
-      match Json.tryParse body with
-      | Choice1Of2 json ->
-        match Optic.get id json with
-        | Some id      -> return Choice1Of2 (id, { requestTime = dur })
-        | None         -> return Choice2Of2 (Message "unexpected json result value")
-      | Choice2Of2 err -> return Choice2Of2 (Message err)
-    | x                -> return Choice2Of2 (Message (sprintf "unknown status code %d" x))
+    match resp with
+    | Choice1Of2 resp ->
+      use resp = resp
+      match resp.StatusCode with
+      | 200 ->
+        let! body = Response.readBodyAsString resp
+        let id = Json.Object_ >?> Optics.Map.key_ "ID" >?> Json.String_
+        match Json.tryParse body with
+        | Choice1Of2 json ->
+          match Optic.get id json with
+          | Some id ->
+            return Choice1Of2 (id, { requestTime = dur })
+
+          | None ->
+            return Choice2Of2 (Message "unexpected json result value")
+
+        | Choice2Of2 err ->
+          return Choice2Of2 (Message err)
+
+      | x ->
+        return Choice2Of2 (Message (sprintf "unknown status code %d" x))
+
+    | Choice2Of2 exx ->
+      return Choice2Of2 (Error.ConnectionFailed exx)
   }
 
 /// CreateNoChecks is like Create but is used specifically to create a session with no associated health checks. 
@@ -70,10 +82,18 @@ let destroy (state : FaktaState) (session : Session) (opts : WriteOptions) : Asy
 
   async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-    use resp = resp
-    match resp.StatusCode with
-    | 200 -> return Choice1Of2 { requestTime = dur }
-    | x   -> return Choice2Of2 (Message (sprintf "unkown status code %d" x))
+    match resp with
+    | Choice1Of2 resp ->
+      use resp = resp
+      match resp.StatusCode with
+      | 200 ->
+        return Choice1Of2 { requestTime = dur }
+
+      | x ->
+        return Choice2Of2 (Message (sprintf "unkown status code %d" x))
+
+    | Choice2Of2 exx ->
+      return Choice2Of2 (Error.ConnectionFailed exx)
   }
 
 
