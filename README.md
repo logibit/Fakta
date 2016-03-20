@@ -1,6 +1,10 @@
 # Fakta
 
-*The* F# HTTP API for Consul.
+A Consul and Vault F# API.
+
+The aim is to support both Consul and Vault from the same library, because it's
+a common deployment scenario. You should be able to use the Consul bits without
+using the Vault bits.
 
 Fakta is Swedish for 'facts', a fitting name for a library interacting with a
 CP-oriented fact store.
@@ -20,6 +24,38 @@ get invalidated.
 
 Together with [Registrator][reg] and this library, F# code can participate in micro-
 service architectures easily.
+
+## Milestones
+
+[All Milestones](https://github.com/haf/Fakta/milestones)
+
+Prio 1 is what is needed to get a PoC up and running.
+Prio 2 is next, by being good to have.
+Prio 3 is next.
+
+The order of Consul vs Vault priorities is:
+
+ - Vault Prio 1
+ - Consul Prio 1
+ - Vault Prio 2
+ - Consul Prio 2
+ - etc
+
+Note that Vault is on top, because all the Prio 0's of Consul are already done.
+
+## References
+
+### Consul
+
+ - [The HTTP API](https://www.consul.io/docs/agent/http.html)
+ - [go-client](https://godoc.org/github.com/hashicorp/consul/api) – the library
+   is partially modelled after this
+
+### Vault
+
+ - [Official Ruby Client](https://github.com/hashicorp/vault-ruby/tree/master/lib/vault/api)
+ - [Official Ruby Client Docs](http://www.rubydoc.info/gems/vault/0.1.5)
+ - [The HTTP API](https://vaultproject.io/docs/http/index.html)
 
 ### [KV][docs-KV]
 
@@ -47,7 +83,6 @@ service architectures easily.
  - [ ] renewPeriodic
 
 ### Service
-
 
 ## Helping Out
 
