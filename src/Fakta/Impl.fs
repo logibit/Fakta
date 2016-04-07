@@ -28,6 +28,9 @@ type UriBuilder =
   static member ofKVKey (config : FaktaConfig) (k : Key) =
     UriBuilder.ofModuleAndPath config "kv" k
 
+  static member ofHealth (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "health" s
+
   static member ofSession (config : FaktaConfig) (op : string) =
     UriBuilder.ofModuleAndPath config "session" op
 

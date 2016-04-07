@@ -231,6 +231,36 @@ type HealthCheck =
     serviceId   : Id
     serviceName : string }
 
+  static member FromJson (_ : HealthCheck) =
+    (fun node id name status notes out serviceId serviceName ->
+      { node = node
+        checkId = id
+        name   = name
+        status = status 
+        notes         = notes
+        output       = out
+        serviceId      = serviceId
+        serviceName     = serviceName })
+    <!> Json.read "node"
+    <*> Json.read "checkId"
+    <*> Json.read "name"
+    <*> Json.read "status"
+    <*> Json.read "notes"
+    <*> Json.read "output"
+    <*> Json.read "serviceId"
+    <*> Json.read "serviceName"
+
+  static member ToJson (hc : HealthCheck) =
+    Json.write "node" hc.node
+    *> Json.write "checkId" hc.checkId
+    *> Json.write "name" hc.name
+    *> Json.write "status" hc.status
+    *> Json.write "notes" hc.notes
+    *> Json.write "output" hc.output
+    *> Json.write "serviceId" hc.serviceId
+    *> Json.write "serviceName" hc.serviceName
+
+
 type LockOptions =
     /// Must be set and have write permissions
   { key         : Key
