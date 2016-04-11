@@ -51,6 +51,18 @@ type Node =
   { node    : string
     address : string }
 
+  static member FromJson (_ : Node) =
+      (fun n a ->
+        { node = n
+          address = a
+            })
+      <!> Json.read "Node"
+      <*> Json.read "Address"
+
+  static member ToJson (n : Node) =
+    Json.write "Node" n.node
+    *> Json.write "Address" n.address
+
 type ACLEntry =
   { createIndex : Index
     modifyIndex : Index
@@ -88,6 +100,27 @@ type AgentService =
     tags    : string list
     port    : Port
     address : string }
+
+  static member FromJson (_ : AgentService) =
+    (fun id s t p a ->
+      { id = id
+        service = s
+        tags   = t
+        port = p
+        address   = a
+          })
+    <!> Json.read "ID"
+    <*> Json.read "Service"
+    <*> Json.read "Tags"
+    <*> Json.read "Port"
+    <*> Json.read "Address"
+  
+  static member ToJson (ags : AgentService) =
+    Json.write "ID" ags.id
+    *> Json.write "Service" ags.service
+    *> Json.write "Tags" ags.tags
+    *> Json.write "Port" ags.port
+    *> Json.write "Address" ags.address
 
 type AgentServiceCheck =
   { script   : string // `json:",omitempty"`
@@ -241,24 +274,24 @@ type HealthCheck =
         output       = out
         serviceId      = serviceId
         serviceName     = serviceName })
-    <!> Json.read "node"
-    <*> Json.read "checkId"
-    <*> Json.read "name"
-    <*> Json.read "status"
-    <*> Json.read "notes"
-    <*> Json.read "output"
-    <*> Json.read "serviceId"
-    <*> Json.read "serviceName"
+    <!> Json.read "Node"
+    <*> Json.read "CheckID"
+    <*> Json.read "Name"
+    <*> Json.read "Status"
+    <*> Json.read "Notes"
+    <*> Json.read "Output"
+    <*> Json.read "ServiceID"
+    <*> Json.read "ServiceName"
 
   static member ToJson (hc : HealthCheck) =
-    Json.write "node" hc.node
-    *> Json.write "checkId" hc.checkId
-    *> Json.write "name" hc.name
-    *> Json.write "status" hc.status
-    *> Json.write "notes" hc.notes
-    *> Json.write "output" hc.output
-    *> Json.write "serviceId" hc.serviceId
-    *> Json.write "serviceName" hc.serviceName
+    Json.write "Node" hc.node
+    *> Json.write "CheckID" hc.checkId
+    *> Json.write "Name" hc.name
+    *> Json.write "Status" hc.status
+    *> Json.write "Notes" hc.notes
+    *> Json.write "Output" hc.output
+    *> Json.write "ServiceID" hc.serviceId
+    *> Json.write "ServiceName" hc.serviceName
 
 
 type LockOptions =
@@ -276,7 +309,22 @@ type LockOptions =
 type ServiceEntry =
   { node    : Node
     service : AgentService
-    checks  : HealthCheck list }
+    checks  : HealthCheck list}
+
+  static member FromJson (_ : ServiceEntry) =
+    (fun n s chs ->
+      { node = n
+        service = s
+        checks   = chs
+          })
+    <!> Json.read "Node"
+    <*> Json.read "Service"
+    <*> Json.read "Checks"
+
+  static member ToJson (se : ServiceEntry) =
+    Json.write "Node" se.node
+    *> Json.write "Service" se.service
+    *> Json.write "Checks" se.checks
 
 type SessionBehaviour =
   /// Release; cause any locks that are held to be released.
