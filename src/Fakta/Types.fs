@@ -80,6 +80,35 @@ type AgentCheck =
     output      : string
     serviceId   : string
     serviceName : string }
+  static member FromJson (_ : AgentCheck) =
+      (fun nd chId n st ns out sId sName ->
+        { node = nd
+          checkID = chId
+          name = n
+          status = st
+          notes = ns
+          output = out
+          serviceId = sId
+          serviceName = sName
+            })
+      <!> Json.read "Node"
+      <*> Json.read "CheckID"
+      <*> Json.read "Name"
+      <*> Json.read "Status"
+      <*> Json.read "Notes"
+      <*> Json.read "Output"
+      <*> Json.read "ServiceId"
+      <*> Json.read "ServiceName"
+
+  static member ToJson (ac : AgentCheck) =
+    Json.write "Node" ac.node
+    *> Json.write "CheckID" ac.checkID
+    *> Json.write "Name" ac.name
+    *> Json.write "Status" ac.status
+    *> Json.write "Notes" ac.notes
+    *> Json.write "Output" ac.output
+    *> Json.write "ServiceId" ac.serviceId
+    *> Json.write "ServiceName" ac.serviceName
 
 type AgentMember =
   { name        : string
@@ -87,33 +116,81 @@ type AgentMember =
     port        : uint16
     tags        : Map<string, string>
     status      : int
-    protocolMin : uint8
-    protocolMax : uint8
-    protocolCur : uint8
-    delegateMin : uint8
-    delegateMax : uint8
-    delegateCur : uint8 }
+    protocolMin : int
+    protocolMax : int
+    protocolCur : int
+    delegateMin : int
+    delegateMax : int
+    delegateCur : int }
+
+  static member FromJson (_ : AgentMember) =
+    (fun n addr p ts st pMin pMax pCur dMin dMax dCur ->
+      { name = n
+        addr = addr
+        port   = p
+        tags = ts
+        status   = st
+        protocolMin = pMin
+        protocolMax = pMax
+        protocolCur = pCur
+        delegateMin = dMin
+        delegateMax = dMax
+        delegateCur = dCur
+          })
+    <!> Json.read "Name"
+    <*> Json.read "Addr"
+    <*> Json.read "Port"
+    <*> Json.read "Tags"
+    <*> Json.read "Status"
+    <*> Json.read "ProtocolMin"
+    <*> Json.read "ProtocolMax"
+    <*> Json.read "ProtocolCur"
+    <*> Json.read "DelegateMin"
+    <*> Json.read "DelegateMax"
+    <*> Json.read "DelegateCur"
+  
+  static member ToJson (am : AgentMember) =
+    Json.write "Name" am.name
+    *> Json.write "Addr" am.addr
+    *> Json.write "Tags" am.tags
+    *> Json.write "Port" am.port
+    *> Json.write "Status" am.status
+    *> Json.write "ProtocolMin" am.protocolMin
+    *> Json.write "ProtocolMax" am.protocolMax
+    *> Json.write "ProtocolCur" am.protocolCur
+    *> Json.write "DelegateMin" am.delegateMin
+    *> Json.write "DelegateMax" am.delegateMax
+    *> Json.write "DelegateCur" am.delegateCur
 
 type AgentService =
-  { id      : Id
-    service : string
-    tags    : string list
-    port    : Port
-    address : string }
+  { id                : Id
+    service           : string
+    tags              : string list
+    port              : Port
+    address           : string
+    enableTagOverride : bool 
+    createIndex       : int
+    modifyIndex       : int}
 
   static member FromJson (_ : AgentService) =
-    (fun id s t p a ->
+    (fun id s t p a eto ci mi ->
       { id = id
         service = s
         tags   = t
         port = p
         address   = a
+        enableTagOverride = eto
+        createIndex = ci
+        modifyIndex = mi
           })
     <!> Json.read "ID"
     <*> Json.read "Service"
     <*> Json.read "Tags"
     <*> Json.read "Port"
     <*> Json.read "Address"
+    <*> Json.read "EnableTagOverride"
+    <*> Json.read "CreateIndex"
+    <*> Json.read "ModifyIndex"
   
   static member ToJson (ags : AgentService) =
     Json.write "ID" ags.id
@@ -121,6 +198,11 @@ type AgentService =
     *> Json.write "Tags" ags.tags
     *> Json.write "Port" ags.port
     *> Json.write "Address" ags.address
+    *> Json.write "EnableTagOverride" ags.enableTagOverride
+    *> Json.write "CreateIndex" ags.createIndex
+    *> Json.write "ModifyIndex" ags.modifyIndex
+
+  
 
 type AgentServiceCheck =
   { script   : string // `json:",omitempty"`

@@ -31,6 +31,9 @@ type UriBuilder =
   static member ofHealth (config : FaktaConfig) (s : string) =
     UriBuilder.ofModuleAndPath config "health" s
 
+  static member ofAgent (config : FaktaConfig) (a : string) =
+    UriBuilder.ofModuleAndPath config "agent" a
+
   static member ofSession (config : FaktaConfig) (op : string) =
     UriBuilder.ofModuleAndPath config "session" op
 
