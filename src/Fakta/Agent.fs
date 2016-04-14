@@ -1,5 +1,6 @@
 ﻿/// Agent can be used to query the Agent endpoints
 module Fakta.Agent
+open System.Text
 open Fakta
 open Fakta.Logging
 open Fakta.Impl
@@ -10,18 +11,59 @@ open Chiron
 
 /// CheckDeregister is used to deregister a check with the local agent
 let checkDeregister (state : FaktaState) (checkId : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  let getResponse = Impl.getResponse state "Fakta.Agent.check.deregister"
+  let req =
+    UriBuilder.ofAgent state.config (sprintf "check/deregister/%s" checkId)
+    |> UriBuilder.uri
+    |> basicRequest Get
+    |> withConfigOpts state.config
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.check.deregister value %s" checkId))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+}
 
 /// CheckRegister is used to register a new check with the local agent 
-let checkRegister (state : FaktaState) (checkId : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+let checkRegister (state : FaktaState) (checkRegistration : AgentCheckRegistration) : Async<Choice<unit, Error>> =
+  let getResponse = Impl.getResponse state "Fakta.Agent.check.register"
+  let serializedCheckReg = Json.serialize checkRegistration |> Json.format
+  let req =
+    UriBuilder.ofAgent state.config "check/register"
+    |> UriBuilder.uri
+    |> basicRequest HttpMethod.Put
+    |> withConfigOpts state.config
+    |> withJsonBody serializedCheckReg
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.check.register set %s" checkRegistration.check.ttl.Value))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+  }
 
 /// Checks returns the locally registered checks
 let checks (state : FaktaState) : Async<Choice<Map<string, AgentCheck>, Error>> =
   let getResponse = Impl.getResponse state "Fakta.Agent.checks"
   let req =
     UriBuilder.ofAgent state.config "checks" 
-    |> flip UriBuilder.mappendRange (queryOptKvs [])
     |> UriBuilder.uri
     |> basicRequest Get
     |> withConfigOpts state.config
@@ -43,22 +85,70 @@ let checks (state : FaktaState) : Async<Choice<Map<string, AgentCheck>, Error>> 
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
 }
+  
+let setNodeMaintenanceMode (state : FaktaState) (enable : bool) : Async<Choice<unit, Error>> =
+  let getResponse = Impl.getResponse state "Fakta.Agent.maintenance"
+  let req =
+    UriBuilder.ofAgent state.config "maintenance"
+    |> UriBuilder.uri
+    |> basicRequest HttpMethod.Put
+    |> withQueryStringItem "enable" (enable.ToString().ToLower())
+    |> withConfigOpts state.config
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %b" enable))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+  }
+
+let setServiceMaintenanceMode (state : FaktaState) (enable : bool) (serviceId : string) : Async<Choice<unit, Error>> =
+  let getResponse = Impl.getResponse state "Fakta.Agent.service.maintenance"
+  let req =
+    UriBuilder.ofAgent state.config (sprintf "service/maintenance/%s" serviceId)
+    |> UriBuilder.uri
+    |> basicRequest HttpMethod.Put
+    |> withQueryStringItem "enable" (enable.ToString().ToLower())
+    |> withConfigOpts state.config
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %b" enable))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+}
 
 /// DisableNodeMaintenance toggles node maintenance mode off for the agent we are connected to.
 let disableNodeMaintenance (state : FaktaState) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  setNodeMaintenanceMode state false
 
 /// DisableServiceMaintenance toggles service maintenance mode off for the given service id.
 let disableServiceMaintenance (state : FaktaState) (serviceId : Id) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  setServiceMaintenanceMode state false (serviceId.ToString())
 
 /// EnableNodeMaintenance toggles node maintenance mode on for the agent we are connected to.
 let enableNodeMaintenance (state : FaktaState) (reason : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  setNodeMaintenanceMode state true
 
 /// EnableServiceMaintenance toggles service maintenance mode on for the given service id.
 let enableServiceMaintenance (state : FaktaState) (serviceId : Id) (reason : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  setServiceMaintenanceMode state true (serviceId.ToString())
 
 /// FailTTL is used to set a TTL check to the failing state
 let failTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
@@ -77,7 +167,6 @@ let members (state : FaktaState) (wan : bool) : Async<Choice<AgentMember list, E
   let getResponse = Impl.getResponse state "Fakta.Agent.members"
   let req =
     UriBuilder.ofAgent state.config "members" 
-    |> flip UriBuilder.mappendRange (queryOptKvs [])
     |> UriBuilder.uri
     |> basicRequest Get
     |> withConfigOpts state.config
@@ -110,7 +199,30 @@ let passTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choi
 
 /// Self is used to query the agent we are speaking to for information about itself
 let self (state : FaktaState) : Async<Choice<Map<string, Map<string, Chiron.Json>>, Error>> =
-  raise (TBD "TODO")
+  let getResponse = Impl.getResponse state "Fakta.Agent.self"
+  let req =
+    UriBuilder.ofAgent state.config "self" 
+    |> UriBuilder.uri
+    |> basicRequest Get
+    |> withConfigOpts state.config
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with
+      | 404 -> return Choice2Of2 (Message "agent.self")
+      | _ ->
+        let! body = Response.readBodyAsString resp
+        let  item = if body = "" then Map.empty else Json.deserialize (Json.parse body)
+        return Choice1Of2 (item)
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+}
 
 /// ServiceDeregister is used to deregister a service with the local agent
 let serviceDeregister (state : FaktaState) (serviceId : Id) : Async<Choice<unit, Error>> =
@@ -120,20 +232,11 @@ let serviceDeregister (state : FaktaState) (serviceId : Id) : Async<Choice<unit,
 let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : Async<Choice<unit, Error>> =
   raise (TBD "TODO")
 
-
-let getMap (key : string) (agents : AgentService list) : Map<string, AgentService> =
-  let res =
-    agents
-    |> List.map (fun x -> (key, x))
-    |> Map.ofList
-  res
-
 /// Services returns the locally registered services
 let services (state : FaktaState) : Async<Choice<Map<string, AgentService>, Error>> =
   let getResponse = Impl.getResponse state "Fakta.Agent.services"
   let req =
     UriBuilder.ofAgent state.config "services" 
-    |> flip UriBuilder.mappendRange (queryOptKvs [])
     |> UriBuilder.uri
     |> basicRequest Get
     |> withConfigOpts state.config
