@@ -205,12 +205,65 @@ type AgentService =
   
 
 type AgentServiceCheck =
-  { script   : string // `json:",omitempty"`
-    interval : string // `json:",omitempty"`
-    timeout  : string // `json:",omitempty"`
-    ttl      : string // `json:",omitempty"`
-    http     : string // `json:",omitempty"`
-    status   : string  } // `json:",omitempty"`
+  {    
+    script   : string option// `json:",omitempty"`
+    interval : string option// `json:",omitempty"`
+    timeout  : string option// `json:",omitempty"`
+    ttl      : string option// `json:",omitempty"`
+    http     : string option// `json:",omitempty"`
+    tcp      : string option
+    docker_container_id :string option
+    shell    : string option
+    status   : string option  } // `json:",omitempty"`
+
+  static member ttlServiceCheck =
+    let res = {
+                  script = None
+                  interval = None
+                  timeout = None
+                  ttl = Some("30s")
+                  http = None
+                  tcp = None
+                  docker_container_id = None
+                  shell = None
+                  status = None
+              }
+    res
+
+  static member FromJson (_ : AgentServiceCheck) =
+    (fun sc i t ttl http tcp dci sh st ->
+      { 
+        script = sc
+        interval = i
+        timeout = t
+        ttl = ttl
+        http = http
+        tcp = tcp
+        docker_container_id = dci
+        shell = sh
+        status = st
+          })
+    <!> Json.read "script"
+    <*> Json.read "interval"
+    <*> Json.read "timeout"
+    <*> Json.read "ttl"
+    <*> Json.read "http"
+    <*> Json.read "tcp"
+    <*> Json.read "docker_container_id"
+    <*> Json.read "shell"
+    <*> Json.read "status"
+  
+  static member ToJson (ags : AgentServiceCheck) =
+    Json.write "script" ags.script
+    *> Json.write "interval" ags.interval
+    *> Json.write "timeout" ags.timeout
+    *> Json.write "ttl" ags.ttl
+    *> Json.write "http" ags.http
+    *> Json.write "tcp" ags.http
+    *> Json.write "docker_container_id" ags.http
+    *> Json.write "shell" ags.http
+    *> Json.write "status" ags.status
+
 
 type AgentServiceChecks = AgentServiceCheck list
 
@@ -224,11 +277,37 @@ type AgentServiceRegistration =
     checks  : AgentServiceChecks }
 
 type AgentCheckRegistration =
-  { id        : Id // `json:",omitempty"`
-    name      : string //`json:",omitempty"`
-    notes     : string // `json:",omitempty"`
-    serviceId : Id // `json:",omitempty"`
+  { id        : Id option // `json:",omitempty"`
+    name      : string option//`json:",omitempty"`
+    notes     : string option// `json:",omitempty"`
+    serviceId : Id option// `json:",omitempty"`
     check     : AgentServiceCheck }
+
+  static member ttlCheck : (AgentCheckRegistration) =
+    let res = { id = Some("consul"); name = Some("web app"); notes = None; serviceId = Some("consul");check = AgentServiceCheck.ttlServiceCheck;}
+    res  
+     
+
+  static member FromJson (_ : AgentCheckRegistration) =
+    (fun id s t p a eto ci mi ->
+      { id = id
+        name = s
+        notes   = t
+        serviceId = p
+        check   = a
+          })
+    <!> Json.read "id"
+    <*> Json.read "name"
+    <*> Json.read "notes"
+    <*> Json.read "service_id"
+    <*> Json.read "check"
+  
+  static member ToJson (ags : AgentCheckRegistration) =
+    Json.write "id" ags.id
+    *> Json.write "name" ags.name
+    *> Json.write "notes" ags.notes
+    *> Json.write "service_id" ags.serviceId
+    *> Json.write "check" ags.check
 
 type CatalogDeregistration =
   { node       : string
