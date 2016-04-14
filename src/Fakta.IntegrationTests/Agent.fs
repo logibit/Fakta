@@ -44,13 +44,33 @@ let tests =
         let logger = state.logger
         for l in listing do
           logger.Log (LogLine.sprintf [] "key: %s" l.Key)
-
-    testCase "can agent register check" <| fun _ ->
-      let listing = Agent.checkRegister state AgentCheckRegistration.ttlCheck
+//
+//    testCase "can agent register check" <| fun _ ->
+//      let listing = Agent.checkRegister state AgentCheckRegistration.ttlCheck
+//      listing |> ignore      
+//      ensureSuccess listing <| fun (listing) ->
+//        let logger = state.logger 
+//        logger.Log (LogLine.sprintf [] "key: %s" (listing.ToString()))
+    testCase "can agent deregister check" <| fun _ ->
+      let listing = Agent.checkDeregister state "service:consul"
       listing |> ignore      
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
-        logger.Log (LogLine.sprintf [] "key: %s" (listing.ToString()))
+        logger.Log (LogLine.sprintf [] "key: %s" "can service deregister service")
+
+    testCase "can agent register service" <| fun _ ->
+      let listing = Agent.serviceRegister state AgentServiceRegistration.serviceRegistration
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger 
+        logger.Log (LogLine.sprintf [] "key: %s" "can service register service")
+
+    testCase "can agent deregister service" <| fun _ ->
+      let listing = Agent.serviceDeregister state "service:serviceReg123"
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger 
+        logger.Log (LogLine.sprintf [] "key: %s" "can service deregister service")
         
 
 //    testCase "can agent set node maintenance true" <| fun _ ->

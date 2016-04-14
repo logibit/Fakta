@@ -226,11 +226,53 @@ let self (state : FaktaState) : Async<Choice<Map<string, Map<string, Chiron.Json
 
 /// ServiceDeregister is used to deregister a service with the local agent
 let serviceDeregister (state : FaktaState) (serviceId : Id) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  let getResponse = Impl.getResponse state "Fakta.Agent.service.deregister"
+  let req =
+    UriBuilder.ofAgent state.config (sprintf "check/deregister/%s" serviceId)
+    |> UriBuilder.uri
+    |> basicRequest Get
+    |> withConfigOpts state.config
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.service.deregister value %s" serviceId))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+}
 
 /// ServiceRegister is used to register a new service with the local agent
 let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  let getResponse = Impl.getResponse state "Fakta.Agent.service.register"
+  let serializedCheckReg = Json.serialize service |> Json.format
+  let req =
+    UriBuilder.ofAgent state.config "service/register"
+    |> UriBuilder.uri
+    |> basicRequest HttpMethod.Put
+    |> withConfigOpts state.config
+    |> withJsonBody serializedCheckReg
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.service.register set %s" service.Name))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+  }
 
 /// Services returns the locally registered services
 let services (state : FaktaState) : Async<Choice<Map<string, AgentService>, Error>> =

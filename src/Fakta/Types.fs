@@ -97,7 +97,7 @@ type AgentCheck =
       <*> Json.read "Status"
       <*> Json.read "Notes"
       <*> Json.read "Output"
-      <*> Json.read "ServiceId"
+      <*> Json.read "ServiceID"
       <*> Json.read "ServiceName"
 
   static member ToJson (ac : AgentCheck) =
@@ -107,7 +107,7 @@ type AgentCheck =
     *> Json.write "Status" ac.status
     *> Json.write "Notes" ac.notes
     *> Json.write "Output" ac.output
-    *> Json.write "ServiceId" ac.serviceId
+    *> Json.write "ServiceID" ac.serviceId
     *> Json.write "ServiceName" ac.serviceName
 
 type AgentMember =
@@ -273,8 +273,53 @@ type AgentServiceRegistration =
     Tags    : string list // `json:",omitempty"`
     Port    : int //     `json:",omitempty"`
     Address : string //  `json:",omitempty"`
+    enableTagOverride : bool
     Check   : AgentServiceCheck
     checks  : AgentServiceChecks }
+
+    static member serviceRegistration : (AgentServiceRegistration) =
+      let res = {
+                    id = "serviceReg123"; 
+                    Name="serviceReg"; 
+                    Tags = []; 
+                    Address="127.0.0.1"; 
+                    Port=8500; 
+                    enableTagOverride = false; 
+                    Check = AgentServiceCheck.ttlServiceCheck;
+                    checks = []
+                }
+      res
+
+    static member FromJson (_ : AgentServiceRegistration) =
+    (fun id n ts p a eto ch chs ->
+      { 
+        id = id
+        Name = n
+        Tags = ts
+        Port = p
+        Address = a
+        enableTagOverride = eto
+        Check = ch
+        checks = chs
+          })
+    <!> Json.read "id"
+    <*> Json.read "Name"
+    <*> Json.read "Tags"
+    <*> Json.read "Port"
+    <*> Json.read "Address"
+    <*> Json.read "enableTagOverride"
+    <*> Json.read "Check"
+    <*> Json.read "checks"
+  
+  static member ToJson (ags : AgentServiceRegistration) =
+    Json.write "id" ags.id
+    *> Json.write "Name" ags.Name
+    *> Json.write "Tags" ags.Tags
+    *> Json.write "Port" ags.Port
+    *> Json.write "Address" ags.Address
+    *> Json.write "enableTagOverride" ags.enableTagOverride
+    *> Json.write "Check" ags.Check
+    *> Json.write "checks" ags.checks
 
 type AgentCheckRegistration =
   { id        : Id option // `json:",omitempty"`
