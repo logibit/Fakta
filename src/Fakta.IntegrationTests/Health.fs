@@ -31,7 +31,7 @@ let tests =
         logger.Log (LogLine.sprintf [] "meta: %A" meta)
 
     testCase "can health service" <| fun _ ->
-      let listing = Health.service state "consul" "" false []
+      let listing = Health.service state "consul" "" true []
       ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do

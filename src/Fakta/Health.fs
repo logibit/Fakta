@@ -3,6 +3,7 @@ open Fakta
 open Fakta.Logging
 open Fakta.Impl
 open System
+open System.Collections
 open NodaTime
 open HttpFs.Client
 open Chiron
@@ -51,13 +52,16 @@ let service (state : FaktaState) (service : string) (tag : string)
             (passingOnly : bool) (opts : QueryOptions)
             : Async<Choice<ServiceEntry list * QueryMeta, Error>> =
   let getResponse = Impl.getResponse state "Fakta.Health.service"
-  let tagUri = if tag.Equals("") then "" else ("?tag="+tag+"/")
-  let passingUri = if passingOnly then "?passing" else ""
+ 
+  let tagName, tagValue = if tag.Equals("") then "","" else "tag",tag
+  let passingOnly = if passingOnly then "passing" else ""
   let req =
-    UriBuilder.ofHealth state.config ("service/" + service + tagUri + passingUri)
+    UriBuilder.ofHealth state.config ("service/" + service)
     |> flip UriBuilder.mappendRange (queryOptKvs opts)
     |> UriBuilder.uri
     |> basicRequest Get
+    |> withQueryStringItem tagName tagValue
+    |> withQueryStringItem passingOnly ""
     |> withConfigOpts state.config
   async {
   let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
