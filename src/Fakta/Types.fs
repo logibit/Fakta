@@ -47,6 +47,23 @@ type Port = uint16
 
 type Check = string
 
+type CheckUpdate =
+  {
+    status : string
+    output : string
+  }
+
+  static member GetUpdateJson (st : string)(out : string) =
+    let res = {
+                  status = st;
+                  output = out
+              }
+    res
+
+  static member ToJson (chu : CheckUpdate) =
+    Json.write "Status" chu.status
+    *> Json.write "Output" chu.output
+
 type Node =
   { node    : string
     address : string }

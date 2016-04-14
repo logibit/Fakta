@@ -1,5 +1,6 @@
 ﻿/// Agent can be used to query the Agent endpoints
 module Fakta.Agent
+open System
 open System.Text
 open Fakta
 open Fakta.Logging
@@ -150,17 +151,30 @@ let enableNodeMaintenance (state : FaktaState) (reason : string) : Async<Choice<
 let enableServiceMaintenance (state : FaktaState) (serviceId : Id) (reason : string) : Async<Choice<unit, Error>> =
   setServiceMaintenanceMode state true (serviceId.ToString())
 
-/// FailTTL is used to set a TTL check to the failing state
-let failTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
-
-/// ForceLeave is used to have the agent eject a failed node
-let forceLeave (state : FaktaState) (node : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
-
 /// Join is used to instruct the agent to attempt a join to another cluster member
 let join (state : FaktaState) (addr : string) (wan : bool) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  let getResponse = Impl.getResponse state "Fakta.Agent.join"
+  let req =
+    UriBuilder.ofAgent state.config (sprintf "join/%s" addr)
+    |> UriBuilder.uri
+    |> basicRequest HttpMethod.Get
+    |> withQueryStringItem "wan" (System.Convert.ToInt16(wan).ToString())
+    |> withConfigOpts state.config
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %s" addr))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+}
 
 /// Members returns the known gossip members. The WAN flag can be used to query a server for WAN members.
 let members (state : FaktaState) (wan : bool) : Async<Choice<AgentMember list, Error>> =
@@ -189,14 +203,6 @@ let members (state : FaktaState) (wan : bool) : Async<Choice<AgentMember list, E
     return Choice2Of2 (Error.ConnectionFailed exx)
 }
 
-/// NodeName is used to get the node name of the agent
-let nodeName (state : FaktaState) : Async<Choice<string, Error>> =
-  raise (TBD "TODO")
-
-/// PassTTL is used to set a TTL check to the passing state
-let passTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
-
 /// Self is used to query the agent we are speaking to for information about itself
 let self (state : FaktaState) : Async<Choice<Map<string, Map<string, Chiron.Json>>, Error>> =
   let getResponse = Impl.getResponse state "Fakta.Agent.self"
@@ -222,6 +228,25 @@ let self (state : FaktaState) : Async<Choice<Map<string, Map<string, Chiron.Json
 
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
+}
+
+/// NodeName is used to get the node name of the agent
+let nodeName (state : FaktaState) : Async<Choice<string, Error>> =
+  async {    
+    match Async.RunSynchronously (self state) with
+    | Choice1Of2 map -> 
+        let r = match map.ContainsKey("Config") with
+                | true ->
+                    let config = map.Item "Config"
+                    match config.ContainsKey("NodeName") with
+                    | true -> 
+                        let nodeNameJson = config.Item "NodeName"
+                        let nodeName = Json.format nodeNameJson
+                        nodeName
+                    | false -> "Node name not found"
+                | false -> "Config section not found"
+        return Choice1Of2(r)
+    | Choice2Of2 err ->  return Choice2Of2 (Message "agent.self")
 }
 
 /// ServiceDeregister is used to deregister a service with the local agent
@@ -303,8 +328,62 @@ let services (state : FaktaState) : Async<Choice<Map<string, AgentService>, Erro
 
 /// UpdateTTL is used to update the TTL of a check
 let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  let getResponse = Impl.getResponse state (sprintf "Fakta.Agent.check.%s" status)
+  let checkUpdate = Json.serialize (CheckUpdate.GetUpdateJson status note ) |> Json.format
+  let req =
+    UriBuilder.ofAgent state.config (sprintf "check/update/%s" checkId)
+    |> UriBuilder.uri
+    |> basicRequest HttpMethod.Put
+    |> withConfigOpts state.config
+    |> withJsonBody checkUpdate
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.check.update status %s" status))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+  }
+
+/// PassTTL is used to set a TTL check to the passing state
+let passTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
+  updateTTL state checkId note "passing"
 
 /// WarnTTL is used to set a TTL check to the warning state
 let warnTTL (state : FaktaState) (checkId : string) (note : string) (status : string) : Async<Choice<unit, Error>> =
-  raise (TBD "TODO")
+  updateTTL state checkId note "warning"
+
+/// FailTTL is used to set a TTL check to the failing state
+let failTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
+  updateTTL state checkId note "critical"
+
+/// ForceLeave is used to have the agent eject a failed node
+let forceLeave (state : FaktaState) (node : string) : Async<Choice<unit, Error>> =
+  let getResponse = Impl.getResponse state "Fakta.Agent.force-leave"
+  let req =
+    UriBuilder.ofAgent state.config (sprintf "force-leave/%s" node)
+    |> UriBuilder.uri
+    |> basicRequest HttpMethod.Get
+    |> withConfigOpts state.config
+  async {
+  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+  match resp with
+  | Choice1Of2 resp ->
+    use resp = resp
+    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+    else
+      match resp.StatusCode with      
+      | 200 -> return Choice1Of2 ()
+      | _ ->  return Choice2Of2 (Message (sprintf "agent.force-leave node %s" node))
+
+  | Choice2Of2 exx ->
+    return Choice2Of2 (Error.ConnectionFailed exx)
+  }
