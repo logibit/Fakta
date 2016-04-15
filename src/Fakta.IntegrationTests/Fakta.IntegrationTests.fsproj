@@ -67,6 +67,7 @@
     <Compile Include="TestFactory.fs" />
     <Compile Include="Agent.fs" />
     <Compile Include="Catalog.fs" />
+    <Compile Include="Event.fs" />
     <Compile Include="KV.fs" />
     <Compile Include="Health.fs" />
     <Compile Include="Session.fs" />
@@ -75,7 +76,7 @@
     <Content Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="packages.config" />    
+    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Aether">

@@ -31,6 +31,9 @@ type UriBuilder =
   static member ofHealth (config : FaktaConfig) (s : string) =
     UriBuilder.ofModuleAndPath config "health" s
 
+  static member ofEvent (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "event" s
+    
   static member ofCatalog (config : FaktaConfig) (s : string) =
     UriBuilder.ofModuleAndPath config "catalog" s
 
@@ -107,10 +110,10 @@ let getResponse (state : FaktaState) path (req : Request) =
   }
 
 let queryMeta dur (resp : Response) =
-  let headerFor key = resp.Headers |> Map.find (ResponseHeader.NonStandard key)
-  { lastIndex   = uint64 (headerFor "X-Consul-Index")
-    lastContact = Duration.FromSeconds (int64 (headerFor "X-Consul-Lastcontact"))
-    knownLeader = bool.Parse (headerFor "X-Consul-Knownleader")
+  let headerFor key = resp.Headers |> Map.tryFind (ResponseHeader.NonStandard key)
+  { lastIndex   = if (headerFor "X-Consul-Index").IsNone then UInt64.MinValue else  uint64 (headerFor "X-Consul-Index").Value
+    lastContact = if (headerFor "X-Consul-Lastcontact").IsNone then Duration.Epsilon else Duration.FromSeconds (int64 (headerFor "X-Consul-Lastcontact").Value)
+    knownLeader = if (headerFor "X-Consul-Knownleader").IsNone then false else bool.Parse (string (headerFor "X-Consul-Knownleader").Value)
     requestTime = dur }
 
 let writeMeta (dur: Duration) : (WriteMeta) = 

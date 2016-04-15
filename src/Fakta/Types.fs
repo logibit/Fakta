@@ -753,7 +753,65 @@ type UserEvent =
     serviceFilter : string
     tagFilter     : string
     version       : int
-    lTime         : uint64 }
+    lTime         : int }
+
+    static member Instance =
+      let res = {
+                  id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
+                  name = "deploy"
+                  payload = [||]
+                  nodeFilter = ""
+                  serviceFilter = ""
+                  tagFilter = ""
+                  version = 1
+                  lTime = 0
+                }
+      res
+
+    static member EmptyEvent =
+      let res = {
+                  id = ""
+                  name = ""
+                  payload = [||]
+                  nodeFilter = ""
+                  serviceFilter = ""
+                  tagFilter = ""
+                  version = -1
+                  lTime = -1
+                }
+      res
+
+    static member FromJson (_ : UserEvent) =
+    (fun id n pl nf sf tf v lt ->
+      { id = id
+        name = n
+        payload = match pl with
+                      | None   -> [||]
+                      | Some pl -> Convert.FromBase64String pl
+        nodeFilter = nf
+        serviceFilter = sf
+        tagFilter   = tf
+        version = v
+        lTime = lt        
+          })
+    <!> Json.read "ID"
+    <*> Json.read "Name"
+    <*> Json.read "Payload"
+    <*> Json.read "NodeFilter"
+    <*> Json.read "ServiceFilter"
+    <*> Json.read "TagFilter"
+    <*> Json.read "Version"
+    <*> Json.read "LTime"
+
+  static member ToJson (ue : UserEvent) =
+    Json.write "ID" ue.id
+    *> Json.write "Name" ue.name
+    *> Json.write "Payload" (Convert.ToBase64String ue.payload)
+    *> Json.write "NodeFilter" ue.nodeFilter
+    *> Json.write "ServiceFilter" ue.serviceFilter
+    *> Json.write "TagFilter" ue.tagFilter
+    *> Json.write "Version" ue.version
+    *> Json.write "LTime" ue.lTime
 
 type QueryMeta =
     /// LastIndex. This can be used as a WaitIndex to perform
