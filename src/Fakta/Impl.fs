@@ -113,6 +113,10 @@ let queryMeta dur (resp : Response) =
     knownLeader = bool.Parse (headerFor "X-Consul-Knownleader")
     requestTime = dur }
 
+let writeMeta (dur: Duration) : (WriteMeta) = 
+  let res:WriteMeta = {requestTime = dur}
+  res
+
 let configOptKvs (config : FaktaConfig) : (string * string option) list =
   [ if Option.isSome config.datacenter then yield "dc", config.datacenter
     if Option.isSome config.token then yield "token", config.token ]

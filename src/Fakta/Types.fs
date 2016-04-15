@@ -104,6 +104,20 @@ type AgentCheck =
     output      : string
     serviceId   : string
     serviceName : string }
+
+  static member Instance =
+    let res = {
+                  node = "COMP05"
+                  checkID = "service:consulcheck"
+                  name = "consul test health check"
+                  status = "passing"
+                  notes = ""
+                  output = ""
+                  serviceId = "consul"
+                  serviceName = "consul"
+              }
+    res
+
   static member FromJson (_ : AgentCheck) =
       (fun nd chId n st ns out sId sName ->
         { node = nd
@@ -195,6 +209,19 @@ type AgentService =
     enableTagOverride : bool 
     createIndex       : int
     modifyIndex       : int}
+
+  static member Instance =
+    let res = {
+                  id = "consul"
+                  service = "consul"
+                  tags = []
+                  port = Port.MinValue
+                  address = "127.0.0.1"
+                  enableTagOverride = false
+                  createIndex = 12
+                  modifyIndex = 18
+              }
+    res
 
   static member FromJson (_ : AgentService) =
     (fun id s t p a eto ci mi ->
@@ -385,6 +412,38 @@ type CatalogDeregistration =
     serviceId  : string
     checkId    : string }
 
+    static member Instance =
+      let res = {
+                  node = "COMP05"
+                  datacenter = "dc1"
+                  address = "127.0.0.1"
+                  serviceId = "consul"
+                  checkId = ""
+                }
+      res
+
+    static member FromJson (_ : CatalogDeregistration) =
+    (fun n a dc si chi ->
+      { node = n
+        address = a
+        datacenter   = dc
+        serviceId = si
+        checkId   = chi
+          })
+    <!> Json.read "Node"
+    <*> Json.read "Address"
+    <*> Json.read "Datacenter"
+    <*> Json.read "ServiceID"
+    <*> Json.read "CheckID"
+  
+  static member ToJson (cdr : CatalogDeregistration) =
+    Json.write "Node" cdr.node
+    *> Json.write "Address" cdr.address
+    *> Json.write "Datacenter" cdr.datacenter
+    *> Json.write "ServiceID" cdr.serviceId
+    *> Json.write "CheckID" cdr.checkId
+
+
 type CatalogNode =
   { node     : Node
     Services : Map<string, AgentService> }
@@ -415,6 +474,37 @@ type CatalogRegistration =
     Service    : AgentService
     Check      : AgentCheck }
 
+  static member Instance =
+    let res = {
+                  Node = "COMP05"
+                  Address = "127.0.0.1"
+                  Datacenter = ""
+                  Service = AgentService.Instance
+                  Check = AgentCheck.Instance
+              }
+    res
+
+  static member FromJson (_ : CatalogRegistration) =
+      (fun n a dc s ch ->
+        { Node = n
+          Address = a
+          Datacenter = dc
+          Service = s
+          Check = ch
+            })
+      <!> Json.read "Node"
+      <*> Json.read "Address"
+      <*> Json.read "Datacenter"
+      <*> Json.read "Service"
+      <*> Json.read "Check"
+
+  static member ToJson (n : CatalogRegistration) =
+    Json.write "Node" n.Node
+    *> Json.write "Address" n.Address
+    *> Json.write "Datacenter" n.Datacenter
+    *> Json.write "Service" n.Service
+    *> Json.write "Check" n.Check
+
 type CatalogService =
   { node           : string
     address        : string
@@ -423,6 +513,33 @@ type CatalogService =
     serviceAddress : string
     serviceTags    : string list
     servicePort    : int }
+
+  static member FromJson (_ : CatalogService) =
+      (fun n a sid sn sa sts sp ->
+        { node = n
+          address = a
+          serviceID = sid
+          serviceName = sn
+          serviceAddress = sa
+          serviceTags = sts
+          servicePort = sp
+            })
+      <!> Json.read "Node"
+      <*> Json.read "Address"
+      <*> Json.read "ServiceID"
+      <*> Json.read "ServiceName"
+      <*> Json.read "ServiceAddress"
+      <*> Json.read "ServiceTags"
+      <*> Json.read "ServicePort"
+
+  static member ToJson (s : CatalogService) =
+    Json.write "Node" s.node
+    *> Json.write "Address" s.address
+    *> Json.write "ServiceID" s.serviceID
+    *> Json.write "ServiceName" s.serviceName
+    *> Json.write "ServiceAddress" s.serviceAddress
+    *> Json.write "ServiceTags" s.serviceTags
+    *> Json.write "ServicePort" s.servicePort
 
 // [{"CreateIndex":10,"ModifyIndex":17,"LockIndex":0,"Key":"fortnox/apikey","Flags":0,"Value":"MTMzOA=="}]
 type KVPair =

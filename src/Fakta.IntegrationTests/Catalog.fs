@@ -36,5 +36,33 @@ let tests =
         let logger = state.logger
         logger.Log (LogLine.sprintf [] "key: %s" node.node.node)
         logger.Log (LogLine.sprintf [] "meta: %A" meta)
+
+    testCase "can catalog service" <| fun _ ->
+      let listing = Catalog.service state "consul" "" []
+      ensureSuccess listing <| fun (services, meta) ->
+        let logger = state.logger
+        for service in services do
+          logger.Log (LogLine.sprintf [] "service node: %s" service.node)
+        logger.Log (LogLine.sprintf [] "meta: %A" meta)
+
+    testCase "can catalog services" <| fun _ ->
+      let listing = Catalog.services state []
+      ensureSuccess listing <| fun (services, meta) ->
+        let logger = state.logger
+        for service in services do
+          logger.Log (LogLine.sprintf [] "service key: %s  value length: %i" service.Key service.Value.Length)
+        logger.Log (LogLine.sprintf [] "meta: %A" meta)
+
+    testCase "can catalog register" <| fun _ ->
+      let listing = Catalog.register state CatalogRegistration.Instance []
+      ensureSuccess listing <| fun (meta) ->
+        let logger = state.logger
+        logger.Log (LogLine.sprintf [] "meta: %A" meta)
+
+    testCase "can catalog deregister" <| fun _ ->
+      let listing = Catalog.deregister state CatalogDeregistration.Instance []
+      ensureSuccess listing <| fun (meta) ->
+        let logger = state.logger
+        logger.Log (LogLine.sprintf [] "meta: %A" meta)
   ]
 
