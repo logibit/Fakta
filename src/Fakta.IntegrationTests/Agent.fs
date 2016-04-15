@@ -82,12 +82,12 @@ let tests =
         let logger = state.logger 
         logger.Log (LogLine.sprintf [] "key: %s" "can service register service")
 
-    testCase "can agent deregister check" <| fun _ ->
-      let listing = Agent.checkDeregister state "serfHealth"
-      listing |> ignore      
-      ensureSuccess listing <| fun (listing) ->
-        let logger = state.logger 
-        logger.Log (LogLine.sprintf [] "key: %s" "can service deregister service")
+//    testCase "can agent deregister check" <| fun _ ->
+//      let listing = Agent.checkDeregister state "serfHealth"
+//      listing |> ignore      
+//      ensureSuccess listing <| fun (listing) ->
+//        let logger = state.logger 
+//        logger.Log (LogLine.sprintf [] "key: %s" "can service deregister service")
 
     testCase "can agent deregister service" <| fun _ ->
       let listing = Agent.serviceDeregister state "service:serviceReg123"

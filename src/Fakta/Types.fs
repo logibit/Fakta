@@ -68,6 +68,13 @@ type Node =
   { node    : string
     address : string }
 
+  static member emptyNode =
+    let en = {
+                node = String.Empty;
+                address = String.Empty
+             }
+    en
+
   static member FromJson (_ : Node) =
       (fun n a ->
         { node = n
@@ -381,6 +388,25 @@ type CatalogDeregistration =
 type CatalogNode =
   { node     : Node
     Services : Map<string, AgentService> }
+
+  static member emptyCatalogNode =
+    let ec = {
+                  Services = Map.empty
+                  node = Node.emptyNode
+             }
+    ec
+
+  static member FromJson (_ : CatalogNode) =
+      (fun n s ->
+        { node = n
+          Services = s
+            })
+      <!> Json.read "Node"
+      <*> Json.read "Services"
+
+  static member ToJson (n : CatalogNode) =
+    Json.write "Node" n.node
+    *> Json.write "Services" n.Services
 
 type CatalogRegistration =
   { Node       : string
