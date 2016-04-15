@@ -47,9 +47,9 @@ let fire (state : FaktaState) (event : UserEvent) (opts : WriteOptions) : Async<
 /// IDToIndex is a bit of a hack. This simulates the index generation to convert an event ID into a WaitIndex.
 let idToIndex (state : FaktaState) (uuid : Guid) : uint64 =
   let lower = uuid.ToString().Substring(0, 18).Replace("-","")
-  let upper = uuid.ToString().Substring(19, 36).Replace("-","")
-  let lowVal  = UInt64.Parse(lower)
-  let highVal = UInt64.Parse(upper)
+  let upper = uuid.ToString().Substring(19, 17).Replace("-","")
+  let lowVal  = UInt64.Parse(lower, System.Globalization.NumberStyles.HexNumber)
+  let highVal = UInt64.Parse(upper, System.Globalization.NumberStyles.HexNumber)
   lowVal ^^^ highVal
 
 /// List is used to get the most recent events an agent has received. This list can be optionally filtered by the name. This endpoint supports quasi-blocking queries. The index is not monotonic, nor does it provide provide LastContact or KnownLeader. 

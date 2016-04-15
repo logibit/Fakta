@@ -342,17 +342,17 @@ type AgentServiceRegistration =
       res
 
     static member FromJson (_ : AgentServiceRegistration) =
-    (fun id n ts p a eto ch chs ->
-      { 
-        id = id
-        Name = n
-        Tags = ts
-        Port = p
-        Address = a
-        enableTagOverride = eto
-        Check = ch
-        checks = chs
-          })
+      (fun id n ts p a eto ch chs ->
+        { 
+          id = id
+          Name = n
+          Tags = ts
+          Port = p
+          Address = a
+          enableTagOverride = eto
+          Check = ch
+          checks = chs
+            })
     <!> Json.read "id"
     <*> Json.read "Name"
     <*> Json.read "Tags"
@@ -423,18 +423,18 @@ type CatalogDeregistration =
       res
 
     static member FromJson (_ : CatalogDeregistration) =
-    (fun n a dc si chi ->
-      { node = n
-        address = a
-        datacenter   = dc
-        serviceId = si
-        checkId   = chi
-          })
-    <!> Json.read "Node"
-    <*> Json.read "Address"
-    <*> Json.read "Datacenter"
-    <*> Json.read "ServiceID"
-    <*> Json.read "CheckID"
+      (fun n a dc si chi ->
+        { node = n
+          address = a
+          datacenter   = dc
+          serviceId = si
+          checkId   = chi
+            })
+      <!> Json.read "Node"
+      <*> Json.read "Address"
+      <*> Json.read "Datacenter"
+      <*> Json.read "ServiceID"
+      <*> Json.read "CheckID"
   
   static member ToJson (cdr : CatalogDeregistration) =
     Json.write "Node" cdr.node
@@ -782,26 +782,26 @@ type UserEvent =
       res
 
     static member FromJson (_ : UserEvent) =
-    (fun id n pl nf sf tf v lt ->
-      { id = id
-        name = n
-        payload = match pl with
-                      | None   -> [||]
-                      | Some pl -> Convert.FromBase64String pl
-        nodeFilter = nf
-        serviceFilter = sf
-        tagFilter   = tf
-        version = v
-        lTime = lt        
-          })
-    <!> Json.read "ID"
-    <*> Json.read "Name"
-    <*> Json.read "Payload"
-    <*> Json.read "NodeFilter"
-    <*> Json.read "ServiceFilter"
-    <*> Json.read "TagFilter"
-    <*> Json.read "Version"
-    <*> Json.read "LTime"
+      (fun id n pl nf sf tf v lt ->
+        { id = id
+          name = n
+          payload = match pl with
+                        | None   -> [||]
+                        | Some pl -> Convert.FromBase64String pl
+          nodeFilter = nf
+          serviceFilter = sf
+          tagFilter   = tf
+          version = v
+          lTime = lt        
+            })
+      <!> Json.read "ID"
+      <*> Json.read "Name"
+      <*> Json.read "Payload"
+      <*> Json.read "NodeFilter"
+      <*> Json.read "ServiceFilter"
+      <*> Json.read "TagFilter"
+      <*> Json.read "Version"
+      <*> Json.read "LTime"
 
   static member ToJson (ue : UserEvent) =
     Json.write "ID" ue.id
