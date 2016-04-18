@@ -43,6 +43,9 @@ type UriBuilder =
   static member ofSession (config : FaktaConfig) (op : string) =
     UriBuilder.ofModuleAndPath config "session" op
 
+  static member ofStatus (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "status" s
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module UriBuilder =
   /// Build a query from the unencoded key-value pairs

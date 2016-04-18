@@ -71,12 +71,13 @@
     <Compile Include="KV.fs" />
     <Compile Include="Health.fs" />
     <Compile Include="Session.fs" />
+    <Compile Include="Status.fs" />
     <Compile Include="Program.fs" />
     <None Include="paket.references" />
     <Content Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="packages.config" />
+    <Content Include="packages.config" />    
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Aether">
