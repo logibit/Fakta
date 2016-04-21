@@ -25,6 +25,9 @@ type UriBuilder =
     { inner = UriBuilder(config.serverBaseUri, Path = keyFor mdle path)
       kvs   = Map.empty }
 
+  static member ofAcl (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "acl" s
+
   static member ofKVKey (config : FaktaConfig) (k : Key) =
     UriBuilder.ofModuleAndPath config "kv" k
 

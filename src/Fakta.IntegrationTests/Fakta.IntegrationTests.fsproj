@@ -65,6 +65,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="TestFactory.fs" />
+    <Compile Include="ACL.fs" />
     <Compile Include="Agent.fs" />
     <Compile Include="Catalog.fs" />
     <Compile Include="Event.fs" />
