@@ -67,12 +67,12 @@ let tests =
 //        let logger = state.logger
 //        logger.Log (LogLine.sprintf [] "ttl updated: %s" "passing")
 
-//    testCase "can agent register check" <| fun _ ->
-//      let listing = Agent.checkRegister state AgentCheckRegistration.ttlCheck
-//      listing |> ignore      
-//      ensureSuccess listing <| fun (listing) ->
-//        let logger = state.logger 
-//        logger.Log (LogLine.sprintf [] "key: %s" (listing.ToString()))
+    testCase "can agent register check" <| fun _ ->
+      let listing = Agent.checkRegister state AgentCheckRegistration.ttlCheck
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger 
+        logger.Log (LogLine.sprintf [] "key: %s" (listing.ToString()))
     
 
     testCase "can agent register service" <| fun _ ->

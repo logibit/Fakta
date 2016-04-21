@@ -95,6 +95,52 @@ type ACLEntry =
     ``type``    : string
     rules       : string }
 
+  static member ClientTokenInstance (tokenID : Id) =
+    let res = {
+                  createIndex = Index.MinValue;
+                  modifyIndex = Index.MinValue;
+                  id = tokenID;
+                  name = "client token"
+                  ``type`` = "client"
+                  rules = ""
+              }
+    res
+
+  static member Empty=
+    let res = {
+                  createIndex = Index.MinValue;
+                  modifyIndex = Index.MinValue;
+                  id = "";
+                  name = ""
+                  ``type`` = ""
+                  rules = ""
+              }
+    res
+
+  static member FromJson (_ : ACLEntry) =
+    (fun ci mi i n t rs ->
+      { createIndex = ci
+        modifyIndex = mi
+        id = i
+        name = n
+        ``type`` = t
+        rules = rs
+          })
+    <!> Json.read "CreateIndex"
+    <*> Json.read "ModifyIndex"
+    <*> Json.read "ID"
+    <*> Json.read "Name"
+    <*> Json.read "Type"
+    <*> Json.read "Rules"
+
+  static member ToJson (ac : ACLEntry) =
+    Json.write "CreateIndex" ac.createIndex
+    *> Json.write "ModifyIndex" ac.modifyIndex
+    *> Json.write "ID" ac.id
+    *> Json.write "Name" ac.name
+    *> Json.write "Type" ac.``type``
+    *> Json.write "Rules" ac.rules
+
 type AgentCheck =
   { node        : string
     checkID     : string
@@ -270,7 +316,7 @@ type AgentServiceCheck =
   static member ttlServiceCheck =
     let res = {
                   script = None
-                  interval = None
+                  interval = Some("15s")
                   timeout = None
                   ttl = Some("30s")
                   http = None
@@ -294,26 +340,26 @@ type AgentServiceCheck =
         shell = sh
         status = st
           })
-    <!> Json.read "script"
-    <*> Json.read "interval"
-    <*> Json.read "timeout"
-    <*> Json.read "ttl"
-    <*> Json.read "http"
-    <*> Json.read "tcp"
-    <*> Json.read "docker_container_id"
-    <*> Json.read "shell"
-    <*> Json.read "status"
+    <!> Json.read "Script"
+    <*> Json.read "Interval"
+    <*> Json.read "Timeout"
+    <*> Json.read "TTL"
+    <*> Json.read "HTTP"
+    <*> Json.read "TCP"
+    <*> Json.read "DockerContainerID"
+    <*> Json.read "Shell"
+    <*> Json.read "Status"
   
   static member ToJson (ags : AgentServiceCheck) =
-    Json.write "script" ags.script
-    *> Json.write "interval" ags.interval
-    *> Json.write "timeout" ags.timeout
-    *> Json.write "ttl" ags.ttl
-    *> Json.write "http" ags.http
-    *> Json.write "tcp" ags.http
-    *> Json.write "docker_container_id" ags.http
-    *> Json.write "shell" ags.http
-    *> Json.write "status" ags.status
+    Json.write "Script" ags.script
+    *> Json.write "Interval" ags.interval
+    *> Json.write "Timeout" ags.timeout
+    *> Json.write "TTL" ags.ttl
+    *> Json.write "HTTP" ags.http
+    *> Json.write "TCP" ags.http
+    *> Json.write "DockerContainerID" ags.http
+    *> Json.write "Shell" ags.http
+    *> Json.write "Status" ags.status
 
 
 type AgentServiceChecks = AgentServiceCheck list
@@ -380,7 +426,11 @@ type AgentCheckRegistration =
     check     : AgentServiceCheck }
 
   static member ttlCheck : (AgentCheckRegistration) =
-    let res = { id = Some("consul"); name = Some("web app"); notes = None; serviceId = Some("consul");check = AgentServiceCheck.ttlServiceCheck;}
+    let res = { id = Some("consul"); 
+                name = Some("web app"); 
+                notes = None; 
+                serviceId = Some("consul");
+                check = AgentServiceCheck.ttlServiceCheck;}
     res  
      
 
@@ -392,18 +442,18 @@ type AgentCheckRegistration =
         serviceId = p
         check   = a
           })
-    <!> Json.read "id"
-    <*> Json.read "name"
-    <*> Json.read "notes"
-    <*> Json.read "service_id"
-    <*> Json.read "check"
+    <!> Json.read "ID"
+    <*> Json.read "Name"
+    <*> Json.read "Notes"
+    <*> Json.read "ServiceID"
+    <*> Json.read "Check"
   
   static member ToJson (ags : AgentCheckRegistration) =
-    Json.write "id" ags.id
-    *> Json.write "name" ags.name
-    *> Json.write "notes" ags.notes
-    *> Json.write "service_id" ags.serviceId
-    *> Json.write "check" ags.check
+    Json.write "ID" ags.id
+    *> Json.write "Name" ags.name
+    *> Json.write "Notes" ags.notes
+    *> Json.write "ServiceID" ags.serviceId
+    *> Json.write "Check" ags.check
 
 type CatalogDeregistration =
   { node       : string
@@ -722,6 +772,10 @@ type SessionOption =
 
 type SessionOptions = SessionOption list
 
+
+
+
+
 /// SessionEntry represents a session in consul 
 type SessionEntry =
     /// The epoch this session was created during. (You know if your session-based
@@ -739,11 +793,54 @@ type SessionEntry =
     /// Checks is used to provide a list of associated health checks. It is highly recommended that, if you override this list, you include the default "serfHealth".
     checks      : string list
     /// LockDelay can be specified as a duration string using a "s" suffix for seconds. The default is 15s.
-    lockDelay   : Duration
+    lockDelay   : uint64
     /// Behavior can be set to either release or delete. This controls the behavior when a session is invalidated. By default, this is release, causing any locks that are held to be released. Changing this to delete causes any locks that are held to be deleted. delete is useful for creating ephemeral key/value entries.
     behavior    : string
     /// The TTL field is a duration string, and like LockDelay it can use "s" as a suffix for seconds. If specified, it must be between 10s and 3600s currently. When provided, the session is invalidated if it is not renewed before the TTL expires. See the session internals page for more documentation of this feature.
     ttl         : Duration }
+
+    static member empty =
+      let res = {
+                  createIndex = UInt64.MinValue;
+                  id = Guid.Empty;
+                  name = "";
+                  node = "";
+                  checks = [];
+                  lockDelay = UInt64.MinValue;
+                  behavior = "";
+                  ttl = Duration.Epsilon
+                }
+      res
+
+    static member FromJson (_ : SessionEntry) =
+      (fun ci id n nd chs ld b ttl ->
+        { createIndex = ci
+          id = id
+          name = n
+          node = nd
+          checks = chs
+          lockDelay   = ld
+          behavior = b
+          ttl = ttl        
+            })
+      <!> Json.read "CreateIndex"
+      <*> Json.read "ID"
+      <*> Json.read "Name"
+      <*> Json.read "Node"
+      <*> Json.read "Checks"
+      <*> Json.read "LockDelay"
+      <*> Json.read "Behavior"
+      <*> Json.readWith Duration.FromJson "TTL"
+
+    static member ToJson (se : SessionEntry) =
+      Json.write "CreateIndex" se.createIndex
+      *> Json.write "ID" se.id
+      *> Json.write "Name" se.name
+      *> Json.write "Node" se.node
+      *> Json.write "Checks" se.checks
+      *> Json.write "LockDelay" se.lockDelay
+      *> Json.write "Behavior" se.behavior
+      *> Duration.ToJson se.ttl
 
 type UserEvent =
   { id            : Id

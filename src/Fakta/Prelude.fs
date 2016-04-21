@@ -12,6 +12,7 @@ module Map =
     | None -> m |> Map.add k v
     | Some _ -> m |> Map.remove k |> Map.add k v
 
+
 module Duration =
   open NodaTime
   open System.Diagnostics
@@ -35,6 +36,7 @@ module Duration =
 
   let consulString (d : Duration) =
     sprintf "%d%s" (uint32 (d.ToTimeSpan().TotalSeconds)) "s"
+
 
 module UTF8 =
   open System.Text
@@ -61,3 +63,30 @@ module Chiron =
       match value with
       | None -> fun json -> Value (), json
       | _    -> Json.write key value
+
+open NodaTime
+open NodaTime.Text
+open Chiron
+open Chiron.Optics
+open Chiron.Operators
+
+type Duration with
+  static member ParsedDuration dur =
+    let parseResult = DurationPattern.CreateWithInvariantCulture("ss\s").Parse dur
+    if parseResult.Success then
+      parseResult.Value
+    else
+      Duration.Epsilon
+
+  static member FromJson =
+    (function
+    | String s -> Value (Duration.ParsedDuration s)
+    | json -> 
+      Json.formatWith JsonFormattingOptions.SingleLine json
+      |> sprintf "Expected a string containing a valid duration: %s"
+      |> Error)
+
+  static member ToJson (dur : Duration) =
+    Json.Optic.set Json.String_
+                    (match dur with
+                    | _  -> Duration.consulString dur)
