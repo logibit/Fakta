@@ -22,7 +22,7 @@ let tests =
         createdId
 
   testList "ACL tests" [
-    testCase "can ACL list" <| fun _ ->
+    testCase "ACL.list -> all the ACL tokens " <| fun _ ->
       let listing = ACL.list state []
       ensureSuccess listing <| fun (aclNodes, meta) ->
         let logger = state.logger
@@ -30,10 +30,10 @@ let tests =
           logger.Log (LogLine.sprintf [] "acl id: %s" acl.id)
         logger.Log (LogLine.sprintf [] "value: %A" meta)
 
-    testCase "can ACL create" <| fun _ ->
+    testCase "ACL create" <| fun _ ->
       tokenID |> ignore
 
-    testCase "can ACL info" <| fun _ ->
+    testCase "ACL clone" <| fun _ ->
       let listing = ACL.clone state tokenID []
       ensureSuccess listing <| fun (clonedId, meta) ->
         let logger = state.logger
@@ -41,20 +41,20 @@ let tests =
         logger.Log (LogLine.sprintf [] "value: %A" meta)
         
 
-    testCase "can ACL info" <| fun _ ->
+    testCase "ACL info" <| fun _ ->
       let listing = ACL.info state tokenID []
       ensureSuccess listing <| fun (info, meta) ->
         let logger = state.logger
         logger.Log (LogLine.sprintf [] "value: %s" info.id)
         logger.Log (LogLine.sprintf [] "value: %A" meta)
 
-    testCase "can ACL update" <| fun _ ->
+    testCase "ACL rules update" <| fun _ ->
       let listing = ACL.update state (ACLEntry.ClientTokenInstance tokenID) []
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.Log (LogLine.sprintf [] "value: %A" meta)    
 
-    testCase "can ACL destroy" <| fun _ ->
+    testCase "ACL destroy" <| fun _ ->
       let listing = ACL.destroy state tokenID []
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger

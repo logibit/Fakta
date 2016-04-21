@@ -108,7 +108,7 @@ let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : Writ
     else
       match resp.StatusCode with      
       | 200 -> return Choice1Of2 (writeMeta dur)
-      | _ ->  return Choice2Of2 (Message (sprintf "catalog.deregister set %s" (req.Url.ToString())))
+      | _ ->  return Choice2Of2 (Message (sprintf "catalog.deregister set %O" (req.Url)))
 
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
@@ -135,7 +135,7 @@ let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptio
     else
       match resp.StatusCode with      
       | 200 -> return Choice1Of2 (writeMeta dur)
-      | _ ->  return Choice2Of2 (Message (sprintf "catalog.register set %s" (req.Url.ToString())))
+      | _ ->  return Choice2Of2 (Message (sprintf "catalog.register set %O" (req.Url)))
 
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)

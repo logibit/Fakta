@@ -14,7 +14,7 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   testList "Health tests" [
-    testCase "can health node" <| fun _ ->
+    testCase "health.node -> checks of given node" <| fun _ ->
       let listing = Health.node state "comp05" []
       ensureSuccess listing <| fun (checks, meta) ->
         let logger = state.logger
@@ -22,7 +22,7 @@ let tests =
           logger.Log (LogLine.sprintf [] "key: %s, value: %s" check.name check.node)
         logger.Log (LogLine.sprintf [] "meta: %A" meta)
 
-    testCase "can health checks" <| fun _ ->
+    testCase "health.checks -> checks associated with a service" <| fun _ ->
       let listing = Health.checks state "serviceReg" []
       ensureSuccess listing <| fun (checks, meta) ->
         let logger = state.logger
@@ -30,7 +30,7 @@ let tests =
           logger.Log (LogLine.sprintf [] "key: %s, value: %s" check.name check.node)
         logger.Log (LogLine.sprintf [] "meta: %A" meta)
 
-    testCase "can health service" <| fun _ ->
+    testCase "health.service -> health and service information" <| fun _ ->
       let listing = Health.service state "consul" "" true []
       ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
@@ -38,7 +38,7 @@ let tests =
           logger.Log (LogLine.sprintf [] "key: %s, value: %s" service.service.service service.node.node)
         logger.Log (LogLine.sprintf [] "meta: %A" meta)
 
-    testCase "can health state" <| fun _ ->
+    testCase "health.state -> checks in a given state" <| fun _ ->
       let listing = Health.state state "any" []
       ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger

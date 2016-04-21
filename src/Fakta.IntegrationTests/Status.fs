@@ -14,13 +14,13 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   testList "Status tests" [
-    testCase "can status leader" <| fun _ ->
+    testCase "status.leader -> query for a known leader" <| fun _ ->
       let listing = Status.leader state
       ensureSuccess listing <| fun (leader) ->
         let logger = state.logger
         logger.Log (LogLine.sprintf [] "value: %s" leader)
 
-    testCase "can status peers" <| fun _ ->
+    testCase "status.peers -> query for a known raft peers " <| fun _ ->
       let listing = Status.peers state
       ensureSuccess listing <| fun (peers) ->
         let logger = state.logger
