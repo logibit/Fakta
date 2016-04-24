@@ -34,10 +34,10 @@ let fire (state : FaktaState) (event : UserEvent) (opts : WriteOptions) : Async<
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "event.fire")
+      | 404 -> return Choice2Of2 (Message "event.fire not found")
       | _ ->
         let! body = Response.readBodyAsString resp
-        let  item = if body = "" then UserEvent.EmptyEvent else Json.deserialize (Json.parse body)
+        let  item = if body = "" then UserEvent.empty else Json.deserialize (Json.parse body)
         return Choice1Of2 (item.id, writeMeta dur)
 
   | Choice2Of2 exx ->
@@ -70,7 +70,7 @@ let list (state : FaktaState) (name : string) (opts : QueryOptions) : Async<Choi
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "event.list")
+      | 404 -> return Choice2Of2 (Message "event.list not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let  items = if body = "" then [] else Json.deserialize (Json.parse body)

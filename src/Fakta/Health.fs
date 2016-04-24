@@ -25,7 +25,7 @@ let getValuesByName (action : string) (path : string) (state : FaktaState) (serv
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message service)
+      | 404 -> return Choice2Of2 (Message (sprintf "%s not found" service))
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -72,7 +72,7 @@ let service (state : FaktaState) (service : string) (tag : string)
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message service)
+      | 404 -> return Choice2Of2 (Message (sprintf "%s not found" service))
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)

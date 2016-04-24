@@ -26,7 +26,7 @@ let datacenters (state : FaktaState) : Async<Choice<string list, Error>> =
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "agent.Checks")
+      | 404 -> return Choice2Of2 (Message "agent.Checks not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let  item = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -53,10 +53,10 @@ let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choi
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "agent.nodes")
+      | 404 -> return Choice2Of2 (Message "agent.nodes not found")
       | _ ->
         let! body = Response.readBodyAsString resp
-        let items = if body = "" then CatalogNode.emptyCatalogNode else Json.deserialize (Json.parse body)
+        let items = if body = "" then CatalogNode.empty else Json.deserialize (Json.parse body)
         return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
@@ -79,7 +79,7 @@ let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * 
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "agent.nodes")
+      | 404 -> return Choice2Of2 (Message "agent.nodes not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -108,7 +108,7 @@ let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : Writ
     else
       match resp.StatusCode with      
       | 200 -> return Choice1Of2 (writeMeta dur)
-      | _ ->  return Choice2Of2 (Message (sprintf "catalog.deregister set %O" (req.Url)))
+      | _ ->  return Choice2Of2 (Message (sprintf "catalog.deregister set %O error: %d" (req.Url) resp.StatusCode))
 
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
@@ -135,7 +135,7 @@ let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptio
     else
       match resp.StatusCode with      
       | 200 -> return Choice1Of2 (writeMeta dur)
-      | _ ->  return Choice2Of2 (Message (sprintf "catalog.register set %O" (req.Url)))
+      | _ ->  return Choice2Of2 (Message (sprintf "catalog.register set %O error: %d" (req.Url) resp.StatusCode))
 
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
@@ -161,7 +161,7 @@ let service (state : FaktaState) (service : string) (tag : string) (opts : Query
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "agent.nodes")
+      | 404 -> return Choice2Of2 (Message "catalog.service not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -189,7 +189,7 @@ let services (state : FaktaState) (opts : QueryOptions) : Async<Choice<Map<strin
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "agent.nodes")
+      | 404 -> return Choice2Of2 (Message "catalog.services not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then Map.empty else Json.deserialize (Json.parse body)

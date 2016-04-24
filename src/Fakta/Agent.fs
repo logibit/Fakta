@@ -28,7 +28,7 @@ let checkDeregister (state : FaktaState) (checkId : string) : Async<Choice<unit,
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "%O" resp))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.checkDeregister error %d" resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -54,7 +54,7 @@ let checkRegister (state : FaktaState) (checkRegistration : AgentCheckRegistrati
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.checkRegister set %s" checkRegistration.check.ttl.Value))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.checkRegister error %d" resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -96,7 +96,7 @@ let setNodeMaintenanceMode (state : FaktaState) (enable : bool) : Async<Choice<u
       |> withQueryStringItem "enable" (enable.ToString().ToLower())
       |> withConfigOpts state.config
     async {
-    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)    
     match resp with
     | Choice1Of2 resp ->
       use resp = resp
@@ -105,7 +105,7 @@ let setNodeMaintenanceMode (state : FaktaState) (enable : bool) : Async<Choice<u
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %b" enable))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %b error: %d" enable resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -129,7 +129,7 @@ let setServiceMaintenanceMode (state : FaktaState) (enable : bool) (serviceId : 
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %b" enable))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %b error: %d" enable resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -170,7 +170,7 @@ let join (state : FaktaState) (addr : string) (wan : bool) : Async<Choice<unit, 
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %s" addr))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.maintenance set %s error: %d" addr resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -193,7 +193,7 @@ let members (state : FaktaState) (wan : bool) : Async<Choice<AgentMember list, E
         return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
       else
         match resp.StatusCode with
-        | 404 -> return Choice2Of2 (Message "agent.members")
+        | 404 -> return Choice2Of2 (Message (sprintf "%d not found: agent.members" resp.StatusCode))
         | _ ->
           let! body = Response.readBodyAsString resp
           let  item = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -220,7 +220,7 @@ let self (state : FaktaState) : Async<Choice<Map<string, Map<string, Chiron.Json
         return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
       else
         match resp.StatusCode with
-        | 404 -> return Choice2Of2 (Message "agent.self")
+        | 404 -> return Choice2Of2 (Message "agent.self not found")
         | _ ->
           let! body = Response.readBodyAsString resp
           let  item = if body = "" then Map.empty else Json.deserialize (Json.parse body)
@@ -268,7 +268,7 @@ let serviceDeregister (state : FaktaState) (serviceId : Id) : Async<Choice<unit,
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.service.deregister value %s" serviceId))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.service.deregister value %s error: %d" serviceId resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -294,7 +294,7 @@ let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : 
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.service.register set %s" service.Name))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.service.register set %s error: %d" service.Name resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -347,7 +347,7 @@ let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : 
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.check.update status %s" status))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.check.update status %s error: %d" status resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
@@ -383,7 +383,7 @@ let forceLeave (state : FaktaState) (node : string) : Async<Choice<unit, Error>>
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.force-leave node %s" node))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.force-leave node %s error: %d" node resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)

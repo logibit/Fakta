@@ -117,9 +117,9 @@ let getResponse (state : FaktaState) path (req : Request) =
 
 let queryMeta dur (resp : Response) =
   let headerFor key = resp.Headers |> Map.tryFind (ResponseHeader.NonStandard key)
-  { lastIndex   = if (headerFor "X-Consul-Index").IsNone then UInt64.MinValue else  uint64 (headerFor "X-Consul-Index").Value
-    lastContact = if (headerFor "X-Consul-Lastcontact").IsNone then Duration.Epsilon else Duration.FromSeconds (int64 (headerFor "X-Consul-Lastcontact").Value)
-    knownLeader = if (headerFor "X-Consul-Knownleader").IsNone then false else bool.Parse (string (headerFor "X-Consul-Knownleader").Value)
+  { lastIndex   = headerFor "X-Consul-Index" |> Option.fold (fun s t -> uint64 t) UInt64.MinValue
+    lastContact = headerFor "X-Consul-Lastcontact" |> Option.fold (fun s t -> Duration.FromSeconds (int64 t)) Duration.Epsilon
+    knownLeader = headerFor "X-Consul-Knownleader" |> Option.fold (fun s t -> Boolean.Parse(string t)) false
     requestTime = dur }
 
 let writeMeta (dur: Duration) : (WriteMeta) = 

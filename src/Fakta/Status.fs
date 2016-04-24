@@ -25,7 +25,7 @@ let leader (state : FaktaState) : Async<Choice<string, Error>> =
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "Leader")
+      | 404 -> return Choice2Of2 (Message "Status.leader not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let item = if body = "" then "" else Json.deserialize (Json.parse body)
@@ -52,7 +52,7 @@ let peers (state : FaktaState) : Async<Choice<string list, Error>> =
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "peers")
+      | 404 -> return Choice2Of2 (Message "Status.peers not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)

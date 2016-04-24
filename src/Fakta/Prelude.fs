@@ -87,6 +87,5 @@ type Duration with
       |> Error)
 
   static member ToJson (dur : Duration) =
-    Json.Optic.set Json.String_
-                    (match dur with
-                    | _  -> Duration.consulString dur)
+    Json.Optic.set Json.String_ (Duration.consulString dur)
+

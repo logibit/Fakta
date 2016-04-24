@@ -54,7 +54,7 @@ let tests =
         logger.Log (LogLine.sprintf [] "meta: %A" meta)
 
     testCase "catalog.register" <| fun _ ->
-      let listing = Catalog.register state CatalogRegistration.Instance []
+      let listing = Catalog.register state (CatalogRegistration.Instance "COMP05") []
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.Log (LogLine.sprintf [] "meta: %A" meta)

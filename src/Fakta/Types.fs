@@ -48,16 +48,13 @@ type Port = uint16
 type Check = string
 
 type CheckUpdate =
-  {
-    status : string
-    output : string
-  }
+  { status : string
+    output : string}
 
   static member GetUpdateJson (st : string)(out : string) =
-    let res = {
-                  status = st;
-                  output = out
-              }
+    let res = 
+      { status = st;
+        output = out }
     res
 
   static member ToJson (chu : CheckUpdate) =
@@ -68,24 +65,24 @@ type Node =
   { node    : string
     address : string }
 
-  static member emptyNode =
-    let en = {
-                node = String.Empty;
-                address = String.Empty
-             }
-    en
+    static member empty =
+      let en = {
+                  node = String.Empty;
+                  address = String.Empty
+               }
+      en
 
-  static member FromJson (_ : Node) =
-      (fun n a ->
-        { node = n
-          address = a
-            })
-      <!> Json.read "Node"
-      <*> Json.read "Address"
+    static member FromJson (_ : Node) =
+        (fun n a ->
+          { node = n
+            address = a
+              })
+        <!> Json.read "Node"
+        <*> Json.read "Address"
 
-  static member ToJson (n : Node) =
-    Json.write "Node" n.node
-    *> Json.write "Address" n.address
+    static member ToJson (n : Node) =
+      Json.write "Node" n.node
+      *> Json.write "Address" n.address
 
 type ACLEntry =
   { createIndex : Index
@@ -96,25 +93,23 @@ type ACLEntry =
     rules       : string }
 
   static member ClientTokenInstance (tokenID : Id) =
-    let res = {
-                  createIndex = Index.MinValue;
-                  modifyIndex = Index.MinValue;
-                  id = tokenID;
-                  name = "client token"
-                  ``type`` = "client"
-                  rules = ""
-              }
+    let res = 
+      { createIndex = Index.MinValue;
+        modifyIndex = Index.MinValue;
+        id = tokenID;
+        name = "client token"
+        ``type`` = "client"
+        rules = "" }
     res
 
-  static member Empty=
-    let res = {
-                  createIndex = Index.MinValue;
-                  modifyIndex = Index.MinValue;
-                  id = "";
-                  name = ""
-                  ``type`` = ""
-                  rules = ""
-              }
+  static member empty=
+    let res = 
+      { createIndex = Index.MinValue;
+        modifyIndex = Index.MinValue;
+        id = "";
+        name = ""
+        ``type`` = ""
+        rules = "" }
     res
 
   static member FromJson (_ : ACLEntry) =
@@ -151,17 +146,16 @@ type AgentCheck =
     serviceId   : string
     serviceName : string }
 
-  static member Instance =
-    let res = {
-                  node = "COMP05"
-                  checkID = "service:consulcheck"
-                  name = "consul test health check"
-                  status = "passing"
-                  notes = ""
-                  output = ""
-                  serviceId = "consul"
-                  serviceName = "consul"
-              }
+  static member Instance (nodeName: string) =
+    let res = 
+      { node = nodeName
+        checkID = "service:consulcheck"
+        name = "consul test health check"
+        status = "passing"
+        notes = ""
+        output = ""
+        serviceId = "consul"
+        serviceName = "consul" }
     res
 
   static member FromJson (_ : AgentCheck) =
@@ -249,7 +243,7 @@ type AgentMember =
 type AgentService =
   { id                : Id
     service           : string
-    tags              : string list
+    tags              : string list option
     port              : Port
     address           : string
     enableTagOverride : bool 
@@ -257,23 +251,24 @@ type AgentService =
     modifyIndex       : int}
 
   static member Instance =
-    let res = {
-                  id = "consul"
-                  service = "consul"
-                  tags = []
-                  port = Port.MinValue
-                  address = "127.0.0.1"
-                  enableTagOverride = false
-                  createIndex = 12
-                  modifyIndex = 18
-              }
+    let res = 
+      { id = "consul"
+        service = "consul"
+        tags = Some([])
+        port = Port.MinValue
+        address = "127.0.0.1"
+        enableTagOverride = false
+        createIndex = 12
+        modifyIndex = 18 }
     res
 
   static member FromJson (_ : AgentService) =
     (fun id s t p a eto ci mi ->
       { id = id
         service = s
-        tags   = t
+        tags   = match t with
+                 | Some a -> a
+                 | None -> Some([])
         port = p
         address   = a
         enableTagOverride = eto
@@ -290,6 +285,7 @@ type AgentService =
     <*> Json.read "ModifyIndex"
   
   static member ToJson (ags : AgentService) =
+    //let tags = if ags.tags = null then [] else args.tags
     Json.write "ID" ags.id
     *> Json.write "Service" ags.service
     *> Json.write "Tags" ags.tags
@@ -303,28 +299,28 @@ type AgentService =
 
 type AgentServiceCheck =
   {    
-    script   : string option// `json:",omitempty"`
-    interval : string option// `json:",omitempty"`
-    timeout  : string option// `json:",omitempty"`
-    ttl      : string option// `json:",omitempty"`
-    http     : string option// `json:",omitempty"`
-    tcp      : string option
-    docker_container_id :string option
-    shell    : string option
-    status   : string option  } // `json:",omitempty"`
+    script   : string// `json:",omitempty"`
+    interval : string// `json:",omitempty"`
+    timeout  : string// `json:",omitempty"`
+    ttl      : string// `json:",omitempty"`
+    http     : string// `json:",omitempty"`
+    tcp      : string
+    dockerContainerId :string
+    shell    : string
+    status   : string  } // `json:",omitempty"`
 
   static member ttlServiceCheck =
-    let res = {
-                  script = None
-                  interval = Some("15s")
-                  timeout = None
-                  ttl = Some("30s")
-                  http = None
-                  tcp = None
-                  docker_container_id = None
-                  shell = None
-                  status = None
-              }
+    let res = 
+      {
+        script = ""
+        interval = "15s"
+        timeout = ""
+        ttl = "30s"
+        http = ""
+        tcp = ""
+        dockerContainerId = ""
+        shell = ""
+        status = "" }
     res
 
   static member FromJson (_ : AgentServiceCheck) =
@@ -336,7 +332,7 @@ type AgentServiceCheck =
         ttl = ttl
         http = http
         tcp = tcp
-        docker_container_id = dci
+        dockerContainerId = dci
         shell = sh
         status = st
           })
@@ -356,9 +352,9 @@ type AgentServiceCheck =
     *> Json.write "Timeout" ags.timeout
     *> Json.write "TTL" ags.ttl
     *> Json.write "HTTP" ags.http
-    *> Json.write "TCP" ags.http
-    *> Json.write "DockerContainerID" ags.http
-    *> Json.write "Shell" ags.http
+    *> Json.write "TCP" ags.tcp
+    *> Json.write "DockerContainerID" ags.dockerContainerId
+    *> Json.write "Shell" ags.shell
     *> Json.write "Status" ags.status
 
 
@@ -367,24 +363,23 @@ type AgentServiceChecks = AgentServiceCheck list
 type AgentServiceRegistration =
   { id      : string //   `json:",omitempty"`
     Name    : string //  `json:",omitempty"`
-    Tags    : string list // `json:",omitempty"`
-    Port    : int //     `json:",omitempty"`
-    Address : string //  `json:",omitempty"`
-    enableTagOverride : bool
-    Check   : AgentServiceCheck
-    checks  : AgentServiceChecks }
+    Tags    : string list option // `json:",omitempty"`
+    Port    : int option //     `json:",omitempty"`
+    Address : string option //  `json:",omitempty"`
+    EnableTagOverride : bool
+    Check   : AgentServiceCheck option
+    checks  : AgentServiceChecks option }
 
-    static member serviceRegistration : (AgentServiceRegistration) =
-      let res = {
-                    id = "serviceReg123"; 
-                    Name="serviceReg"; 
-                    Tags = []; 
-                    Address="127.0.0.1"; 
-                    Port=8500; 
-                    enableTagOverride = false; 
-                    Check = AgentServiceCheck.ttlServiceCheck;
-                    checks = []
-                }
+    static member serviceRegistration (id: string) : (AgentServiceRegistration) =
+      let res = 
+        { id = id; 
+          Name="serviceReg"; 
+          Tags = None; 
+          Address=Some("127.0.0.1"); 
+          Port=Some(8500); 
+          EnableTagOverride = false; 
+          Check = None;
+          checks = None }
       res
 
     static member FromJson (_ : AgentServiceRegistration) =
@@ -395,65 +390,107 @@ type AgentServiceRegistration =
           Tags = ts
           Port = p
           Address = a
-          enableTagOverride = eto
+          EnableTagOverride = eto
           Check = ch
           checks = chs
             })
-    <!> Json.read "id"
+    <!> Json.read "ID"
     <*> Json.read "Name"
     <*> Json.read "Tags"
     <*> Json.read "Port"
     <*> Json.read "Address"
-    <*> Json.read "enableTagOverride"
+    <*> Json.read "EnableTagOverride"
     <*> Json.read "Check"
-    <*> Json.read "checks"
+    <*> Json.read "Checks"
   
   static member ToJson (ags : AgentServiceRegistration) =
-    Json.write "id" ags.id
+    Json.write "ID" ags.id
     *> Json.write "Name" ags.Name
-    *> Json.write "Tags" ags.Tags
-    *> Json.write "Port" ags.Port
-    *> Json.write "Address" ags.Address
-    *> Json.write "enableTagOverride" ags.enableTagOverride
-    *> Json.write "Check" ags.Check
-    *> Json.write "checks" ags.checks
+    *> Json.maybeWrite "Tags" ags.Tags
+    *> Json.maybeWrite "Port" ags.Port
+    *> Json.maybeWrite "Address" ags.Address
+    *> Json.write "EnableTagOverride" ags.EnableTagOverride
+    *> Json.maybeWrite "Check" ags.Check
+    *> Json.maybeWrite "Checks" ags.checks
 
 type AgentCheckRegistration =
   { id        : Id option // `json:",omitempty"`
-    name      : string option//`json:",omitempty"`
+    name      : string//`json:",omitempty"`
     notes     : string option// `json:",omitempty"`
     serviceId : Id option// `json:",omitempty"`
-    check     : AgentServiceCheck }
+    script   : string option// `json:",omitempty"`
+    interval : string option// `json:",omitempty"`
+    timeout  : string option// `json:",omitempty"`
+    ttl      : string option// `json:",omitempty"`
+    http     : string option// `json:",omitempty"`
+    tcp      : string option
+    dockerContainerId :string option
+    shell    : string option
+    status   : string option }
 
-  static member ttlCheck : (AgentCheckRegistration) =
-    let res = { id = Some("consul"); 
-                name = Some("web app"); 
-                notes = None; 
-                serviceId = Some("consul");
-                check = AgentServiceCheck.ttlServiceCheck;}
+  static member ttlCheck (serviceId : string) : (AgentCheckRegistration) =
+    let res = 
+      { id = Some(serviceId); 
+        name = "web app"; 
+        notes = None; 
+        serviceId = Some("consul");
+        script = None
+        interval = Some("15s")
+        timeout = None
+        ttl = Some("30s")
+        http = None
+        tcp = None
+        dockerContainerId = None
+        shell = None
+        status = None }
     res  
      
 
   static member FromJson (_ : AgentCheckRegistration) =
-    (fun id s t p a eto ci mi ->
+    (fun id n nt si sc i t ttl http tcp dci sh st ->
       { id = id
-        name = s
-        notes   = t
-        serviceId = p
-        check   = a
+        name = n
+        notes   = nt
+        serviceId = si
+        script = sc
+        interval = i
+        timeout = t
+        ttl = ttl
+        http = http
+        tcp = tcp
+        dockerContainerId = dci
+        shell = sh
+        status = st
           })
     <!> Json.read "ID"
     <*> Json.read "Name"
     <*> Json.read "Notes"
     <*> Json.read "ServiceID"
-    <*> Json.read "Check"
-  
-  static member ToJson (ags : AgentCheckRegistration) =
-    Json.write "ID" ags.id
+    <*> Json.read "Script"
+    <*> Json.read "Interval"
+    <*> Json.read "Timeout"
+    <*> Json.read "TTL"
+    <*> Json.read "HTTP"
+    <*> Json.read "TCP"
+    <*> Json.read "DockerContainerID"
+    <*> Json.read "Shell"
+    <*> Json.read "Status"
+
+  static member ToJson (ags : AgentCheckRegistration) =    
+    Json.maybeWrite "ID" ags.id
     *> Json.write "Name" ags.name
-    *> Json.write "Notes" ags.notes
-    *> Json.write "ServiceID" ags.serviceId
-    *> Json.write "Check" ags.check
+    *> Json.maybeWrite "Notes" ags.notes //Json.write "Notes" ags.notes
+    *> Json.maybeWrite "ServiceID" ags.serviceId
+    *> Json.maybeWrite "ID" ags.id
+    *> Json.maybeWrite "Script" ags.script
+    *> Json.maybeWrite "Interval" ags.interval
+    *> Json.maybeWrite "Timeout" ags.timeout
+    *> Json.maybeWrite "TTL" ags.ttl
+    *> Json.maybeWrite "HTTP" ags.http
+    *> Json.maybeWrite "TCP" ags.tcp
+    *> Json.maybeWrite "DockerContainerID" ags.dockerContainerId
+    *> Json.maybeWrite "Shell" ags.shell
+    *> Json.maybeWrite "Status" ags.status
 
 type CatalogDeregistration =
   { node       : string
@@ -463,13 +500,12 @@ type CatalogDeregistration =
     checkId    : string }
 
     static member Instance =
-      let res = {
-                  node = "COMP05"
-                  datacenter = "dc1"
-                  address = "127.0.0.1"
-                  serviceId = "consul"
-                  checkId = ""
-                }
+      let res = 
+        { node = "COMP05"
+          datacenter = "dc1"
+          address = "127.0.0.1"
+          serviceId = "consul"
+          checkId = "" }
       res
 
     static member FromJson (_ : CatalogDeregistration) =
@@ -498,11 +534,10 @@ type CatalogNode =
   { node     : Node
     Services : Map<string, AgentService> }
 
-  static member emptyCatalogNode =
-    let ec = {
-                  Services = Map.empty
-                  node = Node.emptyNode
-             }
+  static member empty =
+    let ec = 
+      { Services = Map.empty
+        node = Node.empty }
     ec
 
   static member FromJson (_ : CatalogNode) =
@@ -524,14 +559,14 @@ type CatalogRegistration =
     Service    : AgentService
     Check      : AgentCheck }
 
-  static member Instance =
-    let res = {
-                  Node = "COMP05"
-                  Address = "127.0.0.1"
-                  Datacenter = ""
-                  Service = AgentService.Instance
-                  Check = AgentCheck.Instance
-              }
+  static member Instance (nodeName: string) =
+    let res = 
+      {
+        Node = "COMP05"
+        Address = "127.0.0.1"
+        Datacenter = ""
+        Service = AgentService.Instance
+        Check = AgentCheck.Instance nodeName }
     res
 
   static member FromJson (_ : CatalogRegistration) =
@@ -800,16 +835,15 @@ type SessionEntry =
     ttl         : Duration }
 
     static member empty =
-      let res = {
-                  createIndex = UInt64.MinValue;
-                  id = Guid.Empty;
-                  name = "";
-                  node = "";
-                  checks = [];
-                  lockDelay = UInt64.MinValue;
-                  behavior = "";
-                  ttl = Duration.Epsilon
-                }
+      let res = 
+        { createIndex = UInt64.MinValue;
+          id = Guid.Empty;
+          name = "";
+          node = "";
+          checks = [];
+          lockDelay = UInt64.MinValue;
+          behavior = "";
+          ttl = Duration.Epsilon }
       res
 
     static member FromJson (_ : SessionEntry) =
@@ -853,29 +887,27 @@ type UserEvent =
     lTime         : int }
 
     static member Instance =
-      let res = {
-                  id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
-                  name = "deploy"
-                  payload = [||]
-                  nodeFilter = ""
-                  serviceFilter = ""
-                  tagFilter = ""
-                  version = 1
-                  lTime = 0
-                }
+      let res = 
+        { id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
+          name = "deploy"
+          payload = [||]
+          nodeFilter = ""
+          serviceFilter = ""
+          tagFilter = ""
+          version = 1
+          lTime = 0 }
       res
 
-    static member EmptyEvent =
-      let res = {
-                  id = ""
-                  name = ""
-                  payload = [||]
-                  nodeFilter = ""
-                  serviceFilter = ""
-                  tagFilter = ""
-                  version = -1
-                  lTime = -1
-                }
+    static member empty =
+      let res = 
+        { id = ""
+          name = ""
+          payload = [||]
+          nodeFilter = ""
+          serviceFilter = ""
+          tagFilter = ""
+          version = -1
+          lTime = -1 }
       res
 
     static member FromJson (_ : UserEvent) =
@@ -992,3 +1024,5 @@ type FaktaState =
       logger = NoopLogger
       clock  = SystemClock.Instance
       random = Random () }
+
+

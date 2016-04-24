@@ -25,7 +25,7 @@ let clone (state : FaktaState) (id : Id) (opts : WriteOptions) : Async<Choice<st
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "clone")
+      | 404 -> return Choice2Of2 (Message "ACL.clone not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let item = if body = "" then Map.empty else Json.deserialize (Json.parse body)
@@ -54,7 +54,7 @@ let create (state : FaktaState) (tokenToCreate : ACLEntry) (opts : WriteOptions)
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "List")
+      | 404 -> return Choice2Of2 (Message "ACL.create not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let item = if body = "" then Map.empty else Json.deserialize (Json.parse body)
@@ -81,7 +81,7 @@ let destroy (state : FaktaState) (id : Id) (opts : WriteOptions) : Async<Choice<
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "List")
+      | 404 -> return Choice2Of2 (Message "ACL.destroy not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         return Choice1Of2 (writeMeta dur)
@@ -107,7 +107,7 @@ let info (state : FaktaState) (id : Id) (opts : QueryOptions) : Async<Choice<ACL
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "Info")
+      | 404 -> return Choice2Of2 (Message "ACL.Info not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -134,7 +134,7 @@ let list (state : FaktaState) (opts : QueryOptions) : Async<Choice<ACLEntry list
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "List")
+      | 404 -> return Choice2Of2 (Message "ACL.List not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -163,7 +163,7 @@ let update (state : FaktaState) (acl : ACLEntry) (opts : WriteOptions) : Async<C
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "List")
+      | 404 -> return Choice2Of2 (Message "ACL.Update not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         return Choice1Of2 (writeMeta dur)

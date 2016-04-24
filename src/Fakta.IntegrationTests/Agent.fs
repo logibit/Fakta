@@ -12,6 +12,9 @@ open Fakta.Logging
 
 [<Tests>]
 let tests =
+  let checkId = "testCheckRegistration"
+  let serviceId = "testServiceRegistration"
+
   testList "Agent tests" [
     testCase "agent.services -> locally registered services" <| fun _ ->
       let listing = Agent.services state
@@ -52,13 +55,13 @@ let tests =
         let logger = state.logger
         logger.Log (LogLine.sprintf [] "key: %s" listing)
 
-    testCase "agent.force.leave -> the agent ejects a failed node" <| fun _ ->
-      let node = "COMP05"
-      let listing = Agent.forceLeave state node
-      listing |> ignore      
-      ensureSuccess listing <| fun (listing) ->
-        let logger = state.logger
-        logger.Log (LogLine.sprintf [] "Node left: %s" node)
+//    testCase "agent.force.leave -> the agent ejects a failed node" <| fun _ ->
+//      let node = "COMP05"
+//      let listing = Agent.forceLeave state node
+//      listing |> ignore      
+//      ensureSuccess listing <| fun (listing) ->
+//        let logger = state.logger
+//        logger.Log (LogLine.sprintf [] "Node left: %s" node)
 
 //    testCase "can agent pass ttl" <| fun _ ->
 //      let listing = Agent.passTTL state "consul" "optional parameter"
@@ -66,31 +69,31 @@ let tests =
 //      ensureSuccess listing <| fun (listing) ->
 //        let logger = state.logger
 //        logger.Log (LogLine.sprintf [] "ttl updated: %s" "passing")
-
+    
     testCase "agent.checkregister -> register a new check with the local agent" <| fun _ ->
-      let listing = Agent.checkRegister state AgentCheckRegistration.ttlCheck
+      let listing = Agent.checkRegister state (AgentCheckRegistration.ttlCheck checkId)
       listing |> ignore      
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
         logger.Log (LogLine.sprintf [] "key: %O" (listing))
+
+    testCase "agent.deregister check" <| fun _ ->
+      let listing = Agent.checkDeregister state checkId
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger 
+        logger.Log (LogLine.sprintf [] "key: %s" "can service deregister service")
     
 
-    testCase "agent.serviceregister -> register a new service with the local agent" <| fun _ ->
-      let listing = Agent.serviceRegister state AgentServiceRegistration.serviceRegistration
+    testCase "agent.register service -> register a new service with the local agent" <| fun _ ->
+      let listing = Agent.serviceRegister state (AgentServiceRegistration.serviceRegistration serviceId)
       listing |> ignore      
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
         logger.Log (LogLine.sprintf [] "key: %s" "can service register service")
 
-//    testCase "agent.deregister check" <| fun _ ->
-//      let listing = Agent.checkDeregister state "serfHealth"
-//      listing |> ignore      
-//      ensureSuccess listing <| fun (listing) ->
-//        let logger = state.logger 
-//        logger.Log (LogLine.sprintf [] "key: %s" "can service deregister service")
-
     testCase "agent.deregister service" <| fun _ ->
-      let listing = Agent.serviceDeregister state "service:serviceReg123"
+      let listing = Agent.serviceDeregister state serviceId
       listing |> ignore      
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
@@ -104,12 +107,12 @@ let tests =
         logger.Log (LogLine.sprintf [] "key: %s" "can service deregister service")
         
 
-//    testCase "can agent set node maintenance true" <| fun _ ->
-//      let listing = Agent.enableNodeMaintenance state ""
-//      listing |> ignore      
-//      ensureSuccess listing <| fun (listing) ->
-//        let logger = state.logger
-//        logger.Log (LogLine.sprintf [] "key: %s" "empty")
+    testCase "can agent set node maintenance true" <| fun _ ->
+      let listing = Agent.enableNodeMaintenance state ""
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger
+        logger.Log (LogLine.sprintf [] "key: %s" "empty")
 //
 //    testCase "can agent set node maintenance false" <| fun _ ->
 //      let listing = Agent.disableNodeMaintenance state 

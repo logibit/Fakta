@@ -30,7 +30,7 @@ let getSessionEntry (value : string) (action: string) (state : FaktaState) (id :
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "Session info")
+      | 404 -> return Choice2Of2 (Message (sprintf "%s not found" action))
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -58,7 +58,7 @@ let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
       match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "Session list")
+      | 404 -> return Choice2Of2 (Message "Session list not found")
       | _ ->
         let! body = Response.readBodyAsString resp
         let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -109,7 +109,7 @@ let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOpti
             return Choice1Of2 (id, { requestTime = dur })
 
           | None ->
-            return Choice2Of2 (Message "unexpected json result value")
+            return Choice2Of2 (Message "session create: unexpected json result value")
 
         | Choice2Of2 err ->
           return Choice2Of2 (Message err)
@@ -174,7 +174,7 @@ let info (state : FaktaState) (id : Session) (qo : QueryOptions) : Async<Choice<
         return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
       else
         match resp.StatusCode with
-        | 404 -> return Choice2Of2 (Message "Session info")
+        | 404 -> return Choice2Of2 (Message "Session info not found")
         | _ ->
           let! body = Response.readBodyAsString resp
           let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -211,7 +211,7 @@ let renew (state : FaktaState) (id : string) (wo : WriteOptions) : Async<Choice<
         return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
       else
         match resp.StatusCode with
-        | 404 -> return Choice2Of2 (Message "Session renew")
+        | 404 -> return Choice2Of2 (Message "Session renew not found")
         | _ ->
           let! body = Response.readBodyAsString resp
           let items = if body = "" then [] else Json.deserialize (Json.parse body)
@@ -240,7 +240,7 @@ let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : 
             | Choice1Of2 result ->     
                 let (entry, qo) = result
                 if entry = SessionEntry.empty
-                  then return Choice2Of2 (Message "Session expired") 
+                  then return Choice2Of2 (Message "Session expired not found") 
                   else  
                     renewPeriodic state entry.ttl id wo doneCh |> ignore
                     return Choice1Of2 ()
