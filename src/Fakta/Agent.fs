@@ -91,9 +91,9 @@ let setNodeMaintenanceMode (state : FaktaState) (enable : bool) : Async<Choice<u
     let getResponse = Impl.getResponse state "Fakta.Agent.maintenance"
     let req =
       UriBuilder.ofAgent state.config "maintenance"
+      |> flip UriBuilder.mappendRange [ yield "enable", Some((enable.ToString().ToLower())) ]
       |> UriBuilder.uri
-      |> basicRequest HttpMethod.Put
-      |> withQueryStringItem "enable" (enable.ToString().ToLower())
+      |> basicRequest HttpMethod.Put   
       |> withConfigOpts state.config
     async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)    
@@ -115,9 +115,9 @@ let setServiceMaintenanceMode (state : FaktaState) (enable : bool) (serviceId : 
     let getResponse = Impl.getResponse state "Fakta.Agent.service.maintenance"
     let req =
       UriBuilder.ofAgent state.config (sprintf "service/maintenance/%s" serviceId)
+      |> flip UriBuilder.mappendRange [ yield "enable", Some((enable.ToString().ToLower())) ]
       |> UriBuilder.uri
       |> basicRequest HttpMethod.Put
-      |> withQueryStringItem "enable" (enable.ToString().ToLower())
       |> withConfigOpts state.config
     async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
@@ -156,9 +156,9 @@ let join (state : FaktaState) (addr : string) (wan : bool) : Async<Choice<unit, 
     let getResponse = Impl.getResponse state "Fakta.Agent.join"
     let req =
       UriBuilder.ofAgent state.config (sprintf "join/%s" addr)
+      |> flip UriBuilder.mappendRange [ yield "wan", Some(System.Convert.ToInt16(wan).ToString()) ]
       |> UriBuilder.uri
       |> basicRequest HttpMethod.Get
-      |> withQueryStringItem "wan" (System.Convert.ToInt16(wan).ToString())
       |> withConfigOpts state.config
     async {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
@@ -332,7 +332,7 @@ let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : 
     let getResponse = Impl.getResponse state (sprintf "Fakta.Agent.check.%s" status)
     let checkUpdate = Json.serialize (CheckUpdate.GetUpdateJson status note ) |> Json.format
     let req =
-      UriBuilder.ofAgent state.config (sprintf "check/update/%s" checkId)
+      UriBuilder.ofAgent state.config (sprintf "check/%s/%s" status checkId)
       |> UriBuilder.uri
       |> basicRequest HttpMethod.Put
       |> withConfigOpts state.config
@@ -355,7 +355,7 @@ let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : 
 
 /// PassTTL is used to set a TTL check to the passing state
 let passTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
-    updateTTL state checkId note "passing"
+    updateTTL state checkId note "pass"
 
 /// WarnTTL is used to set a TTL check to the warning state
 let warnTTL (state : FaktaState) (checkId : string) (note : string) (status : string) : Async<Choice<unit, Error>> =

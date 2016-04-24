@@ -19,12 +19,12 @@ let fire (state : FaktaState) (event : UserEvent) (opts : WriteOptions) : Async<
 
   let req =
     UriBuilder.ofEvent state.config (sprintf "fire/%s" event.name)
+    |> flip UriBuilder.mappendRange [ yield nodeVal, Some(nodeKey) 
+                                      yield serviceVal, Some(serviceKey)
+                                      yield tagVal, Some(tagKey)]
     |> UriBuilder.uri
     |> basicRequest Put
     |> withConfigOpts state.config
-    |> withQueryStringItem nodeVal nodeKey
-    |> withQueryStringItem serviceVal serviceKey
-    |> withQueryStringItem tagVal tagKey
   async {
   let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
   match resp with

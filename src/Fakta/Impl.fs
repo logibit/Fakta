@@ -54,7 +54,7 @@ module UriBuilder =
   /// Build a query from the unencoded key-value pairs
   let private buildQuery =
     Map.toList
-    >> List.map (fun (n, v) -> n, v |> Option.map Uri.EscapeUriString)
+    >> List.map (fun (n, v) -> n, v |> Option.map Uri.UnescapeDataString)
     >> List.map (function
                 | n, None -> n
                 | n, Some ev -> String.Concat [ n; "="; ev ])
@@ -80,7 +80,8 @@ let withConfigOpts (config : FaktaConfig) (req : Request) =
   |> Option.fold (fun s creds -> withBasicAuthentication creds.username creds.password req) req
 
 let acceptJson =
-  withHeader (Accept "application/json")
+  //withHeader (Accept "application/json")
+  withHeader (Accept "*/*")
 
 let withIntroductions =
   withHeader (UserAgent "Fakta 0.1")

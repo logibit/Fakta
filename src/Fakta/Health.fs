@@ -57,11 +57,11 @@ let service (state : FaktaState) (service : string) (tag : string)
   let passingOnly = if passingOnly then "passing" else ""
   let req =
     UriBuilder.ofHealth state.config ("service/" + service)
-    |> flip UriBuilder.mappendRange (queryOptKvs opts)
+    |> flip UriBuilder.mappendRange [ yield tagName, Some(tagValue) 
+                                      yield passingOnly, Some("") 
+                                      yield! queryOptKvs opts]
     |> UriBuilder.uri
     |> basicRequest Get
-    |> withQueryStringItem tagName tagValue
-    |> withQueryStringItem passingOnly ""
     |> withConfigOpts state.config
   async {
   let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
