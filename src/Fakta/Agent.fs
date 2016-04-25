@@ -333,6 +333,7 @@ let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : 
     let checkUpdate = Json.serialize (CheckUpdate.GetUpdateJson status note ) |> Json.format
     let req =
       UriBuilder.ofAgent state.config (sprintf "check/%s/%s" status checkId)
+      |> flip UriBuilder.mappendRange [ yield "note", Some(note) ]
       |> UriBuilder.uri
       |> basicRequest HttpMethod.Put
       |> withConfigOpts state.config
@@ -358,12 +359,12 @@ let passTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choi
     updateTTL state checkId note "pass"
 
 /// WarnTTL is used to set a TTL check to the warning state
-let warnTTL (state : FaktaState) (checkId : string) (note : string) (status : string) : Async<Choice<unit, Error>> =
-    updateTTL state checkId note "warning"
+let warnTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
+    updateTTL state checkId note "warn"
 
 /// FailTTL is used to set a TTL check to the failing state
 let failTTL (state : FaktaState) (checkId : string) (note : string) : Async<Choice<unit, Error>> =
-    updateTTL state checkId note "critical"
+    updateTTL state checkId note "fail"
 
 /// ForceLeave is used to have the agent eject a failed node
 let forceLeave (state : FaktaState) (node : string) : Async<Choice<unit, Error>> =

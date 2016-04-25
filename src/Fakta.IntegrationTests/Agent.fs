@@ -53,14 +53,7 @@ let tests =
       listing |> ignore      
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger
-        logger.Log (LogLine.sprintf [] "key: %s" listing)
-
-    testCase "can agent pass ttl" <| fun _ ->
-      let listing = Agent.passTTL state checkId "optional parameter"
-      listing |> ignore      
-      ensureSuccess listing <| fun (listing) ->
-        let logger = state.logger
-        logger.Log (LogLine.sprintf [] "ttl updated: %s" "passing")
+        logger.Log (LogLine.sprintf [] "key: %s" listing)    
     
     testCase "agent.checkregister -> register a new check with the local agent" <| fun _ ->
       let listing = Agent.checkRegister state (AgentCheckRegistration.ttlCheck checkId)
@@ -68,6 +61,27 @@ let tests =
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
         logger.Log (LogLine.sprintf [] "key: %O" (listing))
+
+    testCase "can agent set pass ttl" <| fun _ ->
+      let listing = Agent.passTTL state checkId "optional parameter - passing"
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger
+        logger.Log (LogLine.sprintf [] "ttl updated: %s" "passing")
+
+    testCase "can agent set warn ttl" <| fun _ ->
+      let listing = Agent.warnTTL state checkId "optional parameter - warning"
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger
+        logger.Log (LogLine.sprintf [] "ttl updated: %s" "warning")
+
+    testCase "can agent set fail ttl" <| fun _ ->
+      let listing = Agent.failTTL state checkId "optional parameter - failing"
+      listing |> ignore      
+      ensureSuccess listing <| fun (listing) ->
+        let logger = state.logger
+        logger.Log (LogLine.sprintf [] "ttl updated: %s" "failing")
 
     testCase "agent.deregister check" <| fun _ ->
       let listing = Agent.checkDeregister state checkId
