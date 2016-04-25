@@ -56,8 +56,12 @@ let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choi
       | 404 -> return Choice2Of2 (Message "agent.nodes not found")
       | _ ->
         let! body = Response.readBodyAsString resp
-        let items = if body = "" then CatalogNode.empty else Json.deserialize (Json.parse body)
-        return Choice1Of2 (items, queryMeta dur resp)
+        if body = "" 
+          then 
+            return Choice2Of2 (Message (sprintf "Node %s not found" node))
+          else
+            let items:CatalogNode =  Json.deserialize (Json.parse body)
+            return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
 }

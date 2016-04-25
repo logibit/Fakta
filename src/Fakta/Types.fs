@@ -65,13 +65,6 @@ type Node =
   { node    : string
     address : string }
 
-    static member empty =
-      let en = {
-                  node = String.Empty;
-                  address = String.Empty
-               }
-      en
-
     static member FromJson (_ : Node) =
         (fun n a ->
           { node = n
@@ -311,8 +304,7 @@ type AgentServiceCheck =
 
   static member ttlServiceCheck =
     let res = 
-      {
-        script = ""
+      { script = ""
         interval = "15s"
         timeout = ""
         ttl = "30s"
@@ -362,23 +354,23 @@ type AgentServiceChecks = AgentServiceCheck list
 
 type AgentServiceRegistration =
   { id      : string //   `json:",omitempty"`
-    Name    : string //  `json:",omitempty"`
-    Tags    : string list option // `json:",omitempty"`
-    Port    : int option //     `json:",omitempty"`
-    Address : string option //  `json:",omitempty"`
-    EnableTagOverride : bool
-    Check   : AgentServiceCheck option
+    name    : string //  `json:",omitempty"`
+    tags    : string list option // `json:",omitempty"`
+    port    : int option //     `json:",omitempty"`
+    address : string option //  `json:",omitempty"`
+    enableTagOverride : bool
+    check   : AgentServiceCheck option
     checks  : AgentServiceChecks option }
 
     static member serviceRegistration (id: string) : (AgentServiceRegistration) =
       let res = 
         { id = id; 
-          Name="serviceReg"; 
-          Tags = None; 
-          Address=Some("127.0.0.1"); 
-          Port=Some(8500); 
-          EnableTagOverride = false; 
-          Check = None;
+          name="serviceReg"; 
+          tags = None; 
+          address=Some("127.0.0.1"); 
+          port=Some(8500); 
+          enableTagOverride = false; 
+          check = None;
           checks = None }
       res
 
@@ -386,12 +378,12 @@ type AgentServiceRegistration =
       (fun id n ts p a eto ch chs ->
         { 
           id = id
-          Name = n
-          Tags = ts
-          Port = p
-          Address = a
-          EnableTagOverride = eto
-          Check = ch
+          name = n
+          tags = ts
+          port = p
+          address = a
+          enableTagOverride = eto
+          check = ch
           checks = chs
             })
     <!> Json.read "ID"
@@ -405,12 +397,12 @@ type AgentServiceRegistration =
   
   static member ToJson (ags : AgentServiceRegistration) =
     Json.write "ID" ags.id
-    *> Json.write "Name" ags.Name
-    *> Json.maybeWrite "Tags" ags.Tags
-    *> Json.maybeWrite "Port" ags.Port
-    *> Json.maybeWrite "Address" ags.Address
-    *> Json.write "EnableTagOverride" ags.EnableTagOverride
-    *> Json.maybeWrite "Check" ags.Check
+    *> Json.write "Name" ags.name
+    *> Json.maybeWrite "Tags" ags.tags
+    *> Json.maybeWrite "Port" ags.port
+    *> Json.maybeWrite "Address" ags.address
+    *> Json.write "EnableTagOverride" ags.enableTagOverride
+    *> Json.maybeWrite "Check" ags.check
     *> Json.maybeWrite "Checks" ags.checks
 
 type AgentCheckRegistration =
@@ -533,12 +525,6 @@ type CatalogDeregistration =
 type CatalogNode =
   { node     : Node
     Services : Map<string, AgentService> }
-
-  static member empty =
-    let ec = 
-      { Services = Map.empty
-        node = Node.empty }
-    ec
 
   static member FromJson (_ : CatalogNode) =
       (fun n s ->

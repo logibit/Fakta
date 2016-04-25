@@ -240,7 +240,7 @@ let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : 
             | Choice1Of2 result ->     
                 let (entry, qo) = result
                 if entry = SessionEntry.empty
-                  then return Choice2Of2 (Message "Session expired not found") 
+                  then return Choice2Of2 (Message "Session expired") 
                   else  
                     renewPeriodic state entry.ttl id wo doneCh |> ignore
                     return Choice1Of2 ()

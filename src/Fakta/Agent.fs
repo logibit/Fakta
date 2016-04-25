@@ -294,7 +294,7 @@ let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : 
       else
         match resp.StatusCode with      
         | 200 -> return Choice1Of2 ()
-        | _ ->  return Choice2Of2 (Message (sprintf "agent.service.register set %s error: %d" service.Name resp.StatusCode))
+        | _ ->  return Choice2Of2 (Message (sprintf "agent.service.register set %s error: %d" service.name resp.StatusCode))
 
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
