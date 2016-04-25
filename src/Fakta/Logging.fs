@@ -129,14 +129,14 @@ module LogLine =
       level     = level
       path      = path
       data      = data
-      timestamp = clock.GetCurrentInstant() }
+      timestamp = clock.Now }
 
   let private message data message =
     { message   = message
       level     = Verbose
       path      = ""
       data      = data |> Map.ofList
-      timestamp = (!logger |> fst).GetCurrentInstant() }
+      timestamp = (!logger |> fst).Now }
 
   let sprintf data =
     Printf.kprintf (message data)
