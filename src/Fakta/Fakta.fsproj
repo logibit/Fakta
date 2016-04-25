@@ -51,7 +51,7 @@
     <Compile Include="Semaphore.fs" />
     <Compile Include="Session.fs" />
     <Compile Include="Status.fs" />
-    <Compile Include="hopac.fsx" />
+    <Content Include="hopac.fsx" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
