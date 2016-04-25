@@ -25,18 +25,36 @@ type UriBuilder =
     { inner = UriBuilder(config.serverBaseUri, Path = keyFor mdle path)
       kvs   = Map.empty }
 
+  static member ofAcl (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "acl" s
+
   static member ofKVKey (config : FaktaConfig) (k : Key) =
     UriBuilder.ofModuleAndPath config "kv" k
 
+  static member ofHealth (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "health" s
+
+  static member ofEvent (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "event" s
+    
+  static member ofCatalog (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "catalog" s
+
+  static member ofAgent (config : FaktaConfig) (a : string) =
+    UriBuilder.ofModuleAndPath config "agent" a
+
   static member ofSession (config : FaktaConfig) (op : string) =
     UriBuilder.ofModuleAndPath config "session" op
+
+  static member ofStatus (config : FaktaConfig) (s : string) =
+    UriBuilder.ofModuleAndPath config "status" s
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module UriBuilder =
   /// Build a query from the unencoded key-value pairs
   let private buildQuery =
     Map.toList
-    >> List.map (fun (n, v) -> n, v |> Option.map Uri.EscapeUriString)
+    >> List.map (fun (n, v) -> n, v |> Option.map Uri.UnescapeDataString)
     >> List.map (function
                 | n, None -> n
                 | n, Some ev -> String.Concat [ n; "="; ev ])
@@ -62,7 +80,8 @@ let withConfigOpts (config : FaktaConfig) (req : Request) =
   |> Option.fold (fun s creds -> withBasicAuthentication creds.username creds.password req) req
 
 let acceptJson =
-  withHeader (Accept "application/json")
+  //withHeader (Accept "application/json")
+  withHeader (Accept "*/*")
 
 let withIntroductions =
   withHeader (UserAgent "Fakta 0.1")
@@ -98,11 +117,15 @@ let getResponse (state : FaktaState) path (req : Request) =
   }
 
 let queryMeta dur (resp : Response) =
-  let headerFor key = resp.Headers |> Map.find (ResponseHeader.NonStandard key)
-  { lastIndex   = uint64 (headerFor "X-Consul-Index")
-    lastContact = Duration.FromSeconds (int64 (headerFor "X-Consul-Lastcontact"))
-    knownLeader = bool.Parse (headerFor "X-Consul-Knownleader")
+  let headerFor key = resp.Headers |> Map.tryFind (ResponseHeader.NonStandard key)
+  { lastIndex   = headerFor "X-Consul-Index" |> Option.fold (fun s t -> uint64 t) UInt64.MinValue
+    lastContact = headerFor "X-Consul-Lastcontact" |> Option.fold (fun s t -> Duration.FromSeconds (int64 t)) Duration.Epsilon
+    knownLeader = headerFor "X-Consul-Knownleader" |> Option.fold (fun s t -> Boolean.Parse(string t)) false
     requestTime = dur }
+
+let writeMeta (dur: Duration) : (WriteMeta) = 
+  let res:WriteMeta = {requestTime = dur}
+  res
 
 let configOptKvs (config : FaktaConfig) : (string * string option) list =
   [ if Option.isSome config.datacenter then yield "dc", config.datacenter

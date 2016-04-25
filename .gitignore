@@ -19,3 +19,9 @@ tools/consul.zip
 tools/data/
 AssemblyVersionInfo.fs
 build/
+src/Utils/AssemblyVersionInfo.cs
+src/Utils/packages.config
+src/Utils/Program.cs
+src/Utils/Properties/AssemblyInfo.cs
+src/Utils/Utils.csproj
+src/Utils/Utils.sln

@@ -1,21 +1,21 @@
-#I "../../packages/Hopac/lib/net45"
-#I "../../packages/Hopac.Extras/lib/net45"
-
-#r "Hopac.Core.dll"
-#r "Hopac.dll"
-#r "Hopac.Platform.dll"
-#r "Hopac.Extras.dll"
-
-open System
-open Hopac.Extensions
-open Hopac.Extras
-open Hopac.Timer.Global
-open Hopac.Infixes
-open Hopac
-
-type Request<'a> =
-  | Get
-  | Put of 'a
+//#I @"D:\codes\Fakta\src\packages\Hopac.0.1.3\lib\net45"
+//#I @"D:\codes\Fakta\src\packages\Hopac.Extras.0.1.33\lib\net45"
+//
+//#r "Hopac.Core.dll"
+//#r "Hopac.dll"
+//#r "Hopac.Platform.dll"
+//#r "Hopac.Extras.dll"
+//
+//open System
+//open Hopac.Extensions
+//open Hopac.Extras
+//open Hopac.Timer.Global
+//open Hopac.Infixes
+//open Hopac
+//
+//type Request<'a> =
+//  | Get
+//  | Put of 'a
 (*
 type Cell<'a> = {
   reqCh: Ch<Request<'a>>
