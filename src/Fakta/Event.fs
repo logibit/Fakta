@@ -10,39 +10,31 @@ open NodaTime
 open HttpFs.Client
 open Chiron
 
+let faktaEventString = "Fakta.event"
+
+let eventDottedPath (funcName: string) =
+  (sprintf "%s.%s" faktaEventString funcName)
+
 /// Fire is used to fire a new user event. Only the Name, Payload and Filters are respected. This returns the ID or an associated error. Cross DC requests are supported.
 let fire (state : FaktaState) (event : UserEvent) (opts : WriteOptions) : Async<Choice<string * WriteMeta, Error>> =
-  let getResponse = Impl.getResponse state "Fakta.Event.fire"
-  let nodeVal, nodeKey = if event.nodeFilter.Equals("") then "","" else "node", event.nodeFilter
-  let serviceVal, serviceKey = if event.nodeFilter.Equals("") then "","" else "service", event.serviceFilter
-  let tagVal, tagKey = if event.nodeFilter.Equals("") then "","" else "tag", event.tagFilter
+    let nodeVal, nodeKey = if event.nodeFilter.Equals("") then "","" else "node", event.nodeFilter
+    let serviceVal, serviceKey = if event.nodeFilter.Equals("") then "","" else "service", event.serviceFilter
+    let tagVal, tagKey = if event.nodeFilter.Equals("") then "","" else "tag", event.tagFilter
+    let urlPath = (sprintf "fire/%s" event.name)
+    let uriBuilder = UriBuilder.ofEvent state.config urlPath 
+                     |> flip UriBuilder.mappendRange [ yield nodeVal, Some(nodeKey) 
+                                                       yield serviceVal, Some(serviceKey)
+                                                       yield tagVal, Some(tagKey)]
+    let result = Async.RunSynchronously (call state (eventDottedPath "fire") id uriBuilder HttpMethod.Put)
 
-  let req =
-    UriBuilder.ofEvent state.config (sprintf "fire/%s" event.name)
-    |> flip UriBuilder.mappendRange [ yield nodeVal, Some(nodeKey) 
-                                      yield serviceVal, Some(serviceKey)
-                                      yield tagVal, Some(tagKey)]
-    |> UriBuilder.uri
-    |> basicRequest Put
-    |> withConfigOpts state.config
-  async {
-  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-  match resp with
-  | Choice1Of2 resp ->
-    use resp = resp
-    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
-      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
-    else
-      match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "event.fire not found")
-      | _ ->
-        let! body = Response.readBodyAsString resp
-        let  item = if body = "" then UserEvent.empty else Json.deserialize (Json.parse body)
-        return Choice1Of2 (item.id, writeMeta dur)
-
-  | Choice2Of2 exx ->
-    return Choice2Of2 (Error.ConnectionFailed exx)
-}
+    async {
+      match result with 
+      | Choice1Of2 x -> 
+         let body, (dur:Duration, resp:Response) = x
+         let  item = if body = "" then UserEvent.empty else Json.deserialize (Json.parse body)
+         return Choice1Of2 (item.id, writeMeta dur)
+      | Choice2Of2 err -> return Choice2Of2(err)
+    }
 
 /// IDToIndex is a bit of a hack. This simulates the index generation to convert an event ID into a WaitIndex.
 let idToIndex (state : FaktaState) (uuid : Guid) : uint64 =
@@ -54,28 +46,15 @@ let idToIndex (state : FaktaState) (uuid : Guid) : uint64 =
 
 /// List is used to get the most recent events an agent has received. This list can be optionally filtered by the name. This endpoint supports quasi-blocking queries. The index is not monotonic, nor does it provide provide LastContact or KnownLeader. 
 let list (state : FaktaState) (name : string) (opts : QueryOptions) : Async<Choice<UserEvent list * QueryMeta, Error>> =
-  let getResponse = Impl.getResponse state "Fakta.Event.list"
+    let urlPath = "list"
+    let uriBuilder = UriBuilder.ofEvent state.config urlPath
+    let result = Async.RunSynchronously (call state (eventDottedPath urlPath) id uriBuilder HttpMethod.Get)
 
-  let req =
-    UriBuilder.ofEvent state.config "list"
-    |> UriBuilder.uri
-    |> basicRequest Get
-    |> withConfigOpts state.config
-  async {
-  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-  match resp with
-  | Choice1Of2 resp ->
-    use resp = resp
-    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
-      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
-    else
-      match resp.StatusCode with
-      | 404 -> return Choice2Of2 (Message "event.list not found")
-      | _ ->
-        let! body = Response.readBodyAsString resp
-        let  items = if body = "" then [] else Json.deserialize (Json.parse body)
-        return Choice1Of2 (items, queryMeta dur resp)
-
-  | Choice2Of2 exx ->
-    return Choice2Of2 (Error.ConnectionFailed exx)
-}
+    async {
+      match result with 
+      | Choice1Of2 x -> 
+         let body, (dur:Duration, resp:Response) = x
+         let  items = if body = "" then [] else Json.deserialize (Json.parse body)
+         return Choice1Of2 (items, queryMeta dur resp)
+      | Choice2Of2 err -> return Choice2Of2(err)
+    }

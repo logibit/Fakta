@@ -7,6 +7,7 @@ open HttpFs.Client
 open NodaTime
 open Fakta
 open Fakta.Logging
+open Chiron
 
 let APIVersion = "v1"
 
@@ -160,12 +161,12 @@ let writeOptsKvs : WriteOptions -> (string * string option) list =
              | WriteOption.DataCenter dc              -> ("dc", Some dc) :: acc)
             []
 
-let call (state : FaktaState) (dottedPath:string) (addToReq) (urlPath:string) =
+let call (state : FaktaState) (dottedPath:string) (addToReq) (uriB: UriBuilder) (httpMethod: HttpMethod) =
     let getResponse = getResponse state dottedPath
     let req =
-      UriBuilder.ofAgent state.config urlPath
+      uriB
       |> UriBuilder.uri
-      |> basicRequest HttpMethod.Put
+      |> basicRequest httpMethod
       |> withConfigOpts state.config
       |> addToReq
     async {
@@ -177,7 +178,9 @@ let call (state : FaktaState) (dottedPath:string) (addToReq) (urlPath:string) =
         return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
       else
         match resp.StatusCode with      
-        | 200 -> return Choice1Of2 ()
+        | 200 -> 
+          let! body = Response.readBodyAsString resp
+          return Choice1Of2 (body,(dur, resp))
         | _ ->  return Choice2Of2 (Message (sprintf "%s error %d" dottedPath resp.StatusCode))
 
     | Choice2Of2 exx ->
