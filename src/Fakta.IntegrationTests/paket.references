@@ -5,3 +5,5 @@ Fuchu.FsCheck
 Chiron
 NodaTime
 Http.fs-prerelease
+Aether
+FParsec

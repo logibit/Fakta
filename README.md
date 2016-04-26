@@ -9,6 +9,9 @@ using the Vault bits.
 Fakta is Swedish for 'facts', a fitting name for a library interacting with a
 CP-oriented fact store.
 
+Sponsored by
+[qvitoo – A.I. bookkeeping](https://qvitoo.com/?utm_source=github&utm_campaign=fakta).
+
 ## API
 
 How much has been implemented? This API surface is the same as that of the

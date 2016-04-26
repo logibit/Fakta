@@ -159,3 +159,28 @@ let writeOptsKvs : WriteOptions -> (string * string option) list =
              | WriteOption.TokenOverride token        -> ("token", Some token) :: acc
              | WriteOption.DataCenter dc              -> ("dc", Some dc) :: acc)
             []
+
+let call (state : FaktaState) (dottedPath:string) (addToReq) (urlPath:string) =
+    let getResponse = getResponse state dottedPath
+    let req =
+      UriBuilder.ofAgent state.config urlPath
+      |> UriBuilder.uri
+      |> basicRequest HttpMethod.Put
+      |> withConfigOpts state.config
+      |> addToReq
+    async {
+    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+    match resp with
+    | Choice1Of2 resp ->
+      use resp = resp
+      if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+      else
+        match resp.StatusCode with      
+        | 200 -> return Choice1Of2 ()
+        | _ ->  return Choice2Of2 (Message (sprintf "%s error %d" dottedPath resp.StatusCode))
+
+    | Choice2Of2 exx ->
+      return Choice2Of2 (Error.ConnectionFailed exx)
+    }
+  

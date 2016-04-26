@@ -11,3 +11,5 @@ nuget Hopac.Extras
 nuget Http.fs-prerelease
 nuget NodaTime
 nuget NuGet.CommandLine
+nuget Aether
+nuget FParsec
