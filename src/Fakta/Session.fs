@@ -142,22 +142,9 @@ let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : 
     let waitDur = (ttl / (int64)2)
     let lastRenew = DateTime.Now.Ticks
 
-    if (DateTime.Now.Ticks - lastRenew) > ttl.Ticks 
-      then return Choice2Of2 (Message "Session expired")
-      else 
-        match DateTime.Now.Ticks > doneCh.Ticks with
-        | true ->
-           match Async.RunSynchronously (renew state id wo) with
-            | Choice1Of2 result ->     
-                let (entry, qo) = result
-                if entry = SessionEntry.empty
-                  then return Choice2Of2 (Message "Session expired") 
-                  else  
-                    renewPeriodic state entry.ttl id wo doneCh |> ignore
-                    return Choice1Of2 ()
-            | Choice2Of2 err ->  return Choice2Of2 (Message "Renew")
-        | false -> 
-          destroy state id wo |> ignore
-          return Choice1Of2()
+    while (DateTime.Now.Ticks - lastRenew) <= ttl.Ticks do
+        do! Async.Sleep(DateTime(waitDur.Ticks).Millisecond) 
+        renew state id wo |> ignore
+    return Choice1Of2 ()
   }
       
