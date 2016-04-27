@@ -34,7 +34,7 @@ let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo
 
 /// Create makes a new session. Providing a session entry can customize the
 /// session. It is recommended you give a Name as the options.
-let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<Session * WriteMeta, Error>> =
+let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<string * WriteMeta, Error>> =
     let writeJsonBody : SessionOptions -> Json<unit> =
         List.fold (fun acc -> function
                   | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
@@ -71,7 +71,7 @@ let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOpti
 
 
 /// CreateNoChecks is like Create but is used specifically to create a session with no associated health checks. 
-let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : WriteOptions) : Async<Choice<Session * WriteMeta, Error>> =
+let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : WriteOptions) : Async<Choice<string * WriteMeta, Error>> =
   let newSessionOpts =  
     sessionOpts
     |> List.map(fun x -> not(x.ToString().Equals("Checks")), x)
@@ -136,15 +136,18 @@ let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<
 /// RenewPeriodic is used to periodically invoke Session.Renew on a session until
 /// a doneCh is closed. This is meant to be used in a long running goroutine
 /// to ensure a session stays valid. 
-let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) : Async<Choice<unit, Error>> =
+let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) =
   //func (s *Session) RenewPeriodic(initialTTL string, id string, q *WriteOptions, doneCh chan struct{}) error
+  let result = Async.RunSynchronously( renew state id wo )
   async {
     let waitDur = (ttl / (int64)2)
-    let lastRenew = DateTime.Now.Ticks
-
-    while (DateTime.Now.Ticks - lastRenew) <= ttl.Ticks do
-        do! Async.Sleep(DateTime(waitDur.Ticks).Millisecond) 
-        renew state id wo |> ignore
-    return Choice1Of2 ()
+    let ms = (int)waitDur.Ticks/10000
+    do! Async.Sleep(ms) 
+    match result with 
+    | Choice1Of2 x -> 
+        let entry, _ = x
+        renewPeriodic state entry.ttl id wo |> ignore
+    | _ -> destroy state id wo |> ignore
+    
   }
       
