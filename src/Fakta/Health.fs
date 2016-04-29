@@ -15,12 +15,11 @@ let healthDottedPath (funcName: string) =
 
 let getValuesByName (action : string) (path : string) (state : FaktaState) (service : string) (opts : QueryOptions) 
   : Async<Choice<HealthCheck list * QueryMeta, Error>> =
-    let urlPath = action
-    let uriBuilder = UriBuilder.ofHealth state.config urlPath 
-                     |> flip UriBuilder.mappendRange (queryOptKvs opts)
-    let result = Async.RunSynchronously (call state path id uriBuilder HttpMethod.Get)
-
     async {
+      let urlPath = action
+      let uriBuilder = UriBuilder.ofHealth state.config urlPath 
+                       |> flip UriBuilder.mappendRange (queryOptKvs opts)
+      let! result = call state path id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
          let body, (dur:Duration, resp:Response) = x
@@ -44,16 +43,16 @@ let state (state : FaktaState) (endpointState : string) (opts : QueryOptions) : 
 /// Service is used to query health information along with service info for a given service. It can optionally do server-side filtering on a tag or nodes with passing health checks only.
 let service (state : FaktaState) (service : string) (tag : string)
             (passingOnly : bool) (opts : QueryOptions)
-            : Async<Choice<ServiceEntry list * QueryMeta, Error>> =
-    let urlPath = ("service/" + service)
-    let tagName, tagValue = if tag.Equals("") then "","" else "tag",tag
-    let passingOnly = if passingOnly then "passing" else ""
-    let uriBuilder = UriBuilder.ofHealth state.config ("service/" + service)
-                     |> flip UriBuilder.mappendRange [ yield tagName, Some(tagValue) 
-                                                       yield passingOnly, Some("") 
-                                                       yield! queryOptKvs opts]
-    let result = Async.RunSynchronously (call state (healthDottedPath "service") id uriBuilder HttpMethod.Get)
+            : Async<Choice<ServiceEntry list * QueryMeta, Error>> =    
     async {
+      let urlPath = ("service/" + service)
+      let tagName, tagValue = if tag.Equals("") then "","" else "tag",tag
+      let passingOnly = if passingOnly then "passing" else ""
+      let uriBuilder = UriBuilder.ofHealth state.config ("service/" + service)
+                       |> flip UriBuilder.mappendRange [ yield tagName, Some(tagValue) 
+                                                         yield passingOnly, Some("") 
+                                                         yield! queryOptKvs opts]
+      let! result = call state (healthDottedPath "service") id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
          let body, (dur:Duration, resp:Response) = x

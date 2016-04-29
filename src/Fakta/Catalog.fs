@@ -15,11 +15,11 @@ let catalogDottedPath (funcName: string) =
   (sprintf "%s.%s" faktaCatalogString funcName)
 
 /// Datacenters is used to query for all the known datacenters
-let datacenters (state : FaktaState) : Async<Choice<string list, Error>> =
-    let urlPath = "datacenters"
-    let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-    let result = Async.RunSynchronously (call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get)
+let datacenters (state : FaktaState) : Async<Choice<string list, Error>> =    
     async {
+      let urlPath = "datacenters"
+      let uriBuilder = UriBuilder.ofCatalog state.config urlPath
+      let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
          let body, (dur:Duration, resp:Response) = x
@@ -30,11 +30,11 @@ let datacenters (state : FaktaState) : Async<Choice<string list, Error>> =
 
 
 /// Node is used to query for service information about a single node
-let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choice<CatalogNode * QueryMeta, Error>> =
-    let urlPath = (sprintf "node/%s" node)
-    let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-    let result = Async.RunSynchronously (call state (catalogDottedPath "node") id uriBuilder HttpMethod.Get)
+let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choice<CatalogNode * QueryMeta, Error>> =    
     async {
+      let urlPath = (sprintf "node/%s" node)
+      let uriBuilder = UriBuilder.ofCatalog state.config urlPath
+      let! result = call state (catalogDottedPath "node") id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
          let body, (dur:Duration, resp:Response) = x
@@ -49,11 +49,11 @@ let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choi
 
 
 /// Nodes is used to query all the known nodes
-let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * QueryMeta, Error>> =
-    let urlPath = "nodes"
-    let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-    let result = Async.RunSynchronously (call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get)
+let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * QueryMeta, Error>> =    
     async {
+      let urlPath = "nodes"
+      let uriBuilder = UriBuilder.ofCatalog state.config urlPath
+      let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
          let body, (dur:Duration, resp:Response) = x
@@ -65,11 +65,11 @@ let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * 
 
 /// 
 let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
-    let urlPath = "deregister"
-    let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-    let serializedCheckReg = Json.serialize dereg |> Json.format
-    let result = Async.RunSynchronously (call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put)
     async {
+      let urlPath = "deregister"
+      let uriBuilder = UriBuilder.ofCatalog state.config urlPath
+      let serializedCheckReg = Json.serialize dereg |> Json.format
+      let! result = call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
       match result with 
       | Choice1Of2 x -> 
          let _, (dur:Duration, _) = x
@@ -79,12 +79,12 @@ let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : Writ
 
 
 ///
-let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
-    let urlPath = "register"
-    let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-    let serializedCheckReg = Json.serialize reg |> Json.format
-    let result = Async.RunSynchronously (call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put)
+let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =    
     async {
+      let urlPath = "register"
+      let uriBuilder = UriBuilder.ofCatalog state.config urlPath
+      let serializedCheckReg = Json.serialize reg |> Json.format
+      let! result = call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
       match result with 
       | Choice1Of2 x -> 
          let _, (dur:Duration, _) = x
@@ -94,11 +94,11 @@ let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptio
 
 /// Service is used to query catalog entries for a given service
 let service (state : FaktaState) (service : string) (tag : string) (opts : QueryOptions) 
-  : Async<Choice<CatalogService list * QueryMeta, Error>> =
-    let urlPath = (sprintf "service/%s" service)
-    let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-    let result = Async.RunSynchronously (call state (catalogDottedPath "service") id uriBuilder HttpMethod.Get)
+  : Async<Choice<CatalogService list * QueryMeta, Error>> =    
     async {
+      let urlPath = (sprintf "service/%s" service)
+      let uriBuilder = UriBuilder.ofCatalog state.config urlPath
+      let! result = call state (catalogDottedPath "service") id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
          let body, (dur:Duration, resp:Response) = x
@@ -108,11 +108,11 @@ let service (state : FaktaState) (service : string) (tag : string) (opts : Query
     }
 
 /// Service is used to query catalog entries for a given service
-let services (state : FaktaState) (opts : QueryOptions) : Async<Choice<Map<string, string list> * QueryMeta, Error>> =
-    let urlPath = "services"
-    let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-    let result = Async.RunSynchronously (call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get)
+let services (state : FaktaState) (opts : QueryOptions) : Async<Choice<Map<string, string list> * QueryMeta, Error>> =    
     async {
+      let urlPath = "services"
+      let uriBuilder = UriBuilder.ofCatalog state.config urlPath
+      let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
          let body, (dur:Duration, resp:Response) = x

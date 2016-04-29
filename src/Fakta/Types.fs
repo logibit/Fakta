@@ -293,27 +293,27 @@ type AgentService =
 
 type AgentServiceCheck =
   {    
-    script   : string// `json:",omitempty"`
-    interval : string// `json:",omitempty"`
-    timeout  : string// `json:",omitempty"`
-    ttl      : string// `json:",omitempty"`
-    http     : string// `json:",omitempty"`
+    script   : string option// `json:",omitempty"`
+    interval : string option// `json:",omitempty"`
+    timeout  : string option// `json:",omitempty"`
+    ttl      : string option// `json:",omitempty"`
+    http     : string option// `json:",omitempty"`
     tcp      : string
     dockerContainerId :string
     shell    : string
-    status   : string  } // `json:",omitempty"`
+    status   : string option  } // `json:",omitempty"`
 
   static member ttlServiceCheck =
     let res = 
-      { script = ""
-        interval = "15s"
-        timeout = ""
-        ttl = "30s"
-        http = ""
+      { script = Some("")
+        interval = Some("15s")
+        timeout = Some("")
+        ttl = Some("30s")
+        http = Some("")
         tcp = ""
         dockerContainerId = ""
         shell = ""
-        status = "" }
+        status = Some("") }
     res
 
   static member FromJson (_ : AgentServiceCheck) =
@@ -341,21 +341,21 @@ type AgentServiceCheck =
   
   static member ToJson (ags : AgentServiceCheck) =
     Json.write "Script" ags.script
-    *> Json.write "Interval" ags.interval
-    *> Json.write "Timeout" ags.timeout
-    *> Json.write "TTL" ags.ttl
-    *> Json.write "HTTP" ags.http
+    *> Json.maybeWrite "Interval" ags.interval
+    *> Json.maybeWrite "Timeout" ags.timeout
+    *> Json.maybeWrite "TTL" ags.ttl
+    *> Json.maybeWrite "HTTP" ags.http
     *> Json.write "TCP" ags.tcp
     *> Json.write "DockerContainerID" ags.dockerContainerId
     *> Json.write "Shell" ags.shell
-    *> Json.write "Status" ags.status
+    *> Json.maybeWrite "Status" ags.status
 
 
 type AgentServiceChecks = AgentServiceCheck list
 
 type AgentServiceRegistration =
-  { id      : string //   `json:",omitempty"`
-    name    : string //  `json:",omitempty"`
+  { id      : string option //   `json:",omitempty"`
+    name    : string option //  `json:",omitempty"`
     tags    : string list option // `json:",omitempty"`
     port    : int option //     `json:",omitempty"`
     address : string option //  `json:",omitempty"`
@@ -365,8 +365,8 @@ type AgentServiceRegistration =
 
     static member serviceRegistration (id: string) : (AgentServiceRegistration) =
       let res = 
-        { id = id; 
-          name="serviceReg"; 
+        { id = Some(id); 
+          name= Some("serviceReg"); 
           tags = None; 
           address=Some("127.0.0.1"); 
           port=Some(8500); 
@@ -398,7 +398,7 @@ type AgentServiceRegistration =
   
   static member ToJson (ags : AgentServiceRegistration) =
     Json.write "ID" ags.id
-    *> Json.write "Name" ags.name
+    *> Json.maybeWrite "Name" ags.name
     *> Json.maybeWrite "Tags" ags.tags
     *> Json.maybeWrite "Port" ags.port
     *> Json.maybeWrite "Address" ags.address

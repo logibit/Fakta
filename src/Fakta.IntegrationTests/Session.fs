@@ -28,15 +28,15 @@ let tests =
         logger.Log (LogLine.sprintf [] "session id: %O name: %s" entry.id entry.name)
         logger.Log (LogLine.sprintf [] "value: %A" meta)
 
-//    testCase "renew session" <| fun _ ->
-//      let listing = Session.renew state sessionId []
-//      ensureSuccess listing <| fun (entry, meta) ->
-//        let logger = state.logger
-//        logger.Log (LogLine.sprintf [] "session id: %O name: %s" entry.id entry.name)
-//        logger.Log (LogLine.sprintf [] "value: %A" meta)
+    testCase "renew session" <| fun _ ->
+      let listing = Session.renew state sessionId []
+      ensureSuccess listing <| fun (entry, meta) ->
+        let logger = state.logger
+        logger.Log (LogLine.sprintf [] "session id: %O name: %s" entry.id entry.name)
+        logger.Log (LogLine.sprintf [] "value: %A" meta)
 
-    testCase "renew session periodically" <| fun _ ->
-      Async.RunSynchronously (Session.renewPeriodic state (Duration.FromSeconds 10L) sessionId [] (Duration.FromSeconds 30L))
+//    testCase "renew session periodically" <| fun _ ->
+//      Async.RunSynchronously (Session.renewPeriodic state (Duration.FromSeconds 10L) sessionId [] (Duration.FromSeconds 30L))
 
     testCase "get list of sessions" <| fun _ ->
       let listing = Session.list state []

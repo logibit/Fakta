@@ -20,10 +20,10 @@ let sessionDottedPath (funcName: string) =
 
 let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo : QueryOptions) 
   : Async<Choice<SessionEntry list * QueryMeta, Error>> =
-    let urlPath = if value.Equals("") then (sprintf "%s" action)  else (sprintf "%s/%s" action value)
-    let uriBuilder = UriBuilder.ofSession state.config urlPath
-    let result = Async.RunSynchronously (call state (sessionDottedPath action) id uriBuilder HttpMethod.Get)
     async {
+      let urlPath = if value.Equals("") then (sprintf "%s" action)  else (sprintf "%s/%s" action value)
+      let uriBuilder = UriBuilder.ofSession state.config urlPath
+      let! result = call state (sessionDottedPath action) id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
           let body, (dur:Duration, resp:Response) = x
@@ -34,23 +34,23 @@ let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo
 
 /// Create makes a new session. Providing a session entry can customize the
 /// session. It is recommended you give a Name as the options.
-let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<string * WriteMeta, Error>> =
-    let writeJsonBody : SessionOptions -> Json<unit> =
-        List.fold (fun acc -> function
-                  | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
-                  | Node node     -> acc *> Json.write "Node" node
-                  | Name name     -> acc *> Json.write "Name" name
-                  | Checks checks -> acc *> Json.write "Checks" checks
-                  | Behaviour sb  -> acc *> Json.write "Behavior" sb
-                  | TTL dur       -> acc *> Json.write "TTL" (Duration.consulString dur))
-                  (fun json -> Value (), Json.Object Map.empty)
-
-    let reqBody = Json.format (snd (writeJsonBody sessionOpts (Json.Null ())))
-
-    let urlPath = "create"
-    let uriBuilder = UriBuilder.ofSession state.config urlPath
-    let result = Async.RunSynchronously (call state (sessionDottedPath urlPath) (withJsonBody reqBody) uriBuilder HttpMethod.Put)
+let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<string * WriteMeta, Error>> =    
     async {
+      let writeJsonBody : SessionOptions -> Json<unit> =
+          List.fold (fun acc -> function
+                    | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
+                    | Node node     -> acc *> Json.write "Node" node
+                    | Name name     -> acc *> Json.write "Name" name
+                    | Checks checks -> acc *> Json.write "Checks" checks
+                    | Behaviour sb  -> acc *> Json.write "Behavior" sb
+                    | TTL dur       -> acc *> Json.write "TTL" (Duration.consulString dur))
+                    (fun json -> Value (), Json.Object Map.empty)
+
+      let reqBody = Json.format (snd (writeJsonBody sessionOpts (Json.Null ())))
+
+      let urlPath = "create"
+      let uriBuilder = UriBuilder.ofSession state.config urlPath
+      let! result =call state (sessionDottedPath urlPath) (withJsonBody reqBody) uriBuilder HttpMethod.Put
       match result with 
       | Choice1Of2 x -> 
           let body, (dur:Duration, resp:Response) = x
@@ -79,12 +79,12 @@ let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : Wri
   create state newSessionOpts wo
 
 /// Destroy invalides a given session
-let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =
-    let urlPath = (sprintf "destroy/%s" sessionID)
-    let uriBuilder = UriBuilder.ofSession state.config urlPath
-                     |> flip UriBuilder.mappendRange (writeOptsKvs opts)
-    let result = Async.RunSynchronously (call state (sessionDottedPath "destroy") id uriBuilder HttpMethod.Put)
+let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =    
     async {
+      let urlPath = (sprintf "destroy/%s" sessionID)
+      let uriBuilder = UriBuilder.ofSession state.config urlPath
+                       |> flip UriBuilder.mappendRange (writeOptsKvs opts)
+      let! result = call state (sessionDottedPath "destroy") id uriBuilder HttpMethod.Put
       match result with 
       | Choice1Of2 x -> 
           let body, (dur:Duration, resp:Response) = x
@@ -95,10 +95,10 @@ let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : As
 
 /// Info looks up a single session 
 let info (state : FaktaState) (sessionID : Session) (qo : QueryOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> =
-    let urlPath = (sprintf "info/%s" sessionID )
-    let uriBuilder = UriBuilder.ofSession state.config urlPath
-    let result = Async.RunSynchronously (call state (sessionDottedPath "info") id uriBuilder HttpMethod.Put)
     async {
+      let urlPath = (sprintf "info/%s" sessionID )
+      let uriBuilder = UriBuilder.ofSession state.config urlPath
+      let! result = call state (sessionDottedPath "info") id uriBuilder HttpMethod.Put
       match result with 
       | Choice1Of2 x -> 
           let body, (dur:Duration, resp:Response) = x
@@ -118,11 +118,11 @@ let node (state : FaktaState) (node : string) (qo : QueryOptions) : Async<Choice
   getSessionEntries node "node" state qo
 
 /// Renew renews the TTL on a given session
-let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> =
-    let urlPath = (sprintf "renew/%s" sessionID )
-    let uriBuilder = UriBuilder.ofSession state.config urlPath
-    let result = Async.RunSynchronously (call state (sessionDottedPath "renew") id uriBuilder HttpMethod.Put)
+let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> =    
     async {
+      let urlPath = sprintf "renew/%s" sessionID 
+      let uriBuilder = UriBuilder.ofSession state.config urlPath
+      let! result = call state (sessionDottedPath "renew") id uriBuilder HttpMethod.Put
       match result with 
       | Choice1Of2 x -> 
           let body, (dur:Duration, resp:Response) = x
@@ -138,16 +138,18 @@ let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<
 /// to ensure a session stays valid. 
 let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) =
   //func (s *Session) RenewPeriodic(initialTTL string, id string, q *WriteOptions, doneCh chan struct{}) error
-  let result = Async.RunSynchronously( renew state id wo )
   async {
-    let waitDur = (ttl / (int64)2)
+    let! result = renew state id wo 
+    let waitDur = ttl / int64 2
     let ms = (int)waitDur.Ticks/10000
     do! Async.Sleep(ms) 
     match result with 
-    | Choice1Of2 x -> 
-        let entry, _ = x
-        renewPeriodic state entry.ttl id wo |> ignore
-    | _ -> destroy state id wo |> ignore
+    | Choice1Of2 (entry, _) -> 
+        let! res = renewPeriodic state entry.ttl id wo doneCh
+        res
+    | _ -> 
+        let! r = destroy state id wo
+        r |> ignore
     
   }
       

@@ -17,28 +17,33 @@ let statusDottedPath (funcName: string) =
 
 /// Leader is used to query for a known leader 
 let leader (state : FaktaState) : Async<Choice<string, Error>> =  
-    let urlPath = "leader"
-    let uriBuilder = UriBuilder.ofStatus state.config urlPath
-    let result = Async.RunSynchronously (call state (statusDottedPath urlPath) id uriBuilder HttpMethod.Get)
     async {
+      let urlPath = "leader"
+      let uriBuilder = UriBuilder.ofStatus state.config urlPath
+      let! result = call state (statusDottedPath urlPath) id uriBuilder HttpMethod.Get
       match result with 
-      | Choice1Of2 x -> 
-          let body, (dur:Duration, resp:Response) = x
-          let item = if body = "" then "" else Json.deserialize (Json.parse body)
-          return Choice1Of2 (item)
+      | Choice1Of2 (body, (dur, resp)) -> 
+          match Json.tryParse body with
+          | Choice1Of2 json ->
+               match Json.tryDeserialize json with
+               | Choice1Of2 item -> return Choice1Of2(item)
+               | Choice2Of2 err -> return Choice2Of2(Message err)            
+          | Choice2Of2 err -> return Choice2Of2(Message err)
+          //let item = if body = "" then "" else Json.deserialize (Json.parse body)
+          //return Choice1Of2 (item)
       | Choice2Of2 err -> return Choice2Of2(err)
     }
 
 /// Peers is used to query for a known raft peers 
-let peers (state : FaktaState) : Async<Choice<string list, Error>> =
-    let urlPath = "peers"
-    let uriBuilder = UriBuilder.ofStatus state.config urlPath
-    let result = Async.RunSynchronously (call state (statusDottedPath urlPath) id uriBuilder HttpMethod.Get)
+let peers (state : FaktaState) : Async<Choice<string list, Error>> =    
     async {
+      let urlPath = "peers"
+      let uriBuilder = UriBuilder.ofStatus state.config urlPath
+      let! result = call state (statusDottedPath urlPath) id uriBuilder HttpMethod.Get
       match result with 
       | Choice1Of2 x -> 
           let body, (dur:Duration, resp:Response) = x
-          let items = if body = "" then [] else Json.deserialize (Json.parse body)
+          let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
           return Choice1Of2 (items)
       | Choice2Of2 err -> return Choice2Of2(err)
     }
