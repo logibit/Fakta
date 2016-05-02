@@ -19,55 +19,51 @@ let sessionDottedPath (funcName: string) =
   (sprintf "%s.%s" faktaSessionString funcName)
 
 let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo : QueryOptions) 
-  : Async<Choice<SessionEntry list * QueryMeta, Error>> =
-    async {
-      let urlPath = if value.Equals("") then (sprintf "%s" action)  else (sprintf "%s/%s" action value)
-      let uriBuilder = UriBuilder.ofSession state.config urlPath
-      let! result = call state (sessionDottedPath action) id uriBuilder HttpMethod.Get
-      match result with 
-      | Choice1Of2 x -> 
-          let body, (dur:Duration, resp:Response) = x
-          let items = if body = "" then [] else Json.deserialize (Json.parse body)
-          return Choice1Of2 (items, queryMeta dur resp)
-      | Choice2Of2 err -> return Choice2Of2(err)
-    }
+  : Async<Choice<SessionEntry list * QueryMeta, Error>> = async {
+  let urlPath = if value.Equals("") then (sprintf "%s" action)  else (sprintf "%s/%s" action value)
+  let uriBuilder = UriBuilder.ofSession state.config urlPath
+  let! result = call state (sessionDottedPath action) id uriBuilder HttpMethod.Get
+  match result with 
+  | Choice1Of2 (body, (dur, resp)) -> 
+      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      return Choice1Of2 (items, queryMeta dur resp)
+  | Choice2Of2 err -> return Choice2Of2(err)
+}
 
 /// Create makes a new session. Providing a session entry can customize the
 /// session. It is recommended you give a Name as the options.
-let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<string * WriteMeta, Error>> =    
-    async {
-      let writeJsonBody : SessionOptions -> Json<unit> =
-          List.fold (fun acc -> function
-                    | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
-                    | Node node     -> acc *> Json.write "Node" node
-                    | Name name     -> acc *> Json.write "Name" name
-                    | Checks checks -> acc *> Json.write "Checks" checks
-                    | Behaviour sb  -> acc *> Json.write "Behavior" sb
-                    | TTL dur       -> acc *> Json.write "TTL" (Duration.consulString dur))
-                    (fun json -> Value (), Json.Object Map.empty)
+let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<string * WriteMeta, Error>> = async {
+  let writeJsonBody : SessionOptions -> Json<unit> =
+      List.fold (fun acc -> function
+                | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
+                | Node node     -> acc *> Json.write "Node" node
+                | Name name     -> acc *> Json.write "Name" name
+                | Checks checks -> acc *> Json.write "Checks" checks
+                | Behaviour sb  -> acc *> Json.write "Behavior" sb
+                | TTL dur       -> acc *> Json.write "TTL" (Duration.consulString dur))
+                (fun json -> Value (), Json.Object Map.empty)
 
-      let reqBody = Json.format (snd (writeJsonBody sessionOpts (Json.Null ())))
+  let reqBody = Json.format (snd (writeJsonBody sessionOpts (Json.Null ())))
 
-      let urlPath = "create"
-      let uriBuilder = UriBuilder.ofSession state.config urlPath
-      let! result =call state (sessionDottedPath urlPath) (withJsonBody reqBody) uriBuilder HttpMethod.Put
-      match result with 
-      | Choice1Of2 x -> 
-          let body, (dur:Duration, resp:Response) = x
-          let id = Json.Object_ >?> Optics.Map.key_ "ID" >?> Json.String_
-          match Json.tryParse body with
-          | Choice1Of2 json ->
-            match Optic.get id json with
-            | Some id ->
-              return Choice1Of2 (id, { requestTime = dur })
+  let urlPath = "create"
+  let uriBuilder = UriBuilder.ofSession state.config urlPath
+  let! result =call state (sessionDottedPath urlPath) (withJsonBody reqBody) uriBuilder HttpMethod.Put
+  match result with 
+  | Choice1Of2 (body, (dur, resp)) -> 
+      let id = Json.Object_ >?> Optics.Map.key_ "ID" >?> Json.String_
+      match Json.tryParse body with
+      | Choice1Of2 json ->
+          match Optic.get id json with
+          | Some id ->
+            return Choice1Of2 (id, { requestTime = dur })
 
-            | None ->
-              return Choice2Of2 (Message "session create: unexpected json result value")
+          | None ->
+            return Choice2Of2 (Message "session create: unexpected json result value")
 
-          | Choice2Of2 err ->
-            return Choice2Of2 (Message err)
-      | Choice2Of2 err -> return Choice2Of2(err)
-    }
+      | Choice2Of2 err ->
+        return Choice2Of2 (Message err)
+  | Choice2Of2 err -> return Choice2Of2(err)
+}
 
 
 /// CreateNoChecks is like Create but is used specifically to create a session with no associated health checks. 
@@ -79,34 +75,30 @@ let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : Wri
   create state newSessionOpts wo
 
 /// Destroy invalides a given session
-let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> =    
-    async {
-      let urlPath = (sprintf "destroy/%s" sessionID)
-      let uriBuilder = UriBuilder.ofSession state.config urlPath
-                       |> flip UriBuilder.mappendRange (writeOptsKvs opts)
-      let! result = call state (sessionDottedPath "destroy") id uriBuilder HttpMethod.Put
-      match result with 
-      | Choice1Of2 x -> 
-          let body, (dur:Duration, resp:Response) = x
-          return Choice1Of2 { requestTime = dur }
-      | Choice2Of2 err -> return Choice2Of2(err)
-    }
+let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> = async {
+  let urlPath = (sprintf "destroy/%s" sessionID)
+  let uriBuilder = UriBuilder.ofSession state.config urlPath
+                    |> flip UriBuilder.mappendRange (writeOptsKvs opts)
+  let! result = call state (sessionDottedPath "destroy") id uriBuilder HttpMethod.Put
+  match result with 
+  | Choice1Of2 (_, (dur, _)) -> 
+      return Choice1Of2 { requestTime = dur }
+  | Choice2Of2 err -> return Choice2Of2(err)
+}
 
 
 /// Info looks up a single session 
-let info (state : FaktaState) (sessionID : Session) (qo : QueryOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> =
-    async {
-      let urlPath = (sprintf "info/%s" sessionID )
-      let uriBuilder = UriBuilder.ofSession state.config urlPath
-      let! result = call state (sessionDottedPath "info") id uriBuilder HttpMethod.Put
-      match result with 
-      | Choice1Of2 x -> 
-          let body, (dur:Duration, resp:Response) = x
-          let items = if body = "" then [] else Json.deserialize (Json.parse body)
-          let item = if items.Length = 0 then SessionEntry.empty else items.[0]
-          return Choice1Of2 (item, queryMeta dur resp)
-      | Choice2Of2 err -> return Choice2Of2(err)
-    }
+let info (state : FaktaState) (sessionID : Session) (qo : QueryOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> = async {
+  let urlPath = (sprintf "info/%s" sessionID )
+  let uriBuilder = UriBuilder.ofSession state.config urlPath
+  let! result = call state (sessionDottedPath "info") id uriBuilder HttpMethod.Put
+  match result with 
+  | Choice1Of2 (body, (dur, resp)) -> 
+      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let item = if items.Length = 0 then SessionEntry.empty else items.[0]
+      return Choice1Of2 (item, queryMeta dur resp)
+  | Choice2Of2 err -> return Choice2Of2(err)
+}
     
 
 /// List gets all active sessions 
@@ -118,38 +110,34 @@ let node (state : FaktaState) (node : string) (qo : QueryOptions) : Async<Choice
   getSessionEntries node "node" state qo
 
 /// Renew renews the TTL on a given session
-let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> =    
-    async {
-      let urlPath = sprintf "renew/%s" sessionID 
-      let uriBuilder = UriBuilder.ofSession state.config urlPath
-      let! result = call state (sessionDottedPath "renew") id uriBuilder HttpMethod.Put
-      match result with 
-      | Choice1Of2 x -> 
-          let body, (dur:Duration, resp:Response) = x
-          let items = if body = "" then [] else Json.deserialize (Json.parse body)
-          let item = if items.Length = 0 then SessionEntry.empty else items.[0]
-          return Choice1Of2 (item, queryMeta dur resp)
-      | Choice2Of2 err -> return Choice2Of2(err)
-    }
+let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> = async {
+  let urlPath = sprintf "renew/%s" sessionID 
+  let uriBuilder = UriBuilder.ofSession state.config urlPath
+  let! result = call state (sessionDottedPath "renew") id uriBuilder HttpMethod.Put
+  match result with 
+  | Choice1Of2 (body, (dur, resp)) -> 
+      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let item = if items.Length = 0 then SessionEntry.empty else items.[0]
+      return Choice1Of2 (item, queryMeta dur resp)
+  | Choice2Of2 err -> return Choice2Of2(err)
+}
 
 
 /// RenewPeriodic is used to periodically invoke Session.Renew on a session until
 /// a doneCh is closed. This is meant to be used in a long running goroutine
 /// to ensure a session stays valid. 
-let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) =
-  //func (s *Session) RenewPeriodic(initialTTL string, id string, q *WriteOptions, doneCh chan struct{}) error
-  async {
-    let! result = renew state id wo 
-    let waitDur = ttl / int64 2
-    let ms = (int)waitDur.Ticks/10000
-    do! Async.Sleep(ms) 
-    match result with 
-    | Choice1Of2 (entry, _) -> 
-        let! res = renewPeriodic state entry.ttl id wo doneCh
-        res
-    | _ -> 
-        let! r = destroy state id wo
-        r |> ignore
+let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) = async {
+  let! result = renew state id wo 
+  let waitDur = ttl / int64 2
+  let ms = (int)waitDur.Ticks/10000
+  do! Async.Sleep(ms) 
+  match result with 
+  | Choice1Of2 (entry, _) -> 
+      let! res = renewPeriodic state entry.ttl id wo doneCh
+      res
+  | _ -> 
+      let! r = destroy state id wo
+      r |> ignore
     
-  }
+}
       

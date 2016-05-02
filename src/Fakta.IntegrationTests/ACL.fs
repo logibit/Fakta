@@ -14,12 +14,12 @@ open Fakta.Logging
 [<Tests>]
 let tests =  
   let tokenID = 
-      let listing = ACL.create state (ACLEntry.ClientTokenInstance "") []
-      ensureSuccess listing <| fun (createdId, meta) ->
-        let logger = state.logger
-        logger.Log (LogLine.sprintf [] "acl id: %s" createdId)
-        logger.Log (LogLine.sprintf [] "value: %A" meta)
-        createdId
+    let listing = ACL.create state (ACLEntry.ClientTokenInstance "") []
+    ensureSuccess listing <| fun (createdId, meta) ->
+      let logger = state.logger
+      logger.Log (LogLine.sprintf [] "acl id: %s" createdId)
+      logger.Log (LogLine.sprintf [] "value: %A" meta)
+      createdId
 
   testList "ACL tests" [
     testCase "ACL.list -> all the ACL tokens " <| fun _ ->

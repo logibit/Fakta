@@ -56,6 +56,13 @@ type Random with
     x.NextBytes buffer
     BitConverter.ToUInt64(buffer, 0)
 
+module Choice =
+/// Folds a choice value by handling both cases explicitly.  
+  let fold (f:'a -> 'b) (g:'e -> 'b) = function
+    | Choice1Of2 a -> f a
+    | Choice2Of2 e -> g e
+
+
 module Chiron =
   open Chiron
   module Json =
