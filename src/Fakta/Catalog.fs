@@ -21,7 +21,7 @@ let datacenters (state : FaktaState) : Async<Choice<string list, Error>> = async
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let  item = if body = "" then [] else Json.deserialize (Json.parse body)
+      let  item = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (item)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -51,7 +51,7 @@ let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * 
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -90,7 +90,7 @@ let service (state : FaktaState) (service : string) (tag : string) (opts : Query
   let! result = call state (catalogDottedPath "service") id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) ->
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }

@@ -48,7 +48,7 @@ let list (state : FaktaState) (name : string) (opts : QueryOptions) : Async<Choi
   let! result = call state (eventDottedPath urlPath) id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let  items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let  items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }

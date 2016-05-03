@@ -59,7 +59,7 @@ let info (state : FaktaState) (tokenID : Id) (opts : QueryOptions) : Async<Choic
   let! result = call state (aclDottedPath "info") id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items.[0], queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -72,7 +72,7 @@ let list (state : FaktaState) (opts : QueryOptions) : Async<Choice<ACLEntry list
   let! result = call state (aclDottedPath urlPath) id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }

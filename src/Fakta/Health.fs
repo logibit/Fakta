@@ -21,7 +21,7 @@ let getValuesByName (action : string) (path : string) (state : FaktaState) (serv
   let! result = call state path id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -40,21 +40,19 @@ let state (state : FaktaState) (endpointState : string) (opts : QueryOptions) : 
 
 /// Service is used to query health information along with service info for a given service. It can optionally do server-side filtering on a tag or nodes with passing health checks only.
 let service (state : FaktaState) (service : string) (tag : string)
-            (passingOnly : bool) (opts : QueryOptions)
-            : Async<Choice<ServiceEntry list * QueryMeta, Error>> = async {
+  (passingOnly : bool) (opts : QueryOptions)
+  : Async<Choice<ServiceEntry list * QueryMeta, Error>> = async {
   let urlPath = ("service/" + service)
-  let tagName, tagValue = if tag.Equals("") then "","" else "tag",tag
-  let passingOnly = if passingOnly then "passing" else ""
   let uriBuilder = 
     UriBuilder.ofHealth state.config ("service/" + service)
       |> flip UriBuilder.mappendRange 
-        [ yield tagName, Some(tagValue) 
-          yield passingOnly, Some("") 
+        [ if not (tag.Equals("")) then yield "tag", Some(tag) 
+          if passingOnly then yield "passing", None
           yield! queryOptKvs opts]
   let! result = call state (healthDottedPath "service") id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }

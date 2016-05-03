@@ -57,10 +57,9 @@ type Random with
     BitConverter.ToUInt64(buffer, 0)
 
 module Choice =
-/// Folds a choice value by handling both cases explicitly.  
-  let fold (f:'a -> 'b) (g:'e -> 'b) = function
-    | Choice1Of2 a -> f a
-    | Choice2Of2 e -> g e
+  let bind (f:'a -> Choice<'b, 'e>) (a:Choice<'a, 'e>) = function
+    | Choice1Of2 a' -> f a'
+    | Choice2Of2 e ->  Choice2Of2 e
 
 
 module Chiron =

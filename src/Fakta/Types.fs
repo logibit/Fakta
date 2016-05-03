@@ -153,24 +153,24 @@ type AgentCheck =
     res
 
   static member FromJson (_ : AgentCheck) =
-      (fun nd chId n st ns out sId sName ->
-        { node = nd
-          checkID = chId
-          name = n
-          status = st
-          notes = ns
-          output = out
-          serviceId = sId
-          serviceName = sName
-            })
-      <!> Json.read "Node"
-      <*> Json.read "CheckID"
-      <*> Json.read "Name"
-      <*> Json.read "Status"
-      <*> Json.read "Notes"
-      <*> Json.read "Output"
-      <*> Json.read "ServiceID"
-      <*> Json.read "ServiceName"
+    (fun nd chId n st ns out sId sName ->
+      { node = nd
+        checkID = chId
+        name = n
+        status = st
+        notes = ns
+        output = out
+        serviceId = sId
+        serviceName = sName
+          })
+    <!> Json.read "Node"
+    <*> Json.read "CheckID"
+    <*> Json.read "Name"
+    <*> Json.read "Status"
+    <*> Json.read "Notes"
+    <*> Json.read "Output"
+    <*> Json.read "ServiceID"
+    <*> Json.read "ServiceName"
 
   static member ToJson (ac : AgentCheck) =
     Json.write "Node" ac.node
@@ -387,14 +387,14 @@ type AgentServiceRegistration =
           check = ch
           checks = chs
             })
-    <!> Json.read "ID"
-    <*> Json.read "Name"
-    <*> Json.read "Tags"
-    <*> Json.read "Port"
-    <*> Json.read "Address"
-    <*> Json.read "EnableTagOverride"
-    <*> Json.read "Check"
-    <*> Json.read "Checks"
+      <!> Json.read "ID"
+      <*> Json.read "Name"
+      <*> Json.read "Tags"
+      <*> Json.read "Port"
+      <*> Json.read "Address"
+      <*> Json.read "EnableTagOverride"
+      <*> Json.read "Check"
+      <*> Json.read "Checks"
   
   static member ToJson (ags : AgentServiceRegistration) =
     Json.write "ID" ags.id
@@ -528,12 +528,12 @@ type CatalogNode =
     Services : Map<string, AgentService> }
 
   static member FromJson (_ : CatalogNode) =
-      (fun n s ->
-        { node = n
-          Services = s
-            })
-      <!> Json.read "Node"
-      <*> Json.read "Services"
+    (fun n s ->
+      { node = n
+        Services = s
+          })
+    <!> Json.read "Node"
+    <*> Json.read "Services"
 
   static member ToJson (n : CatalogNode) =
     Json.write "Node" n.node
@@ -557,18 +557,18 @@ type CatalogRegistration =
     res
 
   static member FromJson (_ : CatalogRegistration) =
-      (fun n a dc s ch ->
-        { Node = n
-          Address = a
-          Datacenter = dc
-          Service = s
-          Check = ch
-            })
-      <!> Json.read "Node"
-      <*> Json.read "Address"
-      <*> Json.read "Datacenter"
-      <*> Json.read "Service"
-      <*> Json.read "Check"
+    (fun n a dc s ch ->
+      { Node = n
+        Address = a
+        Datacenter = dc
+        Service = s
+        Check = ch
+          })
+    <!> Json.read "Node"
+    <*> Json.read "Address"
+    <*> Json.read "Datacenter"
+    <*> Json.read "Service"
+    <*> Json.read "Check"
 
   static member ToJson (n : CatalogRegistration) =
     Json.write "Node" n.Node
@@ -587,22 +587,22 @@ type CatalogService =
     servicePort    : int }
 
   static member FromJson (_ : CatalogService) =
-      (fun n a sid sn sa sts sp ->
-        { node = n
-          address = a
-          serviceID = sid
-          serviceName = sn
-          serviceAddress = sa
-          serviceTags = sts
-          servicePort = sp
-            })
-      <!> Json.read "Node"
-      <*> Json.read "Address"
-      <*> Json.read "ServiceID"
-      <*> Json.read "ServiceName"
-      <*> Json.read "ServiceAddress"
-      <*> Json.read "ServiceTags"
-      <*> Json.read "ServicePort"
+    (fun n a sid sn sa sts sp ->
+      { node = n
+        address = a
+        serviceID = sid
+        serviceName = sn
+        serviceAddress = sa
+        serviceTags = sts
+        servicePort = sp
+          })
+    <!> Json.read "Node"
+    <*> Json.read "Address"
+    <*> Json.read "ServiceID"
+    <*> Json.read "ServiceName"
+    <*> Json.read "ServiceAddress"
+    <*> Json.read "ServiceTags"
+    <*> Json.read "ServicePort"
 
   static member ToJson (s : CatalogService) =
     Json.write "Node" s.node
@@ -821,47 +821,47 @@ type SessionEntry =
     /// The TTL field is a duration string, and like LockDelay it can use "s" as a suffix for seconds. If specified, it must be between 10s and 3600s currently. When provided, the session is invalidated if it is not renewed before the TTL expires. See the session internals page for more documentation of this feature.
     ttl         : Duration }
 
-    static member empty =
-      let res = 
-        { createIndex = UInt64.MinValue;
-          id = Guid.Empty;
-          name = "";
-          node = "";
-          checks = [];
-          lockDelay = UInt64.MinValue;
-          behavior = "";
-          ttl = Duration.Epsilon }
-      res
+  static member empty =
+    let res = 
+      { createIndex = UInt64.MinValue;
+        id = Guid.Empty;
+        name = "";
+        node = "";
+        checks = [];
+        lockDelay = UInt64.MinValue;
+        behavior = "";
+        ttl = Duration.Epsilon }
+    res
 
-    static member FromJson (_ : SessionEntry) =
-      (fun ci id n nd chs ld b ttl ->
-        { createIndex = ci
-          id = id
-          name = n
-          node = nd
-          checks = chs
-          lockDelay   = ld
-          behavior = b
-          ttl = ttl        
-            })
-      <!> Json.read "CreateIndex"
-      <*> Json.read "ID"
-      <*> Json.read "Name"
-      <*> Json.read "Node"
-      <*> Json.read "Checks"
-      <*> Json.read "LockDelay"
-      <*> Json.read "Behavior"
-      <*> Json.readWith Duration.FromJson "TTL"
+  static member FromJson (_ : SessionEntry) =
+    (fun ci id n nd chs ld b ttl ->
+      { createIndex = ci
+        id = id
+        name = n
+        node = nd
+        checks = chs
+        lockDelay   = ld
+        behavior = b
+        ttl = ttl        
+          })
+    <!> Json.read "CreateIndex"
+    <*> Json.read "ID"
+    <*> Json.read "Name"
+    <*> Json.read "Node"
+    <*> Json.read "Checks"
+    <*> Json.read "LockDelay"
+    <*> Json.read "Behavior"
+    <*> Json.readWith Duration.FromJson "TTL"
 
-    static member ToJson (se : SessionEntry) =
-      Json.write "CreateIndex" se.createIndex
-      *> Json.write "ID" se.id
-      *> Json.write "Name" se.name
-      *> Json.write "Node" se.node
-      *> Json.write "Checks" se.checks
-      *> Json.write "LockDelay" se.lockDelay
-      *> Json.write "Behavior" se.behavior
-      *> Duration.ToJson se.ttl
+  static member ToJson (se : SessionEntry) =
+    Json.write "CreateIndex" se.createIndex
+    *> Json.write "ID" se.id
+    *> Json.write "Name" se.name
+    *> Json.write "Node" se.node
+    *> Json.write "Checks" se.checks
+    *> Json.write "LockDelay" se.lockDelay
+    *> Json.write "Behavior" se.behavior
+    *> Duration.ToJson se.ttl
 
 type UserEvent =
   { id            : Id
@@ -873,51 +873,51 @@ type UserEvent =
     version       : int
     lTime         : int }
 
-    static member Instance =
-      let res = 
-        { id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
-          name = "deploy"
-          payload = [||]
-          nodeFilter = ""
-          serviceFilter = ""
-          tagFilter = ""
-          version = 1
-          lTime = 0 }
-      res
+  static member Instance =
+    let res = 
+      { id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
+        name = "deploy"
+        payload = [||]
+        nodeFilter = ""
+        serviceFilter = ""
+        tagFilter = ""
+        version = 1
+        lTime = 0 }
+    res
 
-    static member empty =
-      let res = 
-        { id = ""
-          name = ""
-          payload = [||]
-          nodeFilter = ""
-          serviceFilter = ""
-          tagFilter = ""
-          version = -1
-          lTime = -1 }
-      res
+  static member empty =
+    let res = 
+      { id = ""
+        name = ""
+        payload = [||]
+        nodeFilter = ""
+        serviceFilter = ""
+        tagFilter = ""
+        version = -1
+        lTime = -1 }
+    res
 
-    static member FromJson (_ : UserEvent) =
-      (fun id n pl nf sf tf v lt ->
-        { id = id
-          name = n
-          payload = match pl with
-                        | None   -> [||]
-                        | Some pl -> Convert.FromBase64String pl
-          nodeFilter = nf
-          serviceFilter = sf
-          tagFilter   = tf
-          version = v
-          lTime = lt        
-            })
-      <!> Json.read "ID"
-      <*> Json.read "Name"
-      <*> Json.read "Payload"
-      <*> Json.read "NodeFilter"
-      <*> Json.read "ServiceFilter"
-      <*> Json.read "TagFilter"
-      <*> Json.read "Version"
-      <*> Json.read "LTime"
+  static member FromJson (_ : UserEvent) =
+    (fun id n pl nf sf tf v lt ->
+      { id = id
+        name = n
+        payload = match pl with
+                      | None   -> [||]
+                      | Some pl -> Convert.FromBase64String pl
+        nodeFilter = nf
+        serviceFilter = sf
+        tagFilter   = tf
+        version = v
+        lTime = lt        
+          })
+    <!> Json.read "ID"
+    <*> Json.read "Name"
+    <*> Json.read "Payload"
+    <*> Json.read "NodeFilter"
+    <*> Json.read "ServiceFilter"
+    <*> Json.read "TagFilter"
+    <*> Json.read "Version"
+    <*> Json.read "LTime"
 
   static member ToJson (ue : UserEvent) =
     Json.write "ID" ue.id

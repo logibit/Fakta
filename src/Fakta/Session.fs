@@ -25,7 +25,7 @@ let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo
   let! result = call state (sessionDottedPath action) id uriBuilder HttpMethod.Get
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -94,7 +94,7 @@ let info (state : FaktaState) (sessionID : Session) (qo : QueryOptions) : Async<
   let! result = call state (sessionDottedPath "info") id uriBuilder HttpMethod.Put
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       let item = if items.Length = 0 then SessionEntry.empty else items.[0]
       return Choice1Of2 (item, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
@@ -116,7 +116,7 @@ let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<
   let! result = call state (sessionDottedPath "renew") id uriBuilder HttpMethod.Put
   match result with 
   | Choice1Of2 (body, (dur, resp)) -> 
-      let items = if body = "" then [] else Json.deserialize (Json.parse body)
+      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       let item = if items.Length = 0 then SessionEntry.empty else items.[0]
       return Choice1Of2 (item, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
