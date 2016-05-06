@@ -56,7 +56,7 @@ let tests =
         logger.Log (LogLine.sprintf [] "key: %s" listing)    
     
     testCase "agent.checkregister -> register a new check with the local agent" <| fun _ ->
-      let listing = Agent.checkRegister state (AgentCheckRegistration.ttlCheck checkId)
+      let listing = Agent.checkRegister state (AgentCheckRegistration.ttlCheck checkId "web app" "consul" "30s" "15s")
       listing |> ignore      
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 

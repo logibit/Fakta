@@ -86,13 +86,13 @@ type ACLEntry =
     ``type``    : string
     rules       : string }
 
-  static member ClientTokenInstance (tokenID : Id) =
+  static member ClientTokenInstance (tokenID : Id) (tokenName: string) (tokenType: string) =
     let res = 
       { createIndex = Index.MinValue;
         modifyIndex = Index.MinValue;
         id = tokenID;
-        name = "client token"
-        ``type`` = "client"
+        name = tokenName
+        ``type`` = tokenType
         rules = "" }
     res
 
@@ -140,17 +140,7 @@ type AgentCheck =
     serviceId   : string
     serviceName : string }
 
-  static member Instance (nodeName: string) =
-    let res = 
-      { node = nodeName
-        checkID = "service:consulcheck"
-        name = "consul test health check"
-        status = "passing"
-        notes = ""
-        output = ""
-        serviceId = "consul"
-        serviceName = "consul" }
-    res
+
 
   static member FromJson (_ : AgentCheck) =
     (fun nd chId n st ns out sId sName ->
@@ -244,17 +234,6 @@ type AgentService =
     createIndex       : int
     modifyIndex       : int}
 
-  static member Instance =
-    let res = 
-      { id = "consul"
-        service = "consul"
-        tags = Some([])
-        port = Port.MinValue
-        address = "127.0.0.1"
-        enableTagOverride = false
-        createIndex = 12
-        modifyIndex = 18 }
-    res
 
   static member FromJson (_ : AgentService) =
     (fun id s t p a eto ci mi ->
@@ -421,16 +400,16 @@ type AgentCheckRegistration =
     shell    : string option
     status   : string option }
 
-  static member ttlCheck (serviceId : string) : (AgentCheckRegistration) =
+  static member ttlCheck (id : string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =
     let res = 
-      { id = Some(serviceId); 
-        name = "web app"; 
+      { id = Some(id); 
+        name = name; 
         notes = None; 
-        serviceId = Some("consul");
+        serviceId = Some(serviceId);
         script = None
-        interval = Some("15s")
+        interval = Some(intr)
         timeout = None
-        ttl = Some("30s")
+        ttl = Some(ttl)
         http = None
         tcp = None
         dockerContainerId = None
@@ -492,13 +471,13 @@ type CatalogDeregistration =
     serviceId  : string
     checkId    : string }
 
-    static member Instance =
+    static member Instance (nodeName: string) (dc: string) (addr: string) (serviceId: string) (checkID: string) =
       let res = 
-        { node = "COMP05"
-          datacenter = "dc1"
-          address = "127.0.0.1"
-          serviceId = "consul"
-          checkId = "" }
+        { node = nodeName
+          datacenter = dc
+          address = addr
+          serviceId = serviceId
+          checkId = checkID }
       res
 
     static member FromJson (_ : CatalogDeregistration) =
@@ -546,14 +525,14 @@ type CatalogRegistration =
     Service    : AgentService
     Check      : AgentCheck }
 
-  static member Instance (nodeName: string) =
+  static member Instance (nodeName: string) (address: string) (agentCheck: AgentCheck) (agentServicë: AgentService) =
     let res = 
       {
-        Node = "COMP05"
-        Address = "127.0.0.1"
+        Node = nodeName
+        Address = address
         Datacenter = ""
-        Service = AgentService.Instance
-        Check = AgentCheck.Instance nodeName }
+        Service = agentServicë
+        Check = agentCheck }
     res
 
   static member FromJson (_ : CatalogRegistration) =
@@ -873,10 +852,10 @@ type UserEvent =
     version       : int
     lTime         : int }
 
-  static member Instance =
+  static member Instance (ID: string) (name: string) =
     let res = 
-      { id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
-        name = "deploy"
+      { id = ID
+        name = name
         payload = [||]
         nodeFilter = ""
         serviceFilter = ""
@@ -1010,6 +989,6 @@ type FaktaState =
     { config = FaktaConfig.Default
       logger = NoopLogger
       clock  = SystemClock.Instance
-      random = Random () }
+      random =  Random () }
 
 

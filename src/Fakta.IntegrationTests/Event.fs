@@ -14,7 +14,7 @@ open Fakta.Logging
 let tests =
   testList "Event tests" [
     testCase "can event fire" <| fun _ ->
-      let listing = Event.fire state UserEvent.Instance []
+      let listing = Event.fire state (UserEvent.Instance "b54fe110-7af5-cafc-d1fb-afc8ba432b1c" "test event") []
       listing |> ignore      
       ensureSuccess listing <| fun (listing, meta) ->
         let logger = state.logger
