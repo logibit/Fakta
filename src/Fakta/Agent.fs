@@ -20,20 +20,20 @@ let checkDeregister (state : FaktaState) (checkId : string) : Async<Choice<unit,
   let urlPath = (sprintf "check/deregister/%s" checkId)
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let! result = call state (agentDottedPath "checkDeregister") id uriBuilder HttpMethod.Put
-  match result with 
+  match result with
   | Choice1Of2 id -> 
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
 
-/// CheckRegister is used to register a new check with the local agent 
+/// CheckRegister is used to register a new check with the local agent
 let checkRegister (state : FaktaState) (checkRegistration : AgentCheckRegistration) : Async<Choice<unit, Error>> = async {
   let urlPath = (sprintf "check/register")
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let serializedCheckReg = Json.serialize checkRegistration |> Json.format
   let! result = call state (agentDottedPath "checkRegister") (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 id -> 
+  match result with
+  | Choice1Of2 id ->
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -44,21 +44,21 @@ let checks (state : FaktaState) : Async<Choice<Map<string, AgentCheck>, Error>> 
   let urlPath = (sprintf "checks")
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let! result = call state (agentDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let  item = if body = "" then Map.empty else Json.deserialize (Json.parse body)
       return Choice1Of2 (item)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
 
-  
+
 let setNodeMaintenanceMode (state : FaktaState) (enable : bool) : Async<Choice<unit, Error>> = async {
   let urlPath = (sprintf "maintenance")
-  let uriBuilder = UriBuilder.ofAgent state.config urlPath 
+  let uriBuilder = UriBuilder.ofAgent state.config urlPath
                     |> flip UriBuilder.mappendRange [ if enable then yield "enable", Some "true" else yield "enable", Some "false" ]
   let! result = call state (agentDottedPath urlPath) id uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 id -> 
+  match result with
+  | Choice1Of2 id ->
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -66,11 +66,11 @@ let setNodeMaintenanceMode (state : FaktaState) (enable : bool) : Async<Choice<u
 
 let setServiceMaintenanceMode (state : FaktaState) (enable : bool) (serviceId : string) : Async<Choice<unit, Error>> = async {
   let urlPath = (sprintf "service/maintenance/%s" serviceId)
-  let uriBuilder = UriBuilder.ofAgent state.config urlPath 
+  let uriBuilder = UriBuilder.ofAgent state.config urlPath
                     |> flip UriBuilder.mappendRange [ yield "enable", Some((enable.ToString().ToLower())) ]
   let! result = call state (agentDottedPath "service.maintenance") id uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 id -> 
+  match result with
+  | Choice1Of2 id ->
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -95,23 +95,23 @@ let enableServiceMaintenance (state : FaktaState) (serviceId : Id) (reason : str
 /// Join is used to instruct the agent to attempt a join to another cluster member
 let join (state : FaktaState) (addr : string) (wan : bool) : Async<Choice<unit, Error>> = async {
   let urlPath = (sprintf "join/%s" addr)
-  let uriBuilder = UriBuilder.ofAgent state.config urlPath 
+  let uriBuilder = UriBuilder.ofAgent state.config urlPath
                     |> flip UriBuilder.mappendRange [ yield "wan", if wan then Some("1") else Some("0") ]
   let! result = call state (agentDottedPath "join") id uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 id -> 
+  match result with
+  | Choice1Of2 id ->
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
-  
+
 
 /// Members returns the known gossip members. The WAN flag can be used to query a server for WAN members.
 let members (state : FaktaState) (wan : bool) : Async<Choice<AgentMember list, Error>> = async {
   let urlPath = (sprintf "members")
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let! result = call state (agentDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let  item = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (item)
   | Choice2Of2 err -> return Choice2Of2(err)
@@ -123,30 +123,30 @@ let self (state : FaktaState) : Async<Choice<Map<string, Map<string, Chiron.Json
   let urlPath = (sprintf "self")
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let! result = call state (agentDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let  item = if body = "" then Map.empty else Json.deserialize (Json.parse body)
       return Choice1Of2 (item)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
 
 /// NodeName is used to get the node name of the agent
-let nodeName (state : FaktaState) : Async<Choice<string, Error>> = async {    
+let nodeName (state : FaktaState) : Async<Choice<string, Error>> = async {
   let! result = self state
   match result with
-  | Choice1Of2 map -> 
-      let r, err = 
+  | Choice1Of2 map ->
+      let r, err =
         match map.TryFind("Config") with
         | Some config ->
             match config.TryFind("NodeName") with
-              | Some nodeNameJson -> 
+              | Some nodeNameJson ->
                   let nodeName = Json.format nodeNameJson
                   nodeName, false
               | None -> "Node name not found", true
         | None -> "Config section not found", true
-      if err =  false 
-        then return Choice1Of2(r) 
-        else return Choice2Of2 (Message r)          
+      if err =  false
+        then return Choice1Of2(r)
+        else return Choice2Of2 (Message r)
   | Choice2Of2 err ->  return Choice2Of2 (err)
 }
 
@@ -155,8 +155,8 @@ let serviceDeregister (state : FaktaState) (serviceId : Id) : Async<Choice<unit,
   let urlPath = (sprintf "check/deregister/%s" serviceId)
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let! result = call state (agentDottedPath "service.deregister") id uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 id -> 
+  match result with
+  | Choice1Of2 id ->
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -168,8 +168,8 @@ let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : 
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let serializedCheckReg = Json.serialize service |> Json.format
   let! result = call state (agentDottedPath "service.register") (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 id -> 
+  match result with
+  | Choice1Of2 id ->
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -180,8 +180,8 @@ let services (state : FaktaState) : Async<Choice<Map<string, AgentService>, Erro
   let urlPath = "services"
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let! result = call state (agentDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let  item:Map<string,AgentService> = if body = "" then Map.empty else Json.deserialize (Json.parse body)
       return Choice1Of2 (item)
   | Choice2Of2 err -> return Choice2Of2(err)
@@ -190,12 +190,12 @@ let services (state : FaktaState) : Async<Choice<Map<string, AgentService>, Erro
 /// UpdateTTL is used to update the TTL of a check
 let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : string) : Async<Choice<unit, Error>> = async {
   let urlPath = (sprintf  "check/%s/%s" status checkId)
-  let uriBuilder = UriBuilder.ofAgent state.config urlPath 
+  let uriBuilder = UriBuilder.ofAgent state.config urlPath
                     |> flip UriBuilder.mappendRange [ yield "note", Some(note) ]
   let checkUpdate = Json.serialize (CheckUpdate.GetUpdateJson status note ) |> Json.format
   let! result = call state (agentDottedPath (sprintf "check.%s" status)) (withJsonBody checkUpdate) uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 id -> 
+  match result with
+  | Choice1Of2 id ->
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -218,8 +218,8 @@ let forceLeave (state : FaktaState) (node : string) : Async<Choice<unit, Error>>
   let urlPath = (sprintf "force-leave/%s" node)
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
   let! result = call state (agentDottedPath "force-leave") id uriBuilder HttpMethod.Put
-  match result with 
-    | Choice1Of2 id -> 
+  match result with
+    | Choice1Of2 id ->
         return Choice1Of2 ()
     | Choice2Of2 err -> return Choice2Of2(err)
 }

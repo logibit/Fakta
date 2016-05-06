@@ -19,8 +19,8 @@ let datacenters (state : FaktaState) : Async<Choice<string list, Error>> = async
   let urlPath = "datacenters"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let  item = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (item)
   | Choice2Of2 err -> return Choice2Of2(err)
@@ -32,10 +32,10 @@ let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choi
   let urlPath = (sprintf "node/%s" node)
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath "node") id uriBuilder HttpMethod.Get
-  match result with 
+  match result with
   | Choice1Of2 (body, (dur, resp)) ->
-      if body = "" 
-      then 
+      if body = ""
+      then
         return Choice2Of2 (Message (sprintf "Node %s not found" node))
       else
         let items:CatalogNode =  Json.deserialize (Json.parse body)
@@ -49,22 +49,22 @@ let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * 
   let urlPath = "nodes"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
 
 
-/// 
+///
 let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> = async {
   let urlPath = "deregister"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let serializedCheckReg = Json.serialize dereg |> Json.format
   let! result = call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 (_, (dur, _)) -> 
+  match result with
+  | Choice1Of2 (_, (dur, _)) ->
       return Choice1Of2 (writeMeta dur)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
@@ -76,19 +76,19 @@ let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptio
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let serializedCheckReg = Json.serialize reg |> Json.format
   let! result = call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 (_, (dur, _)) -> 
+  match result with
+  | Choice1Of2 (_, (dur, _)) ->
       return Choice1Of2 (writeMeta dur)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
 
 /// Service is used to query catalog entries for a given service
-let service (state : FaktaState) (service : string) (tag : string) (opts : QueryOptions) 
+let service (state : FaktaState) (service : string) (tag : string) (opts : QueryOptions)
   : Async<Choice<CatalogService list * QueryMeta, Error>> = async {
   let urlPath = (sprintf "service/%s" service)
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath "service") id uriBuilder HttpMethod.Get
-  match result with 
+  match result with
   | Choice1Of2 (body, (dur, resp)) ->
       let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
@@ -100,10 +100,9 @@ let services (state : FaktaState) (opts : QueryOptions) : Async<Choice<Map<strin
   let urlPath = "services"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let items = if body = "" then Map.empty else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
-  

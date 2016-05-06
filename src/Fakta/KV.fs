@@ -10,7 +10,7 @@ open Fakta.Impl
 
 ////////////////////// QUERYING /////////////////////
 
-/// Get is used to lookup a single key 
+/// Get is used to lookup a single key
 let get (state : FaktaState) (key : Key) (opts : QueryOptions) : Async<Choice<KVPair * QueryMeta, Error>> =
   let getResponse = getResponse state "Fakta.KV.get"
   let req =
@@ -46,7 +46,7 @@ let get (state : FaktaState) (key : Key) (opts : QueryOptions) : Async<Choice<KV
 let getRaw (state : FaktaState) (key : Key) (opts : QueryOptions) : Async<Choice<byte [] * QueryMeta, Error>> =
   raise (TBD "TODO")
 
-/// Keys is used to list all the keys under a prefix. Optionally, a separator can be used to limit the responses. 
+/// Keys is used to list all the keys under a prefix. Optionally, a separator can be used to limit the responses.
 let keys (s : FaktaState) (key : Key) (sep : string option) (opts : QueryOptions) : Async<Choice<Keys * QueryMeta, Error>> =
   raise (TBD "TODO")
 
@@ -79,7 +79,7 @@ let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Async<Choic
 
 ////////////////////// WRITING /////////////////////
 
-let private mkReq methd (state : FaktaState) (kvp : KVPair) fUri (opts : WriteOptions) (body : RequestBody) = 
+let private mkReq methd (state : FaktaState) (kvp : KVPair) fUri (opts : WriteOptions) (body : RequestBody) =
   UriBuilder.ofKVKey state.config kvp.key
   |> flip UriBuilder.mappendRange (configOptKvs state.config)
   |> flip UriBuilder.mappendRange (writeOptsKvs opts)
@@ -141,7 +141,7 @@ let delete (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : Wri
            opts (BodyRaw [||])
   |> boolResponse (getResponse state "Fakta.KV.delete")
 
-/// DeleteCAS is used for a Delete Check-And-Set operation. The Key and ModifyIndex are respected. Returns true on success or false on failures. 
+/// DeleteCAS is used for a Delete Check-And-Set operation. The Key and ModifyIndex are respected. Returns true on success or false on failures.
 let deleteCAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
   delete state kvp (Some kvp.modifyIndex) opts
 
@@ -163,12 +163,12 @@ let put (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteO
         opts (BodyRaw kvp.value)
   |> boolResponse (getResponse state "Fakta.KV.put")
 
-/// CAS is used for a Check-And-Set operation. The Key, ModifyIndex, Flags and Value are respected. Returns true on success or false on failures. 
+/// CAS is used for a Check-And-Set operation. The Key, ModifyIndex, Flags and Value are respected. Returns true on success or false on failures.
 let CAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
   put state kvp (Some kvp.modifyIndex) opts
 
 /// Release is used for a lock release operation. The Key, Flags, Value and
-/// Session are respected. Returns true on success or false on failures. 
+/// Session are respected. Returns true on success or false on failures.
 let release (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Async<Choice<bool * WriteMeta, Error>> =
   if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
   mkPut state kvp (flip UriBuilder.mappend ("release", kvp.session)) opts (BodyRaw [||])

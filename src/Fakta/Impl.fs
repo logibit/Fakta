@@ -37,7 +37,7 @@ type UriBuilder =
 
   static member ofEvent (config : FaktaConfig) (s : string) =
     UriBuilder.ofModuleAndPath config "event" s
-    
+
   static member ofCatalog (config : FaktaConfig) (s : string) =
     UriBuilder.ofModuleAndPath config "catalog" s
 
@@ -124,7 +124,7 @@ let queryMeta dur (resp : Response) =
     knownLeader = headerFor "X-Consul-Knownleader" |> Option.fold (fun s t -> Boolean.Parse(string t)) false
     requestTime = dur }
 
-let writeMeta (dur: Duration) : (WriteMeta) = 
+let writeMeta (dur: Duration) : (WriteMeta) =
   let res:WriteMeta = {requestTime = dur}
   res
 
@@ -177,12 +177,11 @@ let call (state : FaktaState) (dottedPath:string) (addToReq) (uriB: UriBuilder) 
     if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
       return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
     else
-      match resp.StatusCode with      
-      | 200 -> 
+      match resp.StatusCode with
+      | 200 ->
         let! body = Response.readBodyAsString resp
         return Choice1Of2 (body,(dur, resp))
       | _ ->  return Choice2Of2 (Message (sprintf "%s error %d" dottedPath resp.StatusCode))
   | Choice2Of2 exx ->
     return Choice2Of2 (Error.ConnectionFailed exx)
   }
-  

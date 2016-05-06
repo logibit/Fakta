@@ -87,7 +87,7 @@ type Duration with
   static member FromJson =
     (function
     | String s -> Value (Duration.ParsedDuration s)
-    | json -> 
+    | json ->
       Json.formatWith JsonFormattingOptions.SingleLine json
       |> sprintf "Expected a string containing a valid duration: %s"
       |> Error)

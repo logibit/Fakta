@@ -157,4 +157,4 @@ module Logger =
     logger.Debug f_line
 
   let verbose (logger : Logger) f_line =
-    logger.Verbose f_line  
+    logger.Verbose f_line

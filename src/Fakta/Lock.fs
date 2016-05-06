@@ -3,7 +3,7 @@
 open NodaTime
 
 /// Release is used for a lock release operation. The Key, Flags, Value and
-/// Session are respected. Returns true on success or false on failures. 
+/// Session are respected. Returns true on success or false on failures.
 let destroy (s : FaktaState) : Async<Choice<unit, Error>> =
   raise (TBD "TODO")
 
@@ -14,10 +14,10 @@ let destroy (s : FaktaState) : Async<Choice<unit, Error>> =
 /// intervention, etc. It is NOT safe to assume that the lock is held until
 /// Unlock() unless the Session is specifically created without any associated
 /// health checks. By default Consul sessions prefer liveness over safety and an
-/// application must be able to handle the lock being lost. 
+/// application must be able to handle the lock being lost.
 let lock (s : FaktaState) =
   raise (TBD "TODO") // func (l *Lock) Lock(stopCh <-chan struct{}) (<-chan struct{}, error)
 
-/// Unlock released the lock. It is an error to call this if the lock is not currently held. 
+/// Unlock released the lock. It is an error to call this if the lock is not currently held.
 let unlock (s : FaktaState) : Async<Choice<unit, Error>> =
   raise (TBD "TODO")

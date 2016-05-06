@@ -13,14 +13,14 @@ let faktaHealthString = "Fakta.health"
 let healthDottedPath (funcName: string) =
   (sprintf "%s.%s" faktaHealthString funcName)
 
-let getValuesByName (action : string) (path : string) (state : FaktaState) (service : string) (opts : QueryOptions) 
+let getValuesByName (action : string) (path : string) (state : FaktaState) (service : string) (opts : QueryOptions)
   : Async<Choice<HealthCheck list * QueryMeta, Error>> = async {
   let urlPath = action
-  let uriBuilder = UriBuilder.ofHealth state.config urlPath 
+  let uriBuilder = UriBuilder.ofHealth state.config urlPath
                     |> flip UriBuilder.mappendRange (queryOptKvs opts)
   let! result = call state path id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
@@ -28,7 +28,7 @@ let getValuesByName (action : string) (path : string) (state : FaktaState) (serv
 
 /// Checks is used to return the checks associated with a service
 let checks (state : FaktaState) (service : string) (opts : QueryOptions) : Async<Choice<HealthCheck list * QueryMeta, Error>> =
-  getValuesByName ("checks/" + service)  (healthDottedPath "checks") state service opts 
+  getValuesByName ("checks/" + service)  (healthDottedPath "checks") state service opts
 
 
 /// Node is used to query for checks belonging to a given node
@@ -43,17 +43,16 @@ let service (state : FaktaState) (service : string) (tag : string)
   (passingOnly : bool) (opts : QueryOptions)
   : Async<Choice<ServiceEntry list * QueryMeta, Error>> = async {
   let urlPath = ("service/" + service)
-  let uriBuilder = 
+  let uriBuilder =
     UriBuilder.ofHealth state.config ("service/" + service)
-      |> flip UriBuilder.mappendRange 
-        [ if not (tag.Equals("")) then yield "tag", Some(tag) 
+      |> flip UriBuilder.mappendRange
+        [ if not (tag.Equals("")) then yield "tag", Some(tag)
           if passingOnly then yield "passing", None
           yield! queryOptKvs opts]
   let! result = call state (healthDottedPath "service") id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
-  

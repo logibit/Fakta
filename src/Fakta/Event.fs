@@ -21,13 +21,13 @@ let fire (state : FaktaState) (event : UserEvent) (opts : WriteOptions) : Async<
   let serviceVal, serviceKey = if event.nodeFilter.Equals("") then "","" else "service", event.serviceFilter
   let tagVal, tagKey = if event.nodeFilter.Equals("") then "","" else "tag", event.tagFilter
   let urlPath = (sprintf "fire/%s" event.name)
-  let uriBuilder = UriBuilder.ofEvent state.config urlPath 
-                    |> flip UriBuilder.mappendRange [ yield nodeVal, Some(nodeKey) 
+  let uriBuilder = UriBuilder.ofEvent state.config urlPath
+                    |> flip UriBuilder.mappendRange [ yield nodeVal, Some(nodeKey)
                                                       yield serviceVal, Some(serviceKey)
                                                       yield tagVal, Some(tagKey)]
   let! result = call state (eventDottedPath "fire") id uriBuilder HttpMethod.Put
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let  item = if body = "" then UserEvent.empty else Json.deserialize (Json.parse body)
       return Choice1Of2 (item.id, writeMeta dur)
   | Choice2Of2 err -> return Choice2Of2(err)
@@ -41,13 +41,13 @@ let idToIndex (state : FaktaState) (uuid : Guid) : uint64 =
   let highVal = UInt64.Parse(upper, System.Globalization.NumberStyles.HexNumber)
   lowVal ^^^ highVal
 
-/// List is used to get the most recent events an agent has received. This list can be optionally filtered by the name. This endpoint supports quasi-blocking queries. The index is not monotonic, nor does it provide provide LastContact or KnownLeader. 
+/// List is used to get the most recent events an agent has received. This list can be optionally filtered by the name. This endpoint supports quasi-blocking queries. The index is not monotonic, nor does it provide provide LastContact or KnownLeader.
 let list (state : FaktaState) (name : string) (opts : QueryOptions) : Async<Choice<UserEvent list * QueryMeta, Error>> = async {
   let urlPath = "list"
   let uriBuilder = UriBuilder.ofEvent state.config urlPath
   let! result = call state (eventDottedPath urlPath) id uriBuilder HttpMethod.Get
-  match result with 
-  | Choice1Of2 (body, (dur, resp)) -> 
+  match result with
+  | Choice1Of2 (body, (dur, resp)) ->
       let  items = if body = "[]" then [] else Json.deserialize (Json.parse body)
       return Choice1Of2 (items, queryMeta dur resp)
   | Choice2Of2 err -> return Choice2Of2(err)
