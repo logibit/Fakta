@@ -28,6 +28,23 @@ get invalidated.
 Together with [Registrator][reg] and this library, F# code can participate in micro-
 service architectures easily.
 
+## Compiling and running initial tests
+
+First, run:
+
+``` bash
+./tools/consul.sh agent -dev -bind 127.0.0.1
+```
+
+Then in another terminal:
+
+``` bash
+bundle exec rake
+```
+
+Which will call xbuild/msbuild and compile the project, run unit tests and then
+finally run the integration tests.
+
 ## Milestones
 
 [All Milestones](https://github.com/haf/Fakta/milestones)
