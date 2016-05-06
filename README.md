@@ -150,6 +150,28 @@ Service
 All development is done on `master` branch which should always be release-able;
 write unit tests for your changes and it shall be fine.
 
+### Running local instance of Consul 
+1. enable [ACL support][acl-support] by creating json config file "server.json" looking like this:
+```
+{
+ "bootstrap": false,
+ "server": true,
+ "datacenter": "dc1",
+ "data_dir": "/tmp/consul",
+ "encrypt": "yJqVBxe12ZfE3z+4QSk8qA==",
+ "log_level": "INFO",
+ "acl_datacenter": "dc1",
+ "acl_default_policy": "allow",
+ "acl_master_token": "secret",
+ "acl_token": "secret"
+}
+```
+2. run consul agent with: 
+```
+consul agent -dev -config-file=path to server.json
+```
+3. Open *http://localhost:consul_port/ui/#/dc1/acls (typically http://127.0.0.1:8500/ui/#/dc1/acls )* and create token called the same like the master token in config file
+
 ### Compiling
 
 You compile with Rake/albacore, the best build system for .Net/mono:
@@ -191,4 +213,5 @@ bundle exec rake tests:integration
  [docs-Catalog]: https://www.consul.io/docs/agent/http/catalog.html
  [docs-Event]: https://www.consul.io/docs/agent/http/event.html
  [docs-Health]: https://www.consul.io/docs/agent/http/health.html
+ [acl-support]: https://www.consul.io/docs/agent/options.html
  [reg]: https://github.com/gliderlabs/registrator
