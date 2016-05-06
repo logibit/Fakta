@@ -70,7 +70,7 @@ let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Async<Choic
         return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
       else
         let! body = Response.readBodyAsString resp
-        let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
+        let items = if body = "" then [] else Json.deserialize (Json.parse body)
         return Choice1Of2 (items, queryMeta dur resp)
 
     | Choice2Of2 exx ->
