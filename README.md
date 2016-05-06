@@ -77,37 +77,116 @@ Note that Vault is on top, because all the Prio 0's of Consul are already done.
  - [Official Ruby Client Docs](http://www.rubydoc.info/gems/vault/0.1.5)
  - [The HTTP API](https://vaultproject.io/docs/http/index.html)
 
+### [ACL][docs-Acl]
+
+ - [x] clone
+ - [x] create
+ - [x] destroy
+ - [x] info
+ - [x] list
+ - [x] update
+
+### [Agent][docs-Agent]
+
+ - [x] checkRegister
+ - [x] checkDeregister
+ - [x] checks
+ - [x] enableNodeMaintenance
+ - [x] disableNodeMaintenance
+ - [x] enableServiceMaintenance
+ - [x] disableServiceMaintenance
+ - [x] join
+ - [x] members
+ - [x] self
+ - [x] serviceRegister
+ - [x] serviceDeregister
+ - [x] nodeName
+ - [x] services
+ - [x] passTTL
+ - [x] warnTTL
+ - [x] failTTL
+ - [x] forceLeave
+ 
+### [Catalog][docs-Catalog]
+
+ - [x] datacenters
+ - [x] node
+ - [x] nodes
+ - [x] deregister
+ - [x] register
+ - [x] service
+ - [x] services
+
+### [Event][docs-Event]
+
+ - [x] fire
+ - [x] list
+ - [x] idToIndex
+ 
+### [Health][docs-Health]
+
+ - [x] checks
+ - [x] node
+ - [x] state
+ - [x] service
+
 ### [KV][docs-KV]
 
- - [ ] acquire
- - [ ] CAS
- - [ ] delete
- - [ ] deleteCAS
- - [ ] deleteTree
- - [ ] getRaw
+ - [x] acquire
+ - [x] CAS
+ - [x] delete
+ - [x] deleteCAS
+ - [x] deleteTree
+ - [x] getRaw
  - [x] get
- - [ ] keys
+ - [x] keys
  - [x] list
  - [x] put
- - [ ] release
+ - [x] release
 
 ### [Session][docs-Session]
 
  - [x] create
- - [ ] createNoChecks
+ - [x] createNoChecks
  - [x] destroy
- - [ ] info
- - [ ] list
- - [ ] node
- - [ ] renew
- - [ ] renewPeriodic
+ - [x] info
+ - [x] list
+ - [x] node
+ - [x] renew
+ - [x] renewPeriodic
 
-### Service
+### [Status][docs-Status]
+ - [x] leader
+ - [x] peers
+
+Service
 
 ## Helping Out
 
 All development is done on `master` branch which should always be release-able;
 write unit tests for your changes and it shall be fine.
+
+### Running local instance of Consul 
+1. enable [ACL support][acl-support] by creating json config file "server.json" looking like this:
+```
+{
+ "bootstrap": false,
+ "server": true,
+ "datacenter": "dc1",
+ "data_dir": "/tmp/consul",
+ "encrypt": "yJqVBxe12ZfE3z+4QSk8qA==",
+ "log_level": "INFO",
+ "acl_datacenter": "dc1",
+ "acl_default_policy": "allow",
+ "acl_master_token": "secret",
+ "acl_token": "secret"
+}
+```
+2. run consul agent with: 
+```
+consul agent -dev -config-file=path to server.json
+```
+3. Open *http://localhost:consul_port/ui/#/dc1/acls (typically http://127.0.0.1:8500/ui/#/dc1/acls )* and create token called the same like the master token in config file
 
 ### Compiling
 
@@ -144,4 +223,11 @@ bundle exec rake tests:integration
  [docs-LE]: https://www.consul.io/docs/guides/leader-election.html
  [docs-KV]: https://www.consul.io/docs/agent/http/kv.html
  [docs-Session]: https://www.consul.io/docs/agent/http/session.html
+ [docs-Status]: https://www.consul.io/docs/agent/http/status.html
+ [docs-Acl]: https://www.consul.io/docs/agent/http/acl.html
+ [docs-Agent]: https://www.consul.io/docs/agent/http/agent.html
+ [docs-Catalog]: https://www.consul.io/docs/agent/http/catalog.html
+ [docs-Event]: https://www.consul.io/docs/agent/http/event.html
+ [docs-Health]: https://www.consul.io/docs/agent/http/health.html
+ [acl-support]: https://www.consul.io/docs/agent/options.html
  [reg]: https://github.com/gliderlabs/registrator
