@@ -68,7 +68,6 @@ Note that Vault is on top, because all the Prio 0's of Consul are already done.
  - [x] info
  - [x] list
  - [x] update
- - 
 
 ### [Agent][docs-Agent]
 
