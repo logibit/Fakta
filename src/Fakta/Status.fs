@@ -1,4 +1,5 @@
 ﻿module Fakta.Status
+
 open Fakta
 open Fakta.Logging
 open Fakta.Impl
@@ -8,7 +9,7 @@ open NodaTime
 open HttpFs.Client
 open Chiron
 
-let faktaStatusString = "Fakta.status"
+let faktaStatusString = "Fakta.Status"
 
 let statusDottedPath (funcName: string) =
   (sprintf "%s.%s" faktaStatusString funcName)
@@ -39,7 +40,7 @@ let peers (state : FaktaState) : Async<Choice<string list, Error>> =  async {
   let! result = call state (statusDottedPath urlPath) id uriBuilder HttpMethod.Get
   match result with
   | Choice1Of2 (body, (dur, resp)) ->
-      let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
-      return Choice1Of2 (items)
+    let items = if body = "[]" then [] else Json.deserialize (Json.parse body)
+    return Choice1Of2 (items)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
