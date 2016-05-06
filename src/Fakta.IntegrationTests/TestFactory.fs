@@ -16,7 +16,7 @@ let logger =
       member x.Log line       = printfn "[V] %A" line }
 
 let state = { config = config
-              logger = NoopLogger //logger
+              logger = logger //NoopLogger //logger
               clock  = SystemClock.Instance 
               random = Random () }
 

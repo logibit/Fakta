@@ -66,17 +66,16 @@ type Node =
   { node    : string
     address : string }
 
-    static member FromJson (_ : Node) =
-        (fun n a ->
-          { node = n
-            address = a
-              })
-        <!> Json.read "Node"
-        <*> Json.read "Address"
+  static member FromJson (_ : Node) =
+    (fun n a ->
+      { node = n
+        address = a })
+    <!> Json.read "Node"
+    <*> Json.read "Address"
 
-    static member ToJson (n : Node) =
-      Json.write "Node" n.node
-      *> Json.write "Address" n.address
+  static member ToJson (n : Node) =
+    Json.write "Node" n.node
+    *> Json.write "Address" n.address
 
 type ACLEntry =
   { createIndex : Index
@@ -207,8 +206,7 @@ type AgentMember =
         protocolCur = pCur
         delegateMin = dMin
         delegateMax = dMax
-        delegateCur = dCur
-          })
+        delegateCur = dCur })
     <!> Json.read "Name"
     <*> Json.read "Addr"
     <*> Json.read "Port"
@@ -267,8 +265,7 @@ type AgentService =
         address   = a
         enableTagOverride = eto
         createIndex = ci
-        modifyIndex = mi
-          })
+        modifyIndex = mi })
     <!> Json.read "ID"
     <*> Json.read "Service"
     <*> Json.read "Tags"
@@ -289,8 +286,6 @@ type AgentService =
     *> Json.write "CreateIndex" ags.createIndex
     *> Json.write "ModifyIndex" ags.modifyIndex
 
-
-
 type AgentServiceCheck =
   {
     script   : string option// `json:",omitempty"`
@@ -304,22 +299,19 @@ type AgentServiceCheck =
     status   : string option  } // `json:",omitempty"`
 
   static member ttlServiceCheck =
-    let res =
-      { script = Some("")
-        interval = Some("15s")
-        timeout = Some("")
-        ttl = Some("30s")
-        http = Some("")
-        tcp = ""
-        dockerContainerId = ""
-        shell = ""
-        status = Some("") }
-    res
+    { script = Some("")
+      interval = Some("15s")
+      timeout = Some("")
+      ttl = Some("30s")
+      http = Some("")
+      tcp = ""
+      dockerContainerId = ""
+      shell = ""
+      status = Some("") }
 
   static member FromJson (_ : AgentServiceCheck) =
     (fun sc i t ttl http tcp dci sh st ->
-      {
-        script = sc
+      { script = sc
         interval = i
         timeout = t
         ttl = ttl
@@ -327,8 +319,7 @@ type AgentServiceCheck =
         tcp = tcp
         dockerContainerId = dci
         shell = sh
-        status = st
-          })
+        status = st })
     <!> Json.read "Script"
     <*> Json.read "Interval"
     <*> Json.read "Timeout"
@@ -364,29 +355,25 @@ type AgentServiceRegistration =
     checks  : AgentServiceChecks option }
 
     static member serviceRegistration (id: string) : (AgentServiceRegistration) =
-      let res =
-        { id = Some(id);
-          name= Some("serviceReg");
-          tags = None;
-          address=Some("127.0.0.1");
-          port=Some(8500);
-          enableTagOverride = false;
-          check = None;
-          checks = None }
-      res
+      { id = Some(id)
+        name= Some("serviceReg")
+        tags = None
+        address = Some("127.0.0.1")
+        port = Some 8500
+        enableTagOverride = false
+        check = None
+        checks = None }
 
     static member FromJson (_ : AgentServiceRegistration) =
       (fun id n ts p a eto ch chs ->
-        {
-          id = id
+        { id = id
           name = n
           tags = ts
           port = p
           address = a
           enableTagOverride = eto
           check = ch
-          checks = chs
-            })
+          checks = chs })
       <!> Json.read "ID"
       <*> Json.read "Name"
       <*> Json.read "Tags"
@@ -422,21 +409,19 @@ type AgentCheckRegistration =
     status   : string option }
 
   static member ttlCheck (serviceId : string) : (AgentCheckRegistration) =
-    let res =
-      { id = Some(serviceId);
-        name = "web app";
-        notes = None;
-        serviceId = Some("consul");
-        script = None
-        interval = Some("15s")
-        timeout = None
-        ttl = Some("30s")
-        http = None
-        tcp = None
-        dockerContainerId = None
-        shell = None
-        status = None }
-    res
+    { id = Some(serviceId)
+      name = "web app"
+      notes = None
+      serviceId = Some "consul"
+      script = None
+      interval = Some "15s"
+      timeout = None
+      ttl = Some "30s"
+      http = None
+      tcp = None
+      dockerContainerId = None
+      shell = None
+      status = None }
 
 
   static member FromJson (_ : AgentCheckRegistration) =

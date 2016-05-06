@@ -16,9 +16,8 @@ let statusDottedPath (funcName: string) =
 
 /// Leader is used to query for a known leader
 let leader (state : FaktaState) : Async<Choice<string, Error>> = async {
-  let urlPath = "leader"
-  let uriBuilder = UriBuilder.ofStatus state.config urlPath
-  let! result = call state (statusDottedPath urlPath) id uriBuilder HttpMethod.Get
+  let uriBuilder = UriBuilder.ofStatus state.config "leader"
+  let! result = call state (statusDottedPath "leader") id uriBuilder HttpMethod.Get
 
   match result with
   | Choice1Of2 (body, (dur, resp)) ->

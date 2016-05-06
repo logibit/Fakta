@@ -20,7 +20,7 @@ let tests =
 
     testCase "status.peers -> query for a known raft peers " <| fun _ ->
       let listing = Status.peers state
-      ensureSuccess listing <| fun (peers) ->
+      ensureSuccess listing <| fun peers ->
         let logger = state.logger
         for peer in peers do
           logger.Log (LogLine.sprintf [] "value: %s" peer)
