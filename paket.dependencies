@@ -13,3 +13,4 @@ nuget NodaTime
 nuget NuGet.CommandLine
 nuget Aether
 nuget FParsec
+github haf/YoLo YoLo.fs

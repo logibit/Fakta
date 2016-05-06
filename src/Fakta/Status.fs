@@ -13,7 +13,6 @@ let faktaStatusString = "Fakta.status"
 let statusDottedPath (funcName: string) =
   (sprintf "%s.%s" faktaStatusString funcName)
 
-
 /// Leader is used to query for a known leader
 let leader (state : FaktaState) : Async<Choice<string, Error>> = async {
   let urlPath = "leader"
@@ -22,14 +21,14 @@ let leader (state : FaktaState) : Async<Choice<string, Error>> = async {
 
   match result with
   | Choice1Of2 (body, (dur, resp)) ->
-      match Json.tryParse body with
-      | Choice1Of2 json ->
-            match Json.tryDeserialize json with
-            | Choice1Of2 item -> return Choice1Of2(item)
-            | Choice2Of2 err -> return Choice2Of2(Message err)
+    match Json.tryParse body with
+    | Choice1Of2 json ->
+      match Json.tryDeserialize json with
+      | Choice1Of2 item -> return Choice1Of2(item)
       | Choice2Of2 err -> return Choice2Of2(Message err)
-      //let item = if body = "" then "" else Json.deserialize (Json.parse body)
-      //return Choice1Of2 (item)
+    | Choice2Of2 err -> return Choice2Of2(Message err)
+    //let item = if body = "" then "" else Json.deserialize (Json.parse body)
+    //return Choice1Of2 (item)
   | Choice2Of2 err -> return Choice2Of2(err)
 }
 

@@ -26,3 +26,4 @@ src/Utils/Properties/AssemblyInfo.cs
 src/Utils/Utils.csproj
 src/Utils/Utils.sln
 src/.vs/config/applicationhost.config
+paket-files/

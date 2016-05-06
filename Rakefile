@@ -22,6 +22,11 @@ asmver_files :assembly_info do |a|
                assembly_informational_version: ENV['BUILD_VERSION']
 end
 
+task :yolo do
+  system %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal Fakta.YoLo')" paket-files/haf/YoLo/YoLo.fs} \
+    unless Albacore.windows?
+end
+
 desc 'Perform fast build (warn: doesn\'t d/l deps)'
 build :quick_compile do |b|
   b.prop 'Configuration', Configuration
@@ -39,7 +44,7 @@ task :restore => :paket_bootstrap do
 end
 
 desc 'Perform full build'
-build :compile => [:versioning, :restore, :assembly_info] do |b|
+build :compile => [:versioning, :restore, :assembly_info, :yolo] do |b|
   b.prop 'Configuration', Configuration
   b.sln = 'src/Fakta.sln'
 end
