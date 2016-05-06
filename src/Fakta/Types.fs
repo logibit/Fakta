@@ -84,12 +84,12 @@ type ACLEntry =
     ``type``    : string
     rules       : string }
 
-  static member ClientTokenInstance (tokenId : Id) =
+  static member ClientTokenInstance (tokenID : Id) (tokenName: string) (tokenType: string) =
     { createIndex = Index.MinValue
       modifyIndex = Index.MinValue
       id = tokenId
-      name = "client token"
-      ``type`` = "client"
+        name = tokenName
+        ``type`` = tokenType
       rules = "" }
 
   static member empty =
@@ -133,15 +133,7 @@ type AgentCheck =
     serviceId   : string
     serviceName : string }
 
-  static member Instance (nodeName: string) =
-    { node = nodeName
-      checkID = "service:consulcheck"
-      name = "consul test health check"
-      status = "passing"
-      notes = ""
-      output = ""
-      serviceId = "consul"
-      serviceName = "consul" }
+
 
   static member FromJson (_ : AgentCheck) =
     (fun nd chId n st ns out sId sName ->
@@ -234,15 +226,6 @@ type AgentService =
     createIndex       : int
     modifyIndex       : int}
 
-  static member Instance =
-    { id = "consul"
-      service = "consul"
-      tags = Some([])
-      port = Port.MinValue
-      address = "127.0.0.1"
-      enableTagOverride = false
-      createIndex = 12
-      modifyIndex = 18 }
 
   static member FromJson (_ : AgentService) =
     (fun id s t p a eto ci mi ->
@@ -424,15 +407,16 @@ type AgentCheckRegistration =
     /// health check.
     status   : string option }
 
-  static member ttlCheck (serviceId : string) : (AgentCheckRegistration) =
+  static member ttlCheck (id : string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =
     { id = Some(serviceId)
-      name = "web app"
-      notes = None
+      { id = Some(id); 
+        name = name; 
       serviceId = Some "consul"
+        serviceId = Some(serviceId);
       script = None
-      interval = Some "15s"
+        interval = Some(intr)
       timeout = None
-      ttl = Some "30s"
+        ttl = Some(ttl)
       http = None
       tcp = None
       dockerContainerId = None
@@ -491,12 +475,12 @@ type CatalogDeregistration =
     serviceId  : string
     checkId    : string }
 
-  static member Instance =
-    { node = "COMP05"
-      datacenter = "dc1"
-      address = "127.0.0.1"
-      serviceId = "consul"
-      checkId = "" }
+    static member Instance (nodeName: string) (dc: string) (addr: string) (serviceId: string) (checkID: string) =
+        { node = nodeName
+          datacenter = dc
+          address = addr
+          serviceId = serviceId
+          checkId = checkID }
 
   static member FromJson (_ : CatalogDeregistration) =
     (fun n a dc si chi ->
@@ -542,12 +526,14 @@ type CatalogRegistration =
     service    : AgentService
     check      : AgentCheck }
 
-  static member Instance (nodeName: string) =
+  static member Instance (nodeName: string) (address: string) (agentCheck: AgentCheck) (agentServicë: AgentService) =
     { node = "COMP05"
       address = "127.0.0.1"
-      datacenter = ""
-      service = AgentService.Instance
+        Node = nodeName
+        Address = address
       check = AgentCheck.Instance nodeName }
+        Service = agentServicë
+        Check = agentCheck }
 
   static member FromJson (_ : CatalogRegistration) =
     (fun n a dc s ch ->
@@ -919,9 +905,9 @@ type UserEvent =
     version       : int
     lTime         : int }
 
-  static member Instance =
-    { id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
-      name = "deploy"
+  static member Instance (ID: string) (name: string) =
+      { id = ID
+        name = name
       payload = [||]
       nodeFilter = ""
       serviceFilter = ""
@@ -1052,4 +1038,4 @@ type FaktaState =
     { config = FaktaConfig.empty
       logger = NoopLogger
       clock  = SystemClock.Instance
-      random = Random () }
+      random =  Random () }

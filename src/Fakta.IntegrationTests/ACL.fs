@@ -12,7 +12,7 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   let tokenId =
-    let listing = ACL.create state (ACLEntry.ClientTokenInstance (Guid.NewGuid().ToString()), [])
+    let listing = ACL.create state (ACLEntry.ClientTokenInstance "" "client token" "client") []
     ensureSuccess listing <| fun createdId ->
       let logger = state.logger
       logger.logSimple (Message.sprintf [] "created acl id: %O" createdId)
@@ -43,7 +43,7 @@ let tests =
         logger.logSimple (Message.sprintf [] "value: %A" meta)
 
     testCase "ACL rules update" <| fun _ ->
-      let listing = ACL.update state ((ACLEntry.ClientTokenInstance tokenId), [])
+      let listing = ACL.update state (ACLEntry.ClientTokenInstance tokenID "client token" "client") []
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "value: %A" meta)

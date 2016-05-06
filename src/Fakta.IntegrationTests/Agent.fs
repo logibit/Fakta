@@ -50,7 +50,7 @@ let tests =
         logger.logSimple (Message.sprintf [] "key: %s" name)
     
     testCase "agent.checkregister -> register a new check with the local agent" <| fun _ ->
-      let listing = Agent.checkRegister state (AgentCheckRegistration.ttlCheck checkId, [])
+      let listing = Agent.checkRegister state (AgentCheckRegistration.ttlCheck checkId "web app" "consul" "30s" "15s")
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
         logger.logSimple (Message.sprintf [] "key: %O" (listing))
