@@ -12,14 +12,13 @@ open Chiron.Operators
 open Fakta
 open Fakta.Logging
 open Fakta.Impl
-
-let faktaSessionString = "Fakta.session"
+open Hopac
 
 let sessionDottedPath (funcName: string) =
-  (sprintf "%s.%s" faktaSessionString funcName)
+  [| "Fakta"; "Session"; funcName |]
 
 let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo : QueryOptions)
-  : Async<Choice<SessionEntry list * QueryMeta, Error>> = async {
+  : Job<Choice<SessionEntry list * QueryMeta, Error>> = job {
   let urlPath = if value.Equals("") then (sprintf "%s" action)  else (sprintf "%s/%s" action value)
   let uriBuilder = UriBuilder.ofSession state.config urlPath
   let! result = call state (sessionDottedPath action) id uriBuilder HttpMethod.Get
@@ -32,7 +31,7 @@ let getSessionEntries (value : string) (action: string) (state : FaktaState) (qo
 
 /// Create makes a new session. Providing a session entry can customize the
 /// session. It is recommended you give a Name as the options.
-let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Async<Choice<string * WriteMeta, Error>> = async {
+let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOptions) : Job<Choice<string * WriteMeta, Error>> = job {
   let writeJsonBody : SessionOptions -> Json<unit> =
       List.fold (fun acc -> function
                 | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
@@ -67,7 +66,7 @@ let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOpti
 
 
 /// CreateNoChecks is like Create but is used specifically to create a session with no associated health checks.
-let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : WriteOptions) : Async<Choice<string * WriteMeta, Error>> =
+let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : WriteOptions) : Job<Choice<string * WriteMeta, Error>> =
   let newSessionOpts =
     sessionOpts
     |> List.map(fun x -> not(x.ToString().Equals("Checks")), x)
@@ -75,10 +74,10 @@ let createNoChecks (state : FaktaState) (sessionOpts : SessionOptions) (wo : Wri
   create state newSessionOpts wo
 
 /// Destroy invalides a given session
-let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> = async {
+let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : Job<Choice<WriteMeta, Error>> = job {
   let urlPath = (sprintf "destroy/%s" sessionID)
   let uriBuilder = UriBuilder.ofSession state.config urlPath
-                    |> flip UriBuilder.mappendRange (writeOptsKvs opts)
+                    |> UriBuilder.mappendRange (writeOptsKvs opts)
   let! result = call state (sessionDottedPath "destroy") id uriBuilder HttpMethod.Put
   match result with
   | Choice1Of2 (_, (dur, _)) ->
@@ -88,7 +87,7 @@ let destroy (state : FaktaState) (sessionID : string) (opts : WriteOptions) : As
 
 
 /// Info looks up a single session
-let info (state : FaktaState) (sessionID : Session) (qo : QueryOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> = async {
+let info (state : FaktaState) (sessionID : Session) (qo : QueryOptions) : Job<Choice<SessionEntry * QueryMeta, Error>> = job {
   let urlPath = (sprintf "info/%s" sessionID )
   let uriBuilder = UriBuilder.ofSession state.config urlPath
   let! result = call state (sessionDottedPath "info") id uriBuilder HttpMethod.Put
@@ -102,15 +101,15 @@ let info (state : FaktaState) (sessionID : Session) (qo : QueryOptions) : Async<
 
 
 /// List gets all active sessions
-let list (state : FaktaState) (qo : QueryOptions) : Async<Choice<SessionEntry list * QueryMeta, Error>> =
+let list (state : FaktaState) (qo : QueryOptions) : Job<Choice<SessionEntry list * QueryMeta, Error>> =
   getSessionEntries "" "list" state qo
 
 /// List gets sessions for a node
-let node (state : FaktaState) (node : string) (qo : QueryOptions) : Async<Choice<SessionEntry list * QueryMeta, Error>> =
+let node (state : FaktaState) (node : string) (qo : QueryOptions) : Job<Choice<SessionEntry list * QueryMeta, Error>> =
   getSessionEntries node "node" state qo
 
 /// Renew renews the TTL on a given session
-let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<Choice<SessionEntry * QueryMeta, Error>> = async {
+let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Job<Choice<SessionEntry * QueryMeta, Error>> = job {
   let urlPath = sprintf "renew/%s" sessionID
   let uriBuilder = UriBuilder.ofSession state.config urlPath
   let! result = call state (sessionDottedPath "renew") id uriBuilder HttpMethod.Put
@@ -126,7 +125,7 @@ let renew (state : FaktaState) (sessionID : string) (wo : WriteOptions) : Async<
 /// RenewPeriodic is used to periodically invoke Session.Renew on a session until
 /// a doneCh is closed. This is meant to be used in a long running goroutine
 /// to ensure a session stays valid.
-let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) = async {
+let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) = job {
   let! result = renew state id wo
   let waitDur = ttl / int64 2
   let ms = (int)waitDur.Ticks/10000
@@ -138,5 +137,4 @@ let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : 
   | _ ->
       let! r = destroy state id wo
       r |> ignore
-
 }

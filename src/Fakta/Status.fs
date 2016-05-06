@@ -8,16 +8,15 @@ open System.Collections
 open NodaTime
 open HttpFs.Client
 open Chiron
-
-let faktaStatusString = "Fakta.Status"
+open Hopac
 
 let statusDottedPath (funcName: string) =
-  (sprintf "%s.%s" faktaStatusString funcName)
+  [| "Fakta"; "Status"; funcName |]
 
 /// Leader is used to query for a known leader
-let leader (state : FaktaState) : Async<Choice<string, Error>> = async {
+let leader (state : FaktaState) : Job<Choice<string, Error>> = job {
   let uriBuilder = UriBuilder.ofStatus state.config "leader"
-  let! result = call state (statusDottedPath "leader") id uriBuilder HttpMethod.Get
+  let! result = call state (statusDottedPath "leader") id uriBuilder Get
 
   match result with
   | Choice1Of2 (body, (dur, resp)) ->
@@ -33,10 +32,10 @@ let leader (state : FaktaState) : Async<Choice<string, Error>> = async {
 }
 
 /// Peers is used to query for a known raft peers
-let peers (state : FaktaState) : Async<Choice<string list, Error>> =  async {
+let peers (state : FaktaState) : Job<Choice<string list, Error>> =  job {
   let urlPath = "peers"
   let uriBuilder = UriBuilder.ofStatus state.config urlPath
-  let! result = call state (statusDottedPath urlPath) id uriBuilder HttpMethod.Get
+  let! result = call state (statusDottedPath urlPath) id uriBuilder Get
   match result with
   | Choice1Of2 (body, (dur, resp)) ->
     let items = if body = "[]" then [] else Json.deserialize (Json.parse body)

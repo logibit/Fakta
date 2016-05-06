@@ -8,7 +8,10 @@ open NodaTime
 open Fakta
 open Fakta.Logging
 open Chiron
+open Hopac
 
+/// API version that we talk with consul
+[<Literal>]
 let APIVersion = "v1"
 
 let keyFor (m : string) (k : Key) =
@@ -22,12 +25,12 @@ type UriBuilder =
   { inner : System.UriBuilder
     kvs   : Map<string, string option> }
 
-  static member ofModuleAndPath (config : FaktaConfig) (mdle : string) (path : string) =
-    { inner = UriBuilder(config.serverBaseUri, Path = keyFor mdle path)
+  static member ofModuleAndPath (config : FaktaConfig) (``module`` : string) (path : string) =
+    { inner = UriBuilder(config.serverBaseUri, Path = keyFor ``module`` path)
       kvs   = Map.empty }
 
-  static member ofAcl (config : FaktaConfig) (s : string) =
-    UriBuilder.ofModuleAndPath config "acl" s
+  static member ofAcl (config : FaktaConfig) (op : string) =
+    UriBuilder.ofModuleAndPath config "acl" op
 
   static member ofKVKey (config : FaktaConfig) (k : Key) =
     UriBuilder.ofModuleAndPath config "kv" k
@@ -61,7 +64,7 @@ module UriBuilder =
                 | n, Some ev -> String.Concat [ n; "="; ev ])
     >> String.concat "&"
 
-  let uri (ub : UriBuilder) =
+  let toUri (ub : UriBuilder) =
     ub.inner.Query <- buildQuery ub.kvs
     ub.inner.Uri
 
@@ -69,47 +72,48 @@ module UriBuilder =
   let mappend (ub : UriBuilder) (k, v) =
     { ub with kvs = ub.kvs |> Map.put k v }
 
-  let mappendRange (ub : UriBuilder) kvs =
+  let mappendRange kvs (ub : UriBuilder) =
     List.fold mappend ub kvs
 
 let withQueryOpts (config : FaktaConfig) (ro : QueryOptions) (req : Request) =
   // TODO: complete query options
   req
 
-let withConfigOpts (config : FaktaConfig) (req : Request) =
+let setConfigOpts (config : FaktaConfig) (req : Request) =
   config.credentials
-  |> Option.fold (fun s creds -> withBasicAuthentication creds.username creds.password req) req
+  |> Option.fold (fun s creds -> Request.basicAuthentication creds.username creds.password req) req
 
 let acceptJson =
   //withHeader (Accept "application/json")
-  withHeader (Accept "*/*")
+  Request.setHeader (Accept "*/*")
 
 let withIntroductions =
-  withHeader (UserAgent "Fakta 0.1")
+  Request.setHeader (UserAgent ("Fakta " + (App.getVersion ())))
 
-let basicRequest meth =
-  createRequest meth
+let basicRequest config meth =
+  Request.create meth
   >> acceptJson
   >> withIntroductions
+  >> setConfigOpts config
 
 let withJsonBody body =
-  withHeader (ContentType (ContentType.Create("application", "json")))
-  >> withBodyStringEncoded body (Encoding.UTF8)
+  Request.setHeader (ContentType (ContentType.Create("application", "json")))
+  >> Request.bodyStringEncoded body (Encoding.UTF8)
 
 let getResponse (state : FaktaState) path (req : Request) =
-  async {
-    let data = Map [ "uri", box req.Url
+  job {
+    let data = Map [ "uri", box req.url
                      "requestId", box (state.random.NextUInt64()) ]
-    state.logger.Verbose <| fun _ ->
+    do! Alt.afterFun ignore << state.logger.logVerbose <| fun _ ->
       let data' = data |> Map.add "req" (box req)
-      LogLine.mk state.clock path Verbose data' "-> request"
+      Message.create state.clock path Verbose data' "-> request"
 
     try
       let! res = getResponse req
-      state.logger.Verbose <| fun _ ->
-        let data' = data |> Map.add "statusCode" (box res.StatusCode)
+      do! Alt.afterFun ignore << state.logger.logVerbose <| fun _ ->
+        let data' = data |> Map.add "statusCode" (box res.statusCode)
                          |> Map.add "resp" (box res)
-        LogLine.mk state.clock path Verbose data' "<- response"
+        Message.create state.clock path Verbose data' "<- response"
 
       return Choice1Of2 res
     with
@@ -118,7 +122,7 @@ let getResponse (state : FaktaState) path (req : Request) =
   }
 
 let queryMeta dur (resp : Response) =
-  let headerFor key = resp.Headers |> Map.tryFind (ResponseHeader.NonStandard key)
+  let headerFor key = resp.headers |> Map.tryFind (ResponseHeader.NonStandard key)
   { lastIndex   = headerFor "X-Consul-Index" |> Option.fold (fun s t -> uint64 t) UInt64.MinValue
     lastContact = headerFor "X-Consul-Lastcontact" |> Option.fold (fun s t -> Duration.FromSeconds (int64 t)) Duration.Epsilon
     knownLeader = headerFor "X-Consul-Knownleader" |> Option.fold (fun s t -> Boolean.Parse(string t)) false
@@ -161,28 +165,38 @@ let writeOptsKvs : WriteOptions -> (string * string option) list =
              | WriteOption.DataCenter dc              -> ("dc", Some dc) :: acc)
             []
 
-let call (state : FaktaState) (dottedPath:string) (addToReq) (uriB: UriBuilder) (httpMethod: HttpMethod) =
+let writeCall config moduleAndOp (entity, opts : WriteOptions) =
+  { inner = UriBuilder(config.serverBaseUri,
+                       Path = sprintf "/%s/%s/%s" APIVersion moduleAndOp entity)
+    kvs   = Map.empty }
+  |> UriBuilder.mappendRange (writeOptsKvs opts)
+
+let writeCallUri config op (entity, opts) =
+  writeCall config op (entity, opts) |> UriBuilder.toUri
+
+let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
   let getResponse = getResponse state dottedPath
   let req =
     uriB
-    |> UriBuilder.uri
-    |> basicRequest httpMethod
-    |> withConfigOpts state.config
+    |> UriBuilder.toUri
+    |> basicRequest state.config httpMethod
     |> addToReq
 
-  async {
+  job {
     let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
     match resp with
     | Choice1Of2 resp ->
       use resp = resp
-      if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
-        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+      if not (resp.statusCode = 200 || resp.statusCode = 404) then
+        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.statusCode))
       else
-        match resp.StatusCode with
+        match resp.statusCode with
         | 200 ->
           let! body = Response.readBodyAsString resp
-          return Choice1Of2 (body,(dur, resp))
-        | _ ->  return Choice2Of2 (Message (sprintf "%s error %d" dottedPath resp.StatusCode))
+          return Choice1Of2 (body, (dur, resp))
+        | _ ->
+          let msg = sprintf "%s error %d" (String.Join(".", dottedPath)) resp.statusCode
+          return Choice.createSnd (Message msg)
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
   }

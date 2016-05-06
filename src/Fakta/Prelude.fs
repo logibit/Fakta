@@ -4,16 +4,8 @@ module internal Fakta.Prelude
 [<assembly: System.Runtime.CompilerServices.InternalsVisibleTo "Fakta.Tests">]
 ()
 
-let flip f a b = f b a
-
-module Map =
-  let put k v m =
-    match m |> Map.tryFind k with
-    | None -> m |> Map.add k v
-    | Some _ -> m |> Map.remove k |> Map.add k v
-
-
 module Duration =
+  open Hopac
   open NodaTime
   open System.Diagnostics
 
@@ -26,8 +18,8 @@ module Duration =
     sw.Stop()
     res, fromStopwatch sw
 
-  let timeAsync f =
-    async {
+  let timeAsync (f : unit -> Job<'a>) =
+    job {
       let sw = Stopwatch.StartNew()
       let! res = f ()
       sw.Stop()
@@ -37,30 +29,7 @@ module Duration =
   let consulString (d : Duration) =
     sprintf "%d%s" (uint32 (d.ToTimeSpan().TotalSeconds)) "s"
 
-
-module UTF8 =
-  open System.Text
-
-  let toString (bs : byte []) =
-    Encoding.UTF8.GetString bs
-
-  let bytes (s : string) =
-    Encoding.UTF8.GetBytes s
-
 open System
-
-type Random with
-  /// generate a new random ulong64 value
-  member x.NextUInt64() =
-    let buffer = Array.zeroCreate<byte> sizeof<UInt64>
-    x.NextBytes buffer
-    BitConverter.ToUInt64(buffer, 0)
-
-module Choice =
-  let bind (f:'a -> Choice<'b, 'e>) (a:Choice<'a, 'e>) = function
-    | Choice1Of2 a' -> f a'
-    | Choice2Of2 e ->  Choice2Of2 e
-
 
 module Chiron =
   open Chiron
@@ -94,4 +63,3 @@ type Duration with
 
   static member ToJson (dur : Duration) =
     Json.Optic.set Json.String_ (Duration.consulString dur)
-

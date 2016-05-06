@@ -2,13 +2,13 @@ source https://nuget.org/api/v2
 framework: net45
 
 nuget Chiron
-nuget FSharp.Core ~> 3.1.2
+nuget FSharp.Core ~> 3
 nuget FsCheck
 nuget Fuchu
 nuget Fuchu.FsCheck
 nuget Hopac
 nuget Hopac.Extras
-nuget Http.fs-prerelease
+nuget Http.fs-prerelease ~> 3
 nuget NodaTime
 nuget NuGet.CommandLine
 nuget Aether

@@ -8,14 +8,15 @@ open System
 open NodaTime
 open HttpFs.Client
 open Chiron
+open Hopac
 
 let faktaCatalogString = "Fakta.catalog"
 
 let catalogDottedPath (funcName: string) =
-  (sprintf "%s.%s" faktaCatalogString funcName)
+  [| "Fakta"; "Catalog"; funcName |]
 
 /// Datacenters is used to query for all the known datacenters
-let datacenters (state : FaktaState) : Async<Choice<string list, Error>> = async {
+let datacenters (state : FaktaState) : Job<Choice<string list, Error>> = job {
   let urlPath = "datacenters"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
@@ -28,7 +29,7 @@ let datacenters (state : FaktaState) : Async<Choice<string list, Error>> = async
 
 
 /// Node is used to query for service information about a single node
-let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choice<CatalogNode * QueryMeta, Error>> = async {
+let node (state : FaktaState) (node : string) (opts : QueryOptions) : Job<Choice<CatalogNode * QueryMeta, Error>> = job {
   let urlPath = (sprintf "node/%s" node)
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath "node") id uriBuilder HttpMethod.Get
@@ -45,7 +46,7 @@ let node (state : FaktaState) (node : string) (opts : QueryOptions) : Async<Choi
 
 
 /// Nodes is used to query all the known nodes
-let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * QueryMeta, Error>> = async {
+let nodes (state : FaktaState) (opts : QueryOptions) : Job<Choice<Node list * QueryMeta, Error>> = job {
   let urlPath = "nodes"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get
@@ -58,7 +59,7 @@ let nodes (state : FaktaState) (opts : QueryOptions) : Async<Choice<Node list * 
 
 
 ///
-let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> = async {
+let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : WriteOptions) : Job<Choice<WriteMeta, Error>> = job {
   let urlPath = "deregister"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let serializedCheckReg = Json.serialize dereg |> Json.format
@@ -71,7 +72,7 @@ let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : Writ
 
 
 ///
-let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptions) : Async<Choice<WriteMeta, Error>> = async {
+let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptions) : Job<Choice<WriteMeta, Error>> = job {
   let urlPath = "register"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let serializedCheckReg = Json.serialize reg |> Json.format
@@ -84,7 +85,7 @@ let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptio
 
 /// Service is used to query catalog entries for a given service
 let service (state : FaktaState) (service : string) (tag : string) (opts : QueryOptions)
-  : Async<Choice<CatalogService list * QueryMeta, Error>> = async {
+  : Job<Choice<CatalogService list * QueryMeta, Error>> = job {
   let urlPath = (sprintf "service/%s" service)
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath "service") id uriBuilder HttpMethod.Get
@@ -96,7 +97,7 @@ let service (state : FaktaState) (service : string) (tag : string) (opts : Query
 }
 
 /// Service is used to query catalog entries for a given service
-let services (state : FaktaState) (opts : QueryOptions) : Async<Choice<Map<string, string list> * QueryMeta, Error>> = async {
+let services (state : FaktaState) (opts : QueryOptions) : Job<Choice<Map<string, string list> * QueryMeta, Error>> = job {
   let urlPath = "services"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
   let! result = call state (catalogDottedPath urlPath) id uriBuilder HttpMethod.Get

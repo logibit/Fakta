@@ -23,8 +23,8 @@ let tests =
       ensureSuccess listing <| fun (kvpairs, meta) ->
         let logger = state.logger
         for kvp in kvpairs do
-          logger.Log (LogLine.sprintf [] "key: %s, value: %A" kvp.key kvp.value)
-        logger.Log (LogLine.sprintf [] "meta: %A" meta)
+          logger.logSimple (Message.sprintf [] "key: %s, value: %A" kvp.key kvp.value)
+        logger.logSimple (Message.sprintf [] "meta: %A" meta)
 
     testCase "can put" <| fun _ ->
       let pair = KVPair.Create("world", "goodbye")
