@@ -979,6 +979,15 @@ type FaktaConfig =
       waitTime       = DefaultLockWaitTime
       token          = None }
 
+open System.Threading
+
+let seedGenerator = new Random()
+let random =
+  new ThreadLocal<Random>(fun _ -> 
+          lock seedGenerator (fun _ -> 
+            let seed = seedGenerator.Next()
+            new Random(seed)))
+
 type FaktaState =
   { config : FaktaConfig
     logger : Logger
@@ -989,6 +998,7 @@ type FaktaState =
     { config = FaktaConfig.Default
       logger = NoopLogger
       clock  = SystemClock.Instance
-      random =  Random () }
+      random = random.Value
+    }
 
 
