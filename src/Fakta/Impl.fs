@@ -169,19 +169,20 @@ let call (state : FaktaState) (dottedPath:string) (addToReq) (uriB: UriBuilder) 
     |> basicRequest httpMethod
     |> withConfigOpts state.config
     |> addToReq
+
   async {
-  let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-  match resp with
-  | Choice1Of2 resp ->
-    use resp = resp
-    if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
-      return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
-    else
-      match resp.StatusCode with
-      | 200 ->
-        let! body = Response.readBodyAsString resp
-        return Choice1Of2 (body,(dur, resp))
-      | _ ->  return Choice2Of2 (Message (sprintf "%s error %d" dottedPath resp.StatusCode))
-  | Choice2Of2 exx ->
-    return Choice2Of2 (Error.ConnectionFailed exx)
+    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+    match resp with
+    | Choice1Of2 resp ->
+      use resp = resp
+      if not (resp.StatusCode = 200 || resp.StatusCode = 404) then
+        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.StatusCode))
+      else
+        match resp.StatusCode with
+        | 200 ->
+          let! body = Response.readBodyAsString resp
+          return Choice1Of2 (body,(dur, resp))
+        | _ ->  return Choice2Of2 (Message (sprintf "%s error %d" dottedPath resp.StatusCode))
+    | Choice2Of2 exx ->
+      return Choice2Of2 (Error.ConnectionFailed exx)
   }
