@@ -73,9 +73,14 @@ namespace :tests do
     system "src/Fakta.Tests/bin/#{Configuration}/Fakta.Tests.exe",
            clr_command: true
   end
+
+  task :integration do
+    system "src/Fakta.IntegrationTests/bin/#{Configuration}/Fakta.IntegrationTests.exe",
+           clr_command: true
+  end
 end
 
-task :tests => :'tests:unit'
+task :tests => [:'tests:unit', :'tests:integration']
 
 task :default => [:compile, :tests, :create_nugets]
 
