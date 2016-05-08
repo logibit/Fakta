@@ -70,7 +70,7 @@ let checks state : QueryCall<Map<string, AgentCheck>> =
     queryCall state.config "agent/checks"
 
   let filters =
-    queryFilters state "list"
+    queryFilters state "checks"
     >> codec createRequest fstOfJson
 
   HttpFs.Client.getResponse |> filters
@@ -186,7 +186,7 @@ let nodeName state : QueryCall<string> =
     >?> Optics.Map.key_ "NodeName"
     
   let filters =
-    queryFilters state "members"
+    queryFilters state "nodeName"
     >> codec createRequest (fstOfJsonPrism nodeNameOptic)
 
   HttpFs.Client.getResponse |> filters
@@ -201,7 +201,6 @@ let serviceDeregister (state : FaktaState) (serviceId : Id) : Job<Choice<unit, E
       return Choice1Of2 ()
   | Choice2Of2 err -> return Choice2Of2(err)
 }
-
 
 /// ServiceRegister is used to register a new service with the local agent
 let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : Job<Choice<unit, Error>> = job {
