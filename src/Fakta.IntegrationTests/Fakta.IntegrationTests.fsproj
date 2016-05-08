@@ -54,10 +54,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <ProjectReference Include="..\Fakta\Fakta.fsproj">
-      <Project>{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}</Project>
-      <Name>Fakta</Name>
-    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
@@ -187,4 +183,10 @@
       </ItemGroup>
     </When>
   </Choose>
+  <ItemGroup>
+    <ProjectReference Include="..\Fakta\Fakta.fsproj">
+      <Project>{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}</Project>
+      <Name>Fakta</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

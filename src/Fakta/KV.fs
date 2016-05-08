@@ -16,7 +16,7 @@ let get (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<KVPa
   let getResponse = getResponse state [| "Fakta"; "KV"; "get" |]
   let req =
     UriBuilder.ofKVKey state.config key
-    |> UriBuilder.mappendRange (queryOptKvs opts)
+    |> UriBuilder.mappendRange (queryOptsKvs opts)
     |> UriBuilder.toUri
     |> basicRequest state.config Get
 
@@ -55,7 +55,7 @@ let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Job<Choice<
   let getResponse = getResponse state [| "Fakta"; "KV"; "list" |]
   let req =
     UriBuilder.ofKVKey state.config prefix
-    |> UriBuilder.mappendRange [ yield! queryOptKvs opts
+    |> UriBuilder.mappendRange [ yield! queryOptsKvs opts
                                  yield "recurse", None ]
     |> UriBuilder.toUri
     |> basicRequest state.config Get

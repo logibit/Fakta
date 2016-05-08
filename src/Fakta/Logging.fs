@@ -1,8 +1,17 @@
 ﻿module Fakta.Logging
 
 open System
+open System.Diagnostics
 open NodaTime
 open Hopac
+
+let timeJob (runnable : Job<_>) : Job<'a * Duration> =
+  job {
+    let sw = Stopwatch.StartNew()
+    let! res = runnable
+    sw.Stop()
+    return res, Duration.FromTicks sw.ElapsedTicks
+  }
 
 /// The log levels specify the severity of the message.
 [<CustomEquality; CustomComparison>]
@@ -155,6 +164,13 @@ module Message =
 
   let setField name value message =
     { message with fields = message.fields |> Map.put name value }
+
+  let timeJob path (runnable : Job<_>) =
+    timeJob runnable |> Job.map (function
+    | res, dur ->
+      let msg = gauge (float dur.Ticks / float NodaConstants.TicksPerMillisecond) "ms"
+                |> setPath path
+      res, msg)
 
   let sprintf data =
     Printf.kprintf (event data)

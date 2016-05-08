@@ -16,7 +16,7 @@ let getValuesByName (action : string) (path : string[]) (state : FaktaState) (se
   : Job<Choice<HealthCheck list * QueryMeta, Error>> = job {
   let urlPath = action
   let uriBuilder = UriBuilder.ofHealth state.config urlPath
-                    |> UriBuilder.mappendRange (queryOptKvs opts)
+                    |> UriBuilder.mappendRange (queryOptsKvs opts)
   let! result = call state path id uriBuilder HttpMethod.Get
   match result with
   | Choice1Of2 (body, (dur, resp)) ->
@@ -47,7 +47,7 @@ let service (state : FaktaState) (service : string) (tag : string)
       |> UriBuilder.mappendRange
         [ if not (tag.Equals("")) then yield "tag", Some(tag)
           if passingOnly then yield "passing", None
-          yield! queryOptKvs opts]
+          yield! queryOptsKvs opts]
   let! result = call state (healthDottedPath "service") id uriBuilder HttpMethod.Get
   match result with
   | Choice1Of2 (body, (dur, resp)) ->

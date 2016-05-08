@@ -42,7 +42,7 @@ let create (state : FaktaState) (sessionOpts : SessionOptions) (opts : WriteOpti
                 | TTL dur       -> acc *> Json.write "TTL" (Duration.consulString dur))
                 (fun json -> Value (), Json.Object Map.empty)
 
-  let reqBody = Json.format (snd (writeJsonBody sessionOpts (Json.Null ())))
+  let reqBody = snd (writeJsonBody sessionOpts (Json.Null ()))
 
   let urlPath = "create"
   let uriBuilder = UriBuilder.ofSession state.config urlPath

@@ -62,7 +62,7 @@ let nodes (state : FaktaState) (opts : QueryOptions) : Job<Choice<Node list * Qu
 let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : WriteOptions) : Job<Choice<WriteMeta, Error>> = job {
   let urlPath = "deregister"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-  let serializedCheckReg = Json.serialize dereg |> Json.format
+  let serializedCheckReg = Json.serialize dereg
   let! result = call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
   match result with
   | Choice1Of2 (_, (dur, _)) ->
@@ -75,7 +75,7 @@ let deregister (state : FaktaState) (dereg : CatalogDeregistration) (opts : Writ
 let register (state : FaktaState) (reg : CatalogRegistration) (opts : WriteOptions) : Job<Choice<WriteMeta, Error>> = job {
   let urlPath = "register"
   let uriBuilder = UriBuilder.ofCatalog state.config urlPath
-  let serializedCheckReg = Json.serialize reg |> Json.format
+  let serializedCheckReg = Json.serialize reg
   let! result = call state (catalogDottedPath urlPath) (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
   match result with
   | Choice1Of2 (_, (dur, _)) ->

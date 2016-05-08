@@ -83,17 +83,15 @@ type ACLEntry =
     ``type``    : string
     rules       : string }
 
-  static member ClientTokenInstance (tokenID : Id) =
-    let res =
-      { createIndex = Index.MinValue;
-        modifyIndex = Index.MinValue;
-        id = tokenID;
-        name = "client token"
-        ``type`` = "client"
-        rules = "" }
-    res
+  static member ClientTokenInstance (tokenId : Id) =
+    { createIndex = Index.MinValue
+      modifyIndex = Index.MinValue
+      id = tokenId
+      name = "client token"
+      ``type`` = "client"
+      rules = "" }
 
-  static member empty=
+  static member empty =
     { createIndex = Index.MinValue
       modifyIndex = Index.MinValue
       id = ""
@@ -105,11 +103,10 @@ type ACLEntry =
     (fun ci mi i n t rs ->
       { createIndex = ci
         modifyIndex = mi
-        id = i
-        name = n
-        ``type`` = t
-        rules = rs
-          })
+        id          = i
+        name        = n
+        ``type``    = t
+        rules       = rs })
     <!> Json.read "CreateIndex"
     <*> Json.read "ModifyIndex"
     <*> Json.read "ID"

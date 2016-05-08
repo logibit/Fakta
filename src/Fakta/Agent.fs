@@ -29,7 +29,7 @@ let checkDeregister (state : FaktaState) (checkId : string) : Job<Choice<unit, E
 let checkRegister (state : FaktaState) (checkRegistration : AgentCheckRegistration) : Job<Choice<unit, Error>> = job {
   let urlPath = (sprintf "check/register")
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
-  let serializedCheckReg = Json.serialize checkRegistration |> Json.format
+  let serializedCheckReg = Json.serialize checkRegistration
   let! result = call state (agentDottedPath "checkRegister") (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
   match result with
   | Choice1Of2 id ->
@@ -165,7 +165,7 @@ let serviceDeregister (state : FaktaState) (serviceId : Id) : Job<Choice<unit, E
 let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : Job<Choice<unit, Error>> = job {
   let urlPath = "service/register"
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
-  let serializedCheckReg = Json.serialize service |> Json.format
+  let serializedCheckReg = Json.serialize service
   let! result = call state (agentDottedPath "service.register") (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
   match result with
   | Choice1Of2 id ->
@@ -191,7 +191,7 @@ let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : 
   let urlPath = (sprintf  "check/%s/%s" status checkId)
   let uriBuilder = UriBuilder.ofAgent state.config urlPath
                     |> UriBuilder.mappendRange [ yield "note", Some(note) ]
-  let checkUpdate = Json.serialize (CheckUpdate.GetUpdateJson status note ) |> Json.format
+  let checkUpdate = Json.serialize (CheckUpdate.GetUpdateJson status note )
   let! result = call state (agentDottedPath (sprintf "check.%s" status)) (withJsonBody checkUpdate) uriBuilder HttpMethod.Put
   match result with
   | Choice1Of2 id ->

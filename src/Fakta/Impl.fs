@@ -4,6 +4,7 @@ open System
 open System.Net
 open System.Text
 open HttpFs.Client
+open HttpFs.Composition
 open NodaTime
 open Fakta
 open Fakta.Logging
@@ -90,15 +91,19 @@ let acceptJson =
 let withIntroductions =
   Request.setHeader (UserAgent ("Fakta " + (App.getVersion ())))
 
+/// New JSON request, with Agent and config opts.
 let basicRequest config meth =
   Request.create meth
   >> acceptJson
   >> withIntroductions
   >> setConfigOpts config
 
-let withJsonBody body =
+let withJsonBody jsonBody =
   Request.setHeader (ContentType (ContentType.Create("application", "json")))
-  >> Request.bodyStringEncoded body (Encoding.UTF8)
+  >> Request.bodyStringEncoded (Json.format jsonBody) Encoding.UTF8
+
+let inline withJsonBodyT value =
+  Json.serialize value |> withJsonBody
 
 let getResponse (state : FaktaState) path (req : Request) =
   job {
@@ -144,7 +149,7 @@ let private validate opts =
   |> List.length
   |> fun n -> if n > 1 then raise ConflictingConsistencyOptions else opts
 
-let queryOptKvs : QueryOptions -> (string * string option) list =
+let queryOptsKvs : QueryOptions -> (string * string option) list =
   validate
   >> List.fold (fun acc -> function
                | ReadConsistency Default    -> acc
@@ -165,14 +170,49 @@ let writeOptsKvs : WriteOptions -> (string * string option) list =
              | WriteOption.DataCenter dc              -> ("dc", Some dc) :: acc)
             []
 
-let writeCall config moduleAndOp (entity, opts : WriteOptions) =
+/// For when the operation is to create or delete and there's no entity
+/// parametised in the API function. Like /v1/acl/create (with body) is.
+///
+/// /v1/MODULE/OP?write-opts => UriBuilder
+let writeCall config moduleAndOp opts =
+  { inner = UriBuilder(config.serverBaseUri,
+                       Path = sprintf "/%s/%s" APIVersion moduleAndOp)
+    kvs   = writeOptsKvs opts |> Map.ofList }
+
+/// For when the operation is to create or delete and there's no entity
+/// parametised in the API function. Like /v1/acl/create (with body) is.
+///
+/// /v1/MODULE/OP?write-opts => Uri
+let writeCallUri config moduleAndOp opts =
+  writeCall config moduleAndOp opts |> UriBuilder.toUri
+
+/// For when the entity is parametised in the API function, like
+/// /v1/acl/clone/{entity} is.
+///
+/// /v1/MODULE/OP/ENTITY?write-opts => UriBuilder
+let writeCallEntity config moduleAndOp (entity, opts : WriteOptions) =
   { inner = UriBuilder(config.serverBaseUri,
                        Path = sprintf "/%s/%s/%s" APIVersion moduleAndOp entity)
-    kvs   = Map.empty }
-  |> UriBuilder.mappendRange (writeOptsKvs opts)
+    kvs   = writeOptsKvs opts |> Map.ofList }
 
-let writeCallUri config op (entity, opts) =
-  writeCall config op (entity, opts) |> UriBuilder.toUri
+/// For when the entity is parametised in the API function, like
+/// /v1/acl/clone/{entity} is.
+///
+/// /v1/MODULE/OP/ENTITY?write-opts => Uri
+let writeCallEntityUri config moduleAndOp (entity, opts) =
+  writeCallEntity config moduleAndOp (entity, opts) |> UriBuilder.toUri
+
+let queryCallUri config moduleAndOp opts =
+  { inner = UriBuilder(config.serverBaseUri,
+                       Path = sprintf "/%s/%s" APIVersion moduleAndOp)
+    kvs   = queryOptsKvs opts |> Map.ofList }
+  |> UriBuilder.toUri
+
+let queryCallEntityUri config moduleAndOp (entity, opts) =
+  { inner = UriBuilder(config.serverBaseUri,
+                       Path = sprintf "/%s/%s/%s" APIVersion moduleAndOp entity)
+    kvs   = queryOptsKvs opts |> Map.ofList }
+  |> UriBuilder.toUri
 
 let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
   let getResponse = getResponse state dottedPath
@@ -200,3 +240,58 @@ let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuil
     | Choice2Of2 exx ->
       return Choice2Of2 (Error.ConnectionFailed exx)
   }
+
+type WriteCall<'i, 'o> = JobFunc<'i * WriteOptions, Choice<'o, Error>>
+type QueryCall<'i, 'o> = JobFunc<'i * QueryOptions, Choice<'o * QueryMeta, Error>>
+type QueryCall<'o> = JobFunc<QueryOptions, Choice<'o * QueryMeta, Error>>
+
+let timerFilter (state : FaktaState) path : JobFilter<_, _> =
+  fun next value ->
+    Message.timeJob path (next value)
+    |> Job.map (fun (res, msg) ->
+      Logger.logSimple state.logger msg
+      res)
+
+let unknownsFilter : JobFilter<Request, Response, Request, Choice<Response, Error>> =
+  fun next ->
+    next >> Job.map (fun resp ->
+      if not (resp.statusCode = 200 || resp.statusCode = 404) then
+        Choice.createSnd (Message (sprintf "unknown response code %d" resp.statusCode))
+      elif resp.statusCode = 404 then
+        Choice.createSnd (Error.ResourceNotFound)
+      else
+        Choice.create resp
+    )
+
+let exnsFilter : JobFilter<Request, Choice<Response, Error>> =
+  fun next req ->
+    job {
+      try
+        return! next req
+      with :? System.Net.WebException as e ->
+        return Choice.createSnd (Error.ConnectionFailed e)
+    }
+
+let respBodyFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice<string, Error>> =
+  fun next req ->
+    next req
+    |> Job.bind (function
+      | Choice1Of2 resp ->
+        resp |> Response.readBodyAsString |> Job.map Choice.create
+
+      | Choice2Of2 error ->
+        Job.result (Choice.createSnd error))
+
+let respQueryFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice<string * QueryMeta, Error>> =
+  fun next req ->
+    job {
+      let! resp, dur = Logging.timeJob (next req)
+
+      match resp with
+      | Choice1Of2 resp ->
+        let! body = Response.readBodyAsString resp
+        return Choice.create (body, queryMeta dur resp)
+
+      | Choice2Of2 error ->
+        return Choice.createSnd error
+    }
