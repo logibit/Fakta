@@ -184,7 +184,7 @@ let nodeName state : QueryCall<string> =
     >?> Optics.Map.key_ "Config"
     >?> Json.Object_
     >?> Optics.Map.key_ "NodeName"
-    
+
   let filters =
     queryFilters state "nodeName"
     >> codec createRequest (fstOfJsonPrism nodeNameOptic)
