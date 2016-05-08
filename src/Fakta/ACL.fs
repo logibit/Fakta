@@ -89,8 +89,7 @@ let info state : QueryCall<Id, ACLEntry> =
 /// The list endpoint must be hit with a GET. It lists all the active ACL tokens. This is a privileged endpoint and requires a management token.
 let list state : QueryCall<ACLEntry list> =
   let createRequest =
-    queryCallUri state.config "acl/list"
-    >> basicRequest state.config Get
+    queryCall state.config "acl/list"
 
   let filters =
     queryFilters state "list"

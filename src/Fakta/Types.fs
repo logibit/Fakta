@@ -2,6 +2,7 @@
 module Fakta.Types
 
 open System
+open System.Net
 open System.Text
 open NodaTime
 open Aether
@@ -602,6 +603,68 @@ type CatalogService =
     *> Json.write "ServiceAddress" s.serviceAddress
     *> Json.write "ServiceTags" s.serviceTags
     *> Json.write "ServicePort" s.servicePort
+
+type PortMapping =
+  { dns : Port
+    http : Port
+    rpc : Port
+    serfLan : Port
+    serfWan : Port
+    server : Port }
+
+type ConfigData =
+  { boostrap : bool
+    server   : bool
+    datacenter : string
+    dataDir    : string
+    dnsRecursor : string
+    dnsRecursors : string list
+    domain : string
+    logLevel : LogLevel
+    nodeName : string
+    clientAddr : IPAddress
+    bindAddr : IPAddress
+    advertiseAddr : IPAddress
+    ports : PortMapping
+    leaveOnTerm : bool
+    skipLeaveOnInt : bool
+    statsiteAddr : string
+    protocol : uint16
+    enableDebug : bool
+    verifyIncoming : bool
+    verifyOutgoing : bool
+    caFile : string option
+    certFile : string option
+    keyFile : string option
+    startJoin : string list
+    uiDir : string option
+    pidFile : string option
+    enableSyslog : bool
+    rejoinAfterLeave : bool }
+
+type CoordData =
+  { adjustment : int
+    error : float
+    vec : int list }
+
+type MemberData =
+  { name : string
+    addr : string
+    port : Port
+    tags : Map<string, string>
+    status : int
+    protocolMin : uint16
+    protocolMax : uint16
+    protocolCur : uint16
+    delegateMin : uint16
+    delegateMax : uint16
+    delegateCur : uint16 }
+
+type SelfData =
+  { config : ConfigData
+    coord  : CoordData
+    ``member`` : MemberData }
+
 
 // [{"CreateIndex":10,"ModifyIndex":17,"LockIndex":0,"Key":"fortnox/apikey","Flags":0,"Value":"MTMzOA=="}]
 type KVPair =
