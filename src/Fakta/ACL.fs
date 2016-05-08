@@ -1,14 +1,11 @@
-﻿module Fakta.ACL
+﻿/// Read https://www.consul.io/docs/internals/acl.html for details of how the
+/// ACL module works.
+module Fakta.ACL
 
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
 open HttpFs.Composition
 open Chiron
 open Aether.Operators
-open Hopac
-open System.Diagnostics
 open Fakta
 open Fakta.Impl
 
@@ -18,58 +15,11 @@ open Fakta.Impl
 let aclPath (operation: string) =
   [| "Fakta"; "ACL"; operation |]
 
-let writeFilters state operation =
-  timerFilter state (aclPath operation)
-  >> unknownsFilter
-  >> exnsFilter
+let writeFilters state =
+  aclPath >> writeFilters state
 
-let readFilters state operation =
-  timerFilter state (aclPath operation)
-  >> unknownsFilter
-  >> exnsFilter
-  >> respQueryFilter
-
-let codec prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>> =
-  JobFunc.mapLeft prepare
-  >> JobFunc.map (Choice.bind interpret)
-
-let hasNoRespBody _ =
-  Choice.create ()
-
-module ConsulResult =
-
-  let objectId =
-    Json.Object_
-    >?> Aether.Optics.Map.key_ "ID"
-
-  let firstObjectOfArray =
-    Json.Array_
-    >?> Aether.Optics.List.head_
-
-let ofJsonPrism jsonPrism : string -> Choice<'a, Error> =
-  Json.tryParse
-  >> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
-  >> Choice.bind Json.tryDeserialize
-  >> Choice.mapSnd Error.Message
-
-/// Convert the first value in the tuple in the choice to some type 'a.
-let inline internal fstOfJsonPrism jsonPrism (item1, item2) : Choice<'a, Error> =
-  Json.tryParse item1
-  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
-  |> Choice.bind Json.tryDeserialize
-  |> Choice.map (fun x -> x, item2)
-  |> Choice.mapSnd (fun msg ->
-    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
-  |> Choice.mapSnd Error.Message
-
-/// Convert the first value in the tuple in the choice to some type 'a.
-let inline internal fstOfJson (item1, item2) : Choice<'a, Error> =
-  Json.tryParse item1
-  |> Choice.bind Json.tryDeserialize
-  |> Choice.map (fun x -> x, item2)
-  |> Choice.mapSnd (fun msg ->
-    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
-  |> Choice.mapSnd Error.Message
+let queryFilters state =
+  aclPath >> queryFilters state
 
 ///The clone endpoint must be hit with a PUT. It clones the ACL identified by the id portion of the path and returns a new token ID. This allows a token to serve as a template for others, making it simple to generate new tokens without complex rule management.
 ///
@@ -131,7 +81,7 @@ let info state : QueryCall<Id, ACLEntry> =
     >> basicRequest state.config Get
 
   let filters =
-    readFilters state "info"
+    queryFilters state "info"
     >> codec createRequest (fstOfJsonPrism ConsulResult.firstObjectOfArray)
 
   HttpFs.Client.getResponse |> filters
@@ -143,7 +93,7 @@ let list state : QueryCall<ACLEntry list> =
     >> basicRequest state.config Get
 
   let filters =
-    readFilters state "list"
+    queryFilters state "list"
     >> codec createRequest fstOfJson
 
   HttpFs.Client.getResponse |> filters

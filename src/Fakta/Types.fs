@@ -382,18 +382,45 @@ type AgentServiceRegistration =
     *> Json.maybeWrite "Checks" ags.checks
 
 type AgentCheckRegistration =
+    /// If an ID is not provided, it is set to Name. You cannot have duplicate
+    /// ID entries per agent, so it may be necessary to provide an ID.
   { id        : Id option // `json:",omitempty"`
+    /// The Name field is mandatory, as is one of Script, HTTP, TCP or TTL.
+    /// Script, TCP and HTTP also require that Interval be set.
     name      : string//`json:",omitempty"`
+    /// The Notes field is not used internally by Consul and is meant to be human-readable.
     notes     : string option// `json:",omitempty"`
+    /// The ServiceID field can be provided to associate the registered check
+    /// with an existing service provided by the agent.
     serviceId : Id option// `json:",omitempty"`
+    /// If a Script is provided, the check type is a script, and Consul will evaluate the script every Interval to update the status.
     script   : string option// `json:",omitempty"`
     interval : string option// `json:",omitempty"`
     timeout  : string option// `json:",omitempty"`
+    /// If a TTL type is used, then the TTL update endpoint must be used
+    /// periodically to update the state of the check.
     ttl      : string option// `json:",omitempty"`
+    /// An HTTP check will perform an HTTP GET request against the value of HTTP
+    /// (expected to be a URL) every Interval. If the response is any 2xx code,
+    /// the check is passing. If the response is 429 Too Many Requests, the
+    /// check is warning. Otherwise, the check is critical.
     http     : string option// `json:",omitempty"`
+    /// An TCP check will perform an TCP connection attempt against the value of
+    /// TCP (expected to be an IP/hostname and port combination) every Interval.
+    /// If the connection attempt is successful, the check is passing. If the
+    /// connection attempt is unsuccessful, the check is critical. In the case
+    /// of a hostname that resolves to both IPv4 and IPv6 addresses, an attempt
+    /// will be made to both addresses, and the first successful connection
+    /// attempt will result in a successful check.
     tcp      : string option
+    /// If a DockerContainerID is provided, the check is a Docker check, and
+    /// Consul will evaluate the script every Interval in the given container
+    /// using the specified Shell. Note that Shell is currently only supported
+    /// for Docker checks.
     dockerContainerId :string option
     shell    : string option
+    /// The Status field can be provided to specify the initial state of the
+    /// health check.
     status   : string option }
 
   static member ttlCheck (serviceId : string) : (AgentCheckRegistration) =
@@ -411,7 +438,6 @@ type AgentCheckRegistration =
       shell = None
       status = None }
 
-
   static member FromJson (_ : AgentCheckRegistration) =
     (fun id n nt si sc i t ttl http tcp dci sh st ->
       { id = id
@@ -426,8 +452,7 @@ type AgentCheckRegistration =
         tcp = tcp
         dockerContainerId = dci
         shell = sh
-        status = st
-          })
+        status = st })
     <!> Json.read "ID"
     <*> Json.read "Name"
     <*> Json.read "Notes"

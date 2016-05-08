@@ -10,6 +10,7 @@ open Fakta
 open Fakta.Logging
 open Chiron
 open Hopac
+open Aether.Operators
 
 /// API version that we talk with consul
 [<Literal>]
@@ -170,37 +171,34 @@ let writeOptsKvs : WriteOptions -> (string * string option) list =
              | WriteOption.DataCenter dc              -> ("dc", Some dc) :: acc)
             []
 
-/// For when the operation is to create or delete and there's no entity
-/// parametised in the API function. Like /v1/acl/create (with body) is.
-///
-/// /v1/MODULE/OP?write-opts => UriBuilder
-let writeCall config moduleAndOp opts =
-  { inner = UriBuilder(config.serverBaseUri,
-                       Path = sprintf "/%s/%s" APIVersion moduleAndOp)
-    kvs   = writeOptsKvs opts |> Map.ofList }
 
 /// For when the operation is to create or delete and there's no entity
 /// parametised in the API function. Like /v1/acl/create (with body) is.
 ///
 /// /v1/MODULE/OP?write-opts => Uri
 let writeCallUri config moduleAndOp opts =
-  writeCall config moduleAndOp opts |> UriBuilder.toUri
-
-/// For when the entity is parametised in the API function, like
-/// /v1/acl/clone/{entity} is.
-///
-/// /v1/MODULE/OP/ENTITY?write-opts => UriBuilder
-let writeCallEntity config moduleAndOp (entity, opts : WriteOptions) =
   { inner = UriBuilder(config.serverBaseUri,
-                       Path = sprintf "/%s/%s/%s" APIVersion moduleAndOp entity)
+                       Path = sprintf "/%s/%s" APIVersion moduleAndOp)
     kvs   = writeOptsKvs opts |> Map.ofList }
+  |> UriBuilder.toUri
 
 /// For when the entity is parametised in the API function, like
 /// /v1/acl/clone/{entity} is.
 ///
 /// /v1/MODULE/OP/ENTITY?write-opts => Uri
 let writeCallEntityUri config moduleAndOp (entity, opts) =
-  writeCallEntity config moduleAndOp (entity, opts) |> UriBuilder.toUri
+  { inner = UriBuilder(config.serverBaseUri,
+                       Path = sprintf "/%s/%s/%s" APIVersion moduleAndOp entity)
+    kvs   = writeOptsKvs opts |> Map.ofList }
+|> UriBuilder.toUri
+
+let writeCall config moduleAndOp opts =
+  writeCallUri config moduleAndOp opts
+  |> basicRequest config Put
+
+let writeCallEntity config moduleAndOp (entity, opts) =
+  writeCallEntityUri config moduleAndOp (entity, opts)
+  |> basicRequest config Put
 
 let queryCallUri config moduleAndOp opts =
   { inner = UriBuilder(config.serverBaseUri,
@@ -213,6 +211,16 @@ let queryCallEntityUri config moduleAndOp (entity, opts) =
                        Path = sprintf "/%s/%s/%s" APIVersion moduleAndOp entity)
     kvs   = queryOptsKvs opts |> Map.ofList }
   |> UriBuilder.toUri
+
+let queryCall config moduleAndOp opts =
+  queryCallUri config moduleAndOp opts
+  |> basicRequest config Get
+
+let queryCallEntity config moduleAndOp (entity, opts) =
+  queryCallEntityUri config moduleAndOp opts
+  |> basicRequest config Get
+
+//let queryCall
 
 let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
   let getResponse = getResponse state dottedPath
@@ -295,3 +303,56 @@ let respQueryFilter : JobFilter<Request, Choice<Response, Error>, Request, Choic
       | Choice2Of2 error ->
         return Choice.createSnd error
     }
+
+let writeFilters state path =
+  timerFilter state path
+  >> unknownsFilter
+  >> exnsFilter
+
+let queryFilters state path =
+  timerFilter state path
+  >> unknownsFilter
+  >> exnsFilter
+  >> respQueryFilter
+
+let codec prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>> =
+  JobFunc.mapLeft prepare
+  >> JobFunc.map (Choice.bind interpret)
+
+let hasNoRespBody _ =
+  Choice.create ()
+
+module ConsulResult =
+
+  let objectId =
+    Json.Object_
+    >?> Aether.Optics.Map.key_ "ID"
+
+  let firstObjectOfArray =
+    Json.Array_
+    >?> Aether.Optics.List.head_
+
+let inline ofJsonPrism jsonPrism : string -> Choice<'a, Error> =
+  Json.tryParse
+  >> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
+  >> Choice.bind Json.tryDeserialize
+  >> Choice.mapSnd Error.Message
+
+/// Convert the first value in the tuple in the choice to some type 'a.
+let inline internal fstOfJsonPrism jsonPrism (item1, item2) : Choice< ^a * 'b, Error> =
+  Json.tryParse item1
+  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
+  |> Choice.bind Json.tryDeserialize
+  |> Choice.map (fun x -> x, item2)
+  |> Choice.mapSnd (fun msg ->
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+  |> Choice.mapSnd Error.Message
+
+/// Convert the first value in the tuple in the choice to some type 'a.
+let inline internal fstOfJson (item1, item2) : Choice< ^a * 'b, Error> =
+  Json.tryParse item1
+  |> Choice.bind Json.tryDeserialize
+  |> Choice.map (fun x -> x, item2)
+  |> Choice.mapSnd (fun msg ->
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+  |> Choice.mapSnd Error.Message
