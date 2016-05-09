@@ -87,9 +87,9 @@ type ACLEntry =
   static member ClientTokenInstance (tokenID : Id) (tokenName: string) (tokenType: string) =
     { createIndex = Index.MinValue
       modifyIndex = Index.MinValue
-      id = tokenId
-        name = tokenName
-        ``type`` = tokenType
+      id = tokenID
+      name = tokenName
+      ``type`` = tokenType
       rules = "" }
 
   static member empty =
@@ -407,21 +407,20 @@ type AgentCheckRegistration =
     /// health check.
     status   : string option }
 
-  static member ttlCheck (id : string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =
-    { id = Some(serviceId)
+  static member ttlCheck (id : string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =    
       { id = Some(id); 
         name = name; 
-      serviceId = Some "consul"
-        serviceId = Some(serviceId);
-      script = None
+        notes = None;
+        serviceId =Some(serviceId);
+        script = None
         interval = Some(intr)
-      timeout = None
+        timeout = None
         ttl = Some(ttl)
-      http = None
-      tcp = None
-      dockerContainerId = None
-      shell = None
-      status = None }
+        http = None
+        tcp = None
+        dockerContainerId = None
+        shell = None
+        status = None }
 
   static member FromJson (_ : AgentCheckRegistration) =
     (fun id n nt si sc i t ttl http tcp dci sh st ->
@@ -526,14 +525,12 @@ type CatalogRegistration =
     service    : AgentService
     check      : AgentCheck }
 
-  static member Instance (nodeName: string) (address: string) (agentCheck: AgentCheck) (agentServicë: AgentService) =
-    { node = "COMP05"
-      address = "127.0.0.1"
-        Node = nodeName
-        Address = address
-      check = AgentCheck.Instance nodeName }
-        Service = agentServicë
-        Check = agentCheck }
+  static member Instance (nodeName: string) (address: string) (dc: string) (agentCheck: AgentCheck) (agentServicë: AgentService) =
+    {   node = nodeName
+        address = address        
+        service = agentServicë
+        datacenter = dc
+        check = agentCheck }
 
   static member FromJson (_ : CatalogRegistration) =
     (fun n a dc s ch ->
@@ -906,8 +903,8 @@ type UserEvent =
     lTime         : int }
 
   static member Instance (ID: string) (name: string) =
-      { id = ID
-        name = name
+    { id = ID
+      name = name
       payload = [||]
       nodeFilter = ""
       serviceFilter = ""

@@ -100,7 +100,7 @@ let basicRequest config meth =
   >> setConfigOpts config
 
 let withJsonBody jsonBody =
-  Request.setHeader (ContentType (ContentType.Create("application", "json")))
+  Request.setHeader (ContentType (ContentType.create("application", "json")))
   >> Request.bodyStringEncoded (Json.format jsonBody) Encoding.UTF8
 
 let inline withJsonBodyT value =

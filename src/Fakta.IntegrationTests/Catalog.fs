@@ -75,7 +75,7 @@ let tests =
           createIndex = 12
           modifyIndex = 18 }
 
-      let listing = Catalog.register state (CatalogRegistration.Instance "COMP05" "127.0.0.1" agentCheck agentService) []
+      let listing = Catalog.register state (CatalogRegistration.Instance "COMP05" "127.0.0.1" "" agentCheck agentService) []
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
