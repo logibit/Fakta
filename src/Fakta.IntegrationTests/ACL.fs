@@ -12,7 +12,7 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   let tokenId =
-    let aclInstance = ACLEntry.ClientTokenInstance (Guid.NewGuid().ToString()) "client test token" "client"
+    let aclInstance = ACLEntry.ClientTokenInstance "" "client token" "client"
     let listing = ACL.create state (aclInstance , [])
     ensureSuccess listing <| fun createdId ->
       let logger = state.logger
