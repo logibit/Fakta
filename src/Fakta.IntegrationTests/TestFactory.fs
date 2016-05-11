@@ -6,23 +6,36 @@ open NodaTime
 open Fakta
 open Fakta.Logging
 open Fuchu
+open Hopac
 
-let config = FaktaConfig.Default
+let config = FaktaConfig.empty
 
 let logger =
   { new Logger with
-      member x.Verbose f_line = printfn "[V] %A" (f_line ())
-      member x.Debug f_line   = printfn "[V] %A" (f_line ())
-      member x.Log line       = printfn "[V] %A" line }
+      member x.log message =
+        printfn "%A" message
+        Alt.always (Promise.Now.withValue ())
 
-let state = { config = config
-              logger = NoopLogger //logger
-              clock  = SystemClock.Instance 
-              random = Random () }
+      member x.logVerbose evaluate =
+        printfn "%A" (evaluate ())
+        Alt.always (Promise.Now.withValue ())
 
-let ensureSuccess value f =
-  match Async.RunSynchronously value with
-  | Choice1Of2 x -> f x
-  | Choice2Of2 err -> Tests.failtestf "got error %A" err
+      member x.logSimple message =
+        printfn "%A" message
+    }
+
+let state =
+  { config = config
+    logger = logger// NoopLogger
+    clock  = SystemClock.Instance 
+    random = Random () }
+
+let ensureSuccess computation kontinue =
+  match run computation with
+  | Choice1Of2 x ->
+    kontinue x
+
+  | Choice2Of2 err ->
+    Tests.failtestf "got error %A" err
 
 let given value = ensureSuccess value ignore

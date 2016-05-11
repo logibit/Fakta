@@ -2,6 +2,7 @@
 module Fakta.Types
 
 open System
+open System.Net
 open System.Text
 open NodaTime
 open Aether
@@ -52,11 +53,9 @@ type CheckUpdate =
   { status : string
     output : string}
 
-  static member GetUpdateJson (st : string)(out : string) =
-    let res =
-      { status = st;
-        output = out }
-    res
+  static member GetUpdateJson (st : string) (out : string) =
+    { status = st
+      output = out }
 
   static member ToJson (chu : CheckUpdate) =
     Json.write "Status" chu.status
@@ -66,17 +65,16 @@ type Node =
   { node    : string
     address : string }
 
-    static member FromJson (_ : Node) =
-        (fun n a ->
-          { node = n
-            address = a
-              })
-        <!> Json.read "Node"
-        <*> Json.read "Address"
+  static member FromJson (_ : Node) =
+    (fun n a ->
+      { node = n
+        address = a })
+    <!> Json.read "Node"
+    <*> Json.read "Address"
 
-    static member ToJson (n : Node) =
-      Json.write "Node" n.node
-      *> Json.write "Address" n.address
+  static member ToJson (n : Node) =
+    Json.write "Node" n.node
+    *> Json.write "Address" n.address
 
 type ACLEntry =
   { createIndex : Index
@@ -86,35 +84,30 @@ type ACLEntry =
     ``type``    : string
     rules       : string }
 
-  static member ClientTokenInstance (tokenID : Id) =
-    let res =
-      { createIndex = Index.MinValue;
-        modifyIndex = Index.MinValue;
-        id = tokenID;
-        name = "client token"
-        ``type`` = "client"
-        rules = "" }
-    res
+  static member ClientTokenInstance (tokenID : Id) (tokenName: string) (tokenType: string) =
+    { createIndex = Index.MinValue
+      modifyIndex = Index.MinValue
+      id = tokenID
+      name = tokenName
+      ``type`` = tokenType
+      rules = "" }
 
-  static member empty=
-    let res =
-      { createIndex = Index.MinValue;
-        modifyIndex = Index.MinValue;
-        id = "";
-        name = ""
-        ``type`` = ""
-        rules = "" }
-    res
+  static member empty =
+    { createIndex = Index.MinValue
+      modifyIndex = Index.MinValue
+      id = ""
+      name = ""
+      ``type`` = ""
+      rules = "" }
 
   static member FromJson (_ : ACLEntry) =
     (fun ci mi i n t rs ->
       { createIndex = ci
         modifyIndex = mi
-        id = i
-        name = n
-        ``type`` = t
-        rules = rs
-          })
+        id          = i
+        name        = n
+        ``type``    = t
+        rules       = rs })
     <!> Json.read "CreateIndex"
     <*> Json.read "ModifyIndex"
     <*> Json.read "ID"
@@ -140,17 +133,7 @@ type AgentCheck =
     serviceId   : string
     serviceName : string }
 
-  static member Instance (nodeName: string) =
-    let res =
-      { node = nodeName
-        checkID = "service:consulcheck"
-        name = "consul test health check"
-        status = "passing"
-        notes = ""
-        output = ""
-        serviceId = "consul"
-        serviceName = "consul" }
-    res
+
 
   static member FromJson (_ : AgentCheck) =
     (fun nd chId n st ns out sId sName ->
@@ -207,8 +190,7 @@ type AgentMember =
         protocolCur = pCur
         delegateMin = dMin
         delegateMax = dMax
-        delegateCur = dCur
-          })
+        delegateCur = dCur })
     <!> Json.read "Name"
     <*> Json.read "Addr"
     <*> Json.read "Port"
@@ -244,17 +226,6 @@ type AgentService =
     createIndex       : int
     modifyIndex       : int}
 
-  static member Instance =
-    let res =
-      { id = "consul"
-        service = "consul"
-        tags = Some([])
-        port = Port.MinValue
-        address = "127.0.0.1"
-        enableTagOverride = false
-        createIndex = 12
-        modifyIndex = 18 }
-    res
 
   static member FromJson (_ : AgentService) =
     (fun id s t p a eto ci mi ->
@@ -267,8 +238,7 @@ type AgentService =
         address   = a
         enableTagOverride = eto
         createIndex = ci
-        modifyIndex = mi
-          })
+        modifyIndex = mi })
     <!> Json.read "ID"
     <*> Json.read "Service"
     <*> Json.read "Tags"
@@ -289,11 +259,8 @@ type AgentService =
     *> Json.write "CreateIndex" ags.createIndex
     *> Json.write "ModifyIndex" ags.modifyIndex
 
-
-
 type AgentServiceCheck =
-  {
-    script   : string option// `json:",omitempty"`
+  { script   : string option// `json:",omitempty"`
     interval : string option// `json:",omitempty"`
     timeout  : string option// `json:",omitempty"`
     ttl      : string option// `json:",omitempty"`
@@ -304,22 +271,19 @@ type AgentServiceCheck =
     status   : string option  } // `json:",omitempty"`
 
   static member ttlServiceCheck =
-    let res =
-      { script = Some("")
-        interval = Some("15s")
-        timeout = Some("")
-        ttl = Some("30s")
-        http = Some("")
-        tcp = ""
-        dockerContainerId = ""
-        shell = ""
-        status = Some("") }
-    res
+    { script = Some("")
+      interval = Some("15s")
+      timeout = Some("")
+      ttl = Some("30s")
+      http = Some("")
+      tcp = ""
+      dockerContainerId = ""
+      shell = ""
+      status = Some("") }
 
   static member FromJson (_ : AgentServiceCheck) =
     (fun sc i t ttl http tcp dci sh st ->
-      {
-        script = sc
+      { script = sc
         interval = i
         timeout = t
         ttl = ttl
@@ -327,8 +291,7 @@ type AgentServiceCheck =
         tcp = tcp
         dockerContainerId = dci
         shell = sh
-        status = st
-          })
+        status = st })
     <!> Json.read "Script"
     <*> Json.read "Interval"
     <*> Json.read "Timeout"
@@ -364,29 +327,25 @@ type AgentServiceRegistration =
     checks  : AgentServiceChecks option }
 
     static member serviceRegistration (id: string) : (AgentServiceRegistration) =
-      let res =
-        { id = Some(id);
-          name= Some("serviceReg");
-          tags = None;
-          address=Some("127.0.0.1");
-          port=Some(8500);
-          enableTagOverride = false;
-          check = None;
-          checks = None }
-      res
+      { id = Some(id)
+        name= Some("serviceReg")
+        tags = None
+        address = Some("127.0.0.1")
+        port = Some 8500
+        enableTagOverride = false
+        check = None
+        checks = None }
 
     static member FromJson (_ : AgentServiceRegistration) =
       (fun id n ts p a eto ch chs ->
-        {
-          id = id
+        { id = id
           name = n
           tags = ts
           port = p
           address = a
           enableTagOverride = eto
           check = ch
-          checks = chs
-            })
+          checks = chs })
       <!> Json.read "ID"
       <*> Json.read "Name"
       <*> Json.read "Tags"
@@ -407,37 +366,61 @@ type AgentServiceRegistration =
     *> Json.maybeWrite "Checks" ags.checks
 
 type AgentCheckRegistration =
+    /// If an ID is not provided, it is set to Name. You cannot have duplicate
+    /// ID entries per agent, so it may be necessary to provide an ID.
   { id        : Id option // `json:",omitempty"`
+    /// The Name field is mandatory, as is one of Script, HTTP, TCP or TTL.
+    /// Script, TCP and HTTP also require that Interval be set.
     name      : string//`json:",omitempty"`
+    /// The Notes field is not used internally by Consul and is meant to be human-readable.
     notes     : string option// `json:",omitempty"`
+    /// The ServiceID field can be provided to associate the registered check
+    /// with an existing service provided by the agent.
     serviceId : Id option// `json:",omitempty"`
+    /// If a Script is provided, the check type is a script, and Consul will evaluate the script every Interval to update the status.
     script   : string option// `json:",omitempty"`
     interval : string option// `json:",omitempty"`
     timeout  : string option// `json:",omitempty"`
+    /// If a TTL type is used, then the TTL update endpoint must be used
+    /// periodically to update the state of the check.
     ttl      : string option// `json:",omitempty"`
+    /// An HTTP check will perform an HTTP GET request against the value of HTTP
+    /// (expected to be a URL) every Interval. If the response is any 2xx code,
+    /// the check is passing. If the response is 429 Too Many Requests, the
+    /// check is warning. Otherwise, the check is critical.
     http     : string option// `json:",omitempty"`
+    /// An TCP check will perform an TCP connection attempt against the value of
+    /// TCP (expected to be an IP/hostname and port combination) every Interval.
+    /// If the connection attempt is successful, the check is passing. If the
+    /// connection attempt is unsuccessful, the check is critical. In the case
+    /// of a hostname that resolves to both IPv4 and IPv6 addresses, an attempt
+    /// will be made to both addresses, and the first successful connection
+    /// attempt will result in a successful check.
     tcp      : string option
+    /// If a DockerContainerID is provided, the check is a Docker check, and
+    /// Consul will evaluate the script every Interval in the given container
+    /// using the specified Shell. Note that Shell is currently only supported
+    /// for Docker checks.
     dockerContainerId :string option
     shell    : string option
+    /// The Status field can be provided to specify the initial state of the
+    /// health check.
     status   : string option }
 
-  static member ttlCheck (serviceId : string) : (AgentCheckRegistration) =
-    let res =
-      { id = Some(serviceId);
-        name = "web app";
+  static member ttlCheck (id : string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =    
+      { id = Some(id); 
+        name = name; 
         notes = None;
-        serviceId = Some("consul");
+        serviceId =Some(serviceId);
         script = None
-        interval = Some("15s")
+        interval = Some(intr)
         timeout = None
-        ttl = Some("30s")
+        ttl = Some(ttl)
         http = None
         tcp = None
         dockerContainerId = None
         shell = None
         status = None }
-    res
-
 
   static member FromJson (_ : AgentCheckRegistration) =
     (fun id n nt si sc i t ttl http tcp dci sh st ->
@@ -453,8 +436,7 @@ type AgentCheckRegistration =
         tcp = tcp
         dockerContainerId = dci
         shell = sh
-        status = st
-          })
+        status = st })
     <!> Json.read "ID"
     <*> Json.read "Name"
     <*> Json.read "Notes"
@@ -492,28 +474,26 @@ type CatalogDeregistration =
     serviceId  : string
     checkId    : string }
 
-    static member Instance =
-      let res =
-        { node = "COMP05"
-          datacenter = "dc1"
-          address = "127.0.0.1"
-          serviceId = "consul"
-          checkId = "" }
-      res
+    static member Instance (nodeName: string) (dc: string) (addr: string) (serviceId: string) (checkID: string) =
+        { node = nodeName
+          datacenter = dc
+          address = addr
+          serviceId = serviceId
+          checkId = checkID }
 
-    static member FromJson (_ : CatalogDeregistration) =
-      (fun n a dc si chi ->
-        { node = n
-          address = a
-          datacenter   = dc
-          serviceId = si
-          checkId   = chi
-            })
-      <!> Json.read "Node"
-      <*> Json.read "Address"
-      <*> Json.read "Datacenter"
-      <*> Json.read "ServiceID"
-      <*> Json.read "CheckID"
+  static member FromJson (_ : CatalogDeregistration) =
+    (fun n a dc si chi ->
+      { node = n
+        address = a
+        datacenter   = dc
+        serviceId = si
+        checkId   = chi
+          })
+    <!> Json.read "Node"
+    <*> Json.read "Address"
+    <*> Json.read "Datacenter"
+    <*> Json.read "ServiceID"
+    <*> Json.read "CheckID"
 
   static member ToJson (cdr : CatalogDeregistration) =
     Json.write "Node" cdr.node
@@ -525,45 +505,40 @@ type CatalogDeregistration =
 
 type CatalogNode =
   { node     : Node
-    Services : Map<string, AgentService> }
+    services : Map<string, AgentService> }
 
   static member FromJson (_ : CatalogNode) =
     (fun n s ->
       { node = n
-        Services = s
-          })
+        services = s })
     <!> Json.read "Node"
     <*> Json.read "Services"
 
   static member ToJson (n : CatalogNode) =
     Json.write "Node" n.node
-    *> Json.write "Services" n.Services
+    *> Json.write "Services" n.services
 
 type CatalogRegistration =
-  { Node       : string
-    Address    : string
-    Datacenter : string
-    Service    : AgentService
-    Check      : AgentCheck }
+  { node       : string
+    address    : string
+    datacenter : string
+    service    : AgentService
+    check      : AgentCheck }
 
-  static member Instance (nodeName: string) =
-    let res =
-      {
-        Node = "COMP05"
-        Address = "127.0.0.1"
-        Datacenter = ""
-        Service = AgentService.Instance
-        Check = AgentCheck.Instance nodeName }
-    res
+  static member Instance (nodeName: string) (address: string) (dc: string) (agentCheck: AgentCheck) (agentServicë: AgentService) =
+    {   node = nodeName
+        address = address        
+        service = agentServicë
+        datacenter = dc
+        check = agentCheck }
 
   static member FromJson (_ : CatalogRegistration) =
     (fun n a dc s ch ->
-      { Node = n
-        Address = a
-        Datacenter = dc
-        Service = s
-        Check = ch
-          })
+      { node = n
+        address = a
+        datacenter = dc
+        service = s
+        check = ch })
     <!> Json.read "Node"
     <*> Json.read "Address"
     <*> Json.read "Datacenter"
@@ -571,11 +546,11 @@ type CatalogRegistration =
     <*> Json.read "Check"
 
   static member ToJson (n : CatalogRegistration) =
-    Json.write "Node" n.Node
-    *> Json.write "Address" n.Address
-    *> Json.write "Datacenter" n.Datacenter
-    *> Json.write "Service" n.Service
-    *> Json.write "Check" n.Check
+    Json.write "Node" n.node
+    *> Json.write "Address" n.address
+    *> Json.write "Datacenter" n.datacenter
+    *> Json.write "Service" n.service
+    *> Json.write "Check" n.check
 
 type CatalogService =
   { node           : string
@@ -594,8 +569,7 @@ type CatalogService =
         serviceName = sn
         serviceAddress = sa
         serviceTags = sts
-        servicePort = sp
-          })
+        servicePort = sp })
     <!> Json.read "Node"
     <*> Json.read "Address"
     <*> Json.read "ServiceID"
@@ -612,6 +586,68 @@ type CatalogService =
     *> Json.write "ServiceAddress" s.serviceAddress
     *> Json.write "ServiceTags" s.serviceTags
     *> Json.write "ServicePort" s.servicePort
+
+type PortMapping =
+  { dns : Port
+    http : Port
+    rpc : Port
+    serfLan : Port
+    serfWan : Port
+    server : Port }
+
+type ConfigData =
+  { boostrap : bool
+    server   : bool
+    datacenter : string
+    dataDir    : string
+    dnsRecursor : string
+    dnsRecursors : string list
+    domain : string
+    logLevel : LogLevel
+    nodeName : string
+    clientAddr : IPAddress
+    bindAddr : IPAddress
+    advertiseAddr : IPAddress
+    ports : PortMapping
+    leaveOnTerm : bool
+    skipLeaveOnInt : bool
+    statsiteAddr : string
+    protocol : uint16
+    enableDebug : bool
+    verifyIncoming : bool
+    verifyOutgoing : bool
+    caFile : string option
+    certFile : string option
+    keyFile : string option
+    startJoin : string list
+    uiDir : string option
+    pidFile : string option
+    enableSyslog : bool
+    rejoinAfterLeave : bool }
+
+type CoordData =
+  { adjustment : int
+    error : float
+    vec : int list }
+
+type MemberData =
+  { name : string
+    addr : string
+    port : Port
+    tags : Map<string, string>
+    status : int
+    protocolMin : uint16
+    protocolMax : uint16
+    protocolCur : uint16
+    delegateMin : uint16
+    delegateMax : uint16
+    delegateCur : uint16 }
+
+type SelfData =
+  { config : ConfigData
+    coord  : CoordData
+    ``member`` : MemberData }
+
 
 // [{"CreateIndex":10,"ModifyIndex":17,"LockIndex":0,"Key":"fortnox/apikey","Flags":0,"Value":"MTMzOA=="}]
 type KVPair =
@@ -642,7 +678,7 @@ type KVPair =
   member x.utf8String =
     UTF8.toString x.value
 
-  static member Create(key : Key, value : byte [], ?flags) =
+  static member create(key : Key, value : byte [], ?flags) =
     // TODO: validate that value <= 512 KiB
     { createIndex = 0UL
       modifyIndex = 0UL
@@ -653,11 +689,11 @@ type KVPair =
       session     = None }
 
   static member Create(key : Key, value : string) =
-    KVPair.Create(key, Encoding.UTF8.GetBytes value)
+    KVPair.create(key, UTF8.bytes value)
 
   static member inline CreateForAcquire(session : Session, key : Key, value : 'T, ?flags) =
     let json = Json.serialize value |> Json.format |> Encoding.UTF8.GetBytes
-    { KVPair.Create(key, json, defaultArg flags 0UL) with
+    { KVPair.create(key, json, defaultArg flags 0UL) with
         session = Some session }
 
   static member FromJson (_ : KVPair) =
@@ -704,14 +740,14 @@ type HealthCheck =
 
   static member FromJson (_ : HealthCheck) =
     (fun node id name status notes out serviceId serviceName ->
-      { node = node
-        checkId = id
-        name   = name
-        status = status
-        notes         = notes
-        output       = out
-        serviceId      = serviceId
-        serviceName     = serviceName })
+      { node        = node
+        checkId     = id
+        name        = name
+        status      = status
+        notes       = notes
+        output      = out
+        serviceId   = serviceId
+        serviceName = serviceName })
     <!> Json.read "Node"
     <*> Json.read "CheckID"
     <*> Json.read "Name"
@@ -751,10 +787,9 @@ type ServiceEntry =
 
   static member FromJson (_ : ServiceEntry) =
     (fun n s chs ->
-      { node = n
+      { node    = n
         service = s
-        checks   = chs
-          })
+        checks  = chs })
     <!> Json.read "Node"
     <*> Json.read "Service"
     <*> Json.read "Checks"
@@ -795,9 +830,6 @@ type SessionOption =
 type SessionOptions = SessionOption list
 
 
-
-
-
 /// SessionEntry represents a session in consul
 type SessionEntry =
     /// The epoch this session was created during. (You know if your session-based
@@ -822,16 +854,14 @@ type SessionEntry =
     ttl         : Duration }
 
   static member empty =
-    let res =
-      { createIndex = UInt64.MinValue;
-        id = Guid.Empty;
-        name = "";
-        node = "";
-        checks = [];
-        lockDelay = UInt64.MinValue;
-        behavior = "";
-        ttl = Duration.Epsilon }
-    res
+    { createIndex = UInt64.MinValue
+      id = Guid.Empty
+      name = ""
+      node = ""
+      checks = []
+      lockDelay = UInt64.MinValue
+      behavior = ""
+      ttl = Duration.Epsilon }
 
   static member FromJson (_ : SessionEntry) =
     (fun ci id n nd chs ld b ttl ->
@@ -842,8 +872,7 @@ type SessionEntry =
         checks = chs
         lockDelay   = ld
         behavior = b
-        ttl = ttl
-          })
+        ttl = ttl })
     <!> Json.read "CreateIndex"
     <*> Json.read "ID"
     <*> Json.read "Name"
@@ -873,43 +902,38 @@ type UserEvent =
     version       : int
     lTime         : int }
 
-  static member Instance =
-    let res =
-      { id = "b54fe110-7af5-cafc-d1fb-afc8ba432b1c"
-        name = "deploy"
-        payload = [||]
-        nodeFilter = ""
-        serviceFilter = ""
-        tagFilter = ""
-        version = 1
-        lTime = 0 }
-    res
+  static member Instance (ID: string) (name: string) =
+    { id = ID
+      name = name
+      payload = [||]
+      nodeFilter = ""
+      serviceFilter = ""
+      tagFilter = ""
+      version = 1
+      lTime = 0 }
 
   static member empty =
-    let res =
-      { id = ""
-        name = ""
-        payload = [||]
-        nodeFilter = ""
-        serviceFilter = ""
-        tagFilter = ""
-        version = -1
-        lTime = -1 }
-    res
+    { id = ""
+      name = ""
+      payload = [||]
+      nodeFilter = ""
+      serviceFilter = ""
+      tagFilter = ""
+      version = -1
+      lTime = -1 }
 
   static member FromJson (_ : UserEvent) =
     (fun id n pl nf sf tf v lt ->
       { id = id
         name = n
         payload = match pl with
-                      | None   -> [||]
-                      | Some pl -> Convert.FromBase64String pl
+                  | None    -> [||]
+                  | Some pl -> Convert.FromBase64String pl
         nodeFilter = nf
         serviceFilter = sf
-        tagFilter   = tf
+        tagFilter     = tf
         version = v
-        lTime = lt
-          })
+        lTime = lt })
     <!> Json.read "ID"
     <*> Json.read "Name"
     <*> Json.read "Payload"
@@ -976,29 +1000,39 @@ type WriteOptions = WriteOption list
 
 type Error =
   | Message of string
+  | ResourceNotFound
   | KeyNotFound of Key
   | ConnectionFailed of System.Net.WebException
 
 type FaktaConfig =
     /// The base URIs that we have servers at
-  { serverBaseUri  : Uri
+  { serverBaseUri : Uri
     /// Datacenter to use. If not provided, the default agent datacenter is used.
-    datacenter     : string option
+    datacenter    : string option
     /// HttpAuth is the auth info to use for http access.
-    credentials    : HttpBasicAuth option
+    credentials   : HttpBasicAuth option
     /// WaitTime limits how long a Watch will block. If not provided,
     /// the agent default values will be used.
-    waitTime       : Duration
+    waitTime      : Duration
     /// Token is used to provide a per-request ACL token
     /// which overrides the agent's default token.
-    token          : Token option
-  }
-  static member Default =
+    token         : Token option }
+
+  static member empty =
     { serverBaseUri  = Uri "http://127.0.0.1:8500"
       datacenter     = None
       credentials    = None
       waitTime       = DefaultLockWaitTime
       token          = None }
+
+open System.Threading
+
+let seedGenerator = new Random()
+let random =
+  new ThreadLocal<Random>(fun _ -> 
+          lock seedGenerator (fun _ -> 
+            let seed = seedGenerator.Next()
+            new Random(seed)))
 
 type FaktaState =
   { config : FaktaConfig
@@ -1006,10 +1040,9 @@ type FaktaState =
     clock  : IClock
     random : Random }
 
-  static member Default =
-    { config = FaktaConfig.Default
+  static member empty =
+    { config = FaktaConfig.empty
       logger = NoopLogger
       clock  = SystemClock.Instance
-      random = Random () }
-
-
+      random = random.Value
+    }

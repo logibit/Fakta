@@ -1,8 +1,17 @@
 ﻿module Fakta.Logging
 
 open System
-
+open System.Diagnostics
 open NodaTime
+open Hopac
+
+let timeJob (runnable : Job<_>) : Job<'a * Duration> =
+  job {
+    let sw = Stopwatch.StartNew()
+    let! res = runnable
+    sw.Stop()
+    return res, Duration.FromTicks sw.ElapsedTicks
+  }
 
 /// The log levels specify the severity of the message.
 [<CustomEquality; CustomComparison>]
@@ -92,54 +101,79 @@ type LogLevel =
       member x.Equals other =
         x.ToInt() = other.ToInt()
 
-/// When logging, write a log line like this with the source of your
+type Value =
+  | Event of template:string
+  | Gauge of value:float * units:string
+
+/// When logging, write a Message like this with the source of your
 /// log line as well as a message and an optional exception.
-type LogLine =
+type Message =
   { /// the level that this log line has
     level     : LogLevel
     /// the source of the log line, e.g. 'ModuleName.FunctionName'
-    path      : string
+    path      : string[]
     /// the message that the application wants to log
-    message   : string
-    /// any key-value based data to log
-    data      : Map<string, obj>
+    value     : Value
+    /// Any key-value data pairs to log or interpolate into the message
+    /// template.
+    fields    : Map<string, obj>
     /// timestamp when this log line was created
     timestamp : Instant }
 
 /// The primary Logger abstraction that you can log data into
 type Logger =
-  abstract Verbose : (unit -> LogLine) -> unit
-  abstract Debug : (unit -> LogLine) -> unit
-  abstract Log : LogLine -> unit
+  abstract logVerbose : (unit -> Message) -> Alt<Promise<unit>>
+  abstract log : Message -> Alt<Promise<unit>>
+  abstract logSimple : Message -> unit
 
 let NoopLogger =
   { new Logger with
-      member x.Verbose f_line = ()
-      member x.Debug f_line = ()
-      member x.Log line = () }
+      member x.logVerbose evaluate = Alt.always (Promise.Now.withValue ())
+      member x.log message = Alt.always (Promise.Now.withValue ())
+      member x.logSimple message = () }
 
 let private logger =
-  ref (SystemClock.Instance, fun (name : string) -> NoopLogger)
+  ref ((fun () -> SystemClock.Instance.Now), fun (name : string) -> NoopLogger)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module LogLine =
+module Message =
 
-  let mk (clock : IClock) path level data message =
-    { message   = message
+  let create (clock : IClock) path level fields message =
+    { value     = Event message
       level     = level
       path      = path
-      data      = data
+      fields    = fields
       timestamp = clock.Now }
 
-  let private message data message =
-    { message   = message
-      level     = Verbose
-      path      = ""
-      data      = data |> Map.ofList
-      timestamp = (!logger |> fst).Now }
+  let event fields message =
+    { value     = Event message
+      level     = Info
+      path      = Array.empty
+      fields    = fields |> Map.ofList
+      timestamp = (fst !logger) () }
+
+  let gauge value units =
+    { value     = Gauge (value, units)
+      level     = Debug
+      path      = Array.empty
+      fields    = Map.empty
+      timestamp = (fst !logger) () }
+
+  let setPath path message =
+    { message with path = path }
+
+  let setField name value message =
+    { message with fields = message.fields |> Map.put name value }
+
+  let timeJob path (runnable : Job<_>) =
+    timeJob runnable |> Job.map (function
+    | res, dur ->
+      let msg = gauge (float dur.Ticks / float NodaConstants.TicksPerMillisecond) "ms"
+                |> setPath path
+      res, msg)
 
   let sprintf data =
-    Printf.kprintf (message data)
+    Printf.kprintf (event data)
 
 let configure clock fLogger =
   logger := (clock, fLogger)
@@ -150,11 +184,11 @@ let getLoggerByName name =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Logger =
 
-  let log (logger : Logger) (line : LogLine) =
-    logger.Log line
+  let log (logger : Logger) message =
+    logger.log message
 
-  let debug (logger : Logger) f_line =
-    logger.Debug f_line
+  let logVerbose (logger : Logger) evaluate =
+    logger.logVerbose evaluate
 
-  let verbose (logger : Logger) f_line =
-    logger.Verbose f_line
+  let logSimple (logger : Logger) message =
+    logger.logSimple message

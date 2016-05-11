@@ -29,3 +29,4 @@ src/.vs/config/applicationhost.config
 paket-files/
 consul
 consul.zip
+serf/

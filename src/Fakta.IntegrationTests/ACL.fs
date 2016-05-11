@@ -6,19 +6,17 @@ open Chiron
 open Chiron.Operators
 open Fuchu
 open NodaTime
-
 open Fakta
 open Fakta.Logging
 
-
 [<Tests>]
-let tests =  
-  let tokenID = 
-    let listing = ACL.create state (ACLEntry.ClientTokenInstance "") []
-    ensureSuccess listing <| fun (createdId, meta) ->
+let tests =
+  let tokenId =
+    let aclInstance = ACLEntry.ClientTokenInstance "" "client token" "client"
+    let listing = ACL.create state (aclInstance , [])
+    ensureSuccess listing <| fun createdId ->
       let logger = state.logger
-      logger.Log (LogLine.sprintf [] "acl id: %s" createdId)
-      logger.Log (LogLine.sprintf [] "value: %A" meta)
+      logger.logSimple (Message.sprintf [] "created acl id: %O" createdId)
       createdId
 
   testList "ACL tests" [
@@ -27,37 +25,35 @@ let tests =
       ensureSuccess listing <| fun (aclNodes, meta) ->
         let logger = state.logger
         for acl in aclNodes do
-          logger.Log (LogLine.sprintf [] "acl id: %s" acl.id)
-        logger.Log (LogLine.sprintf [] "value: %A" meta)
+          logger.logSimple (Message.sprintf [] "acl id: %O" acl.id)
+        logger.logSimple (Message.sprintf [] "value: %A" meta)
 
     testCase "ACL create" <| fun _ ->
-      tokenID |> ignore
+      ignore "tested for each test during the setup"
 
     testCase "ACL clone" <| fun _ ->
-      let listing = ACL.clone state tokenID []
-      ensureSuccess listing <| fun (clonedId, meta) ->
-        let logger = state.logger
-        logger.Log (LogLine.sprintf [] "acl id: %s" clonedId)
-        logger.Log (LogLine.sprintf [] "value: %A" meta)
-        
+      let listing = ACL.clone state (tokenId, [])
+      ensureSuccess listing <| fun clonedId ->
+        state.logger.logSimple (Message.sprintf [] "acl id: %O" clonedId)
 
     testCase "ACL info" <| fun _ ->
-      let listing = ACL.info state tokenID []
+      let listing = ACL.info state (tokenId, [])
       ensureSuccess listing <| fun (info, meta) ->
         let logger = state.logger
-        logger.Log (LogLine.sprintf [] "value: %s" info.id)
-        logger.Log (LogLine.sprintf [] "value: %A" meta)
+        logger.logSimple (Message.sprintf [] "value: %O" info.id)
+        logger.logSimple (Message.sprintf [] "value: %A" meta)
 
     testCase "ACL rules update" <| fun _ ->
-      let listing = ACL.update state (ACLEntry.ClientTokenInstance tokenID) []
+      let aclInstance = ACLEntry.ClientTokenInstance tokenId "client token" "client"
+      let listing = ACL.update state (aclInstance, [])
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
-        logger.Log (LogLine.sprintf [] "value: %A" meta)    
+        logger.logSimple (Message.sprintf [] "value: %A" meta)
 
     testCase "ACL destroy" <| fun _ ->
-      let listing = ACL.destroy state tokenID []
+      let listing = ACL.destroy state (tokenId, [])
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
-        logger.Log (LogLine.sprintf [] "value: %A" meta)
+        logger.logSimple (Message.sprintf [] "value: %A" meta)
 ]
 
