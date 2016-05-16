@@ -54,13 +54,34 @@ let tests =
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
 
     testCase "catalog.register" <| fun _ ->
-      let listing = Catalog.register state (CatalogRegistration.Instance "COMP05") []
+       
+      let agentCheck:AgentCheck = 
+        { node = "COMP05"
+          checkID = "service:consulcheck"
+          name = "consul test health check"
+          status = "passing"
+          notes = ""
+          output = ""
+          serviceId = "consul"
+          serviceName = "consul" }
+
+      let agentService:AgentService = 
+        { id = "consul"
+          service = "consul"
+          tags = Some([])
+          port = Port.MinValue
+          address = "127.0.0.1"
+          enableTagOverride = false
+          createIndex = 12
+          modifyIndex = 18 }
+
+      let listing = Catalog.register state (CatalogRegistration.Instance "COMP05" "127.0.0.1" "" agentCheck agentService) []
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
 
     testCase "catalog.deregister" <| fun _ ->
-      let listing = Catalog.deregister state CatalogDeregistration.Instance []
+      let listing = Catalog.deregister state (CatalogDeregistration.Instance "COMP05" "dc1" "127.0.0.1" "consul" "") []
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
