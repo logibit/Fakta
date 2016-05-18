@@ -13,6 +13,26 @@ open Hopac
 let statusDottedPath (funcName: string) =
   [| "Fakta"; "Status"; funcName |]
 
+//let statusPath (funcName: string) =
+//  [| "Fakta"; "Status"; funcName |]
+//
+//let writeFilters state =
+//  statusPath >> writeFilters state
+//
+//let basicFilters state =
+//  statusPath >> basicFilters state
+//
+//
+//let ldr state: BasicCall<string> =
+//  let createRequest =
+//    basicCall state.config "service/services"
+//
+//  let filters =
+//    basicFilters state "services"
+//    >> codec2 createRequest fstOfJson2
+//
+//  HttpFs.Client.getResponse |> filters
+
 /// Leader is used to query for a known leader
 let leader (state : FaktaState) : Job<Choice<string, Error>> = job {
   let uriBuilder = UriBuilder.ofStatus state.config "leader"

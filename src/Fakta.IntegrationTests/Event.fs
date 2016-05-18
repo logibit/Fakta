@@ -22,7 +22,7 @@ let tests =
         logger.logSimple (Message.sprintf [] "value: %O" (meta.requestTime))
 
     testCase "events list" <| fun _ ->
-      let listing = Event.list state "" []
+      let listing = Event.list state ("", [])
       listing |> ignore      
       ensureSuccess listing <| fun (listing, meta) ->
         let logger = state.logger

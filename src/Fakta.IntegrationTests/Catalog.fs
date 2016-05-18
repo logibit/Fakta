@@ -13,13 +13,13 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   testList "Catalog tests" [
-    testCase "catalog.datacenters -> all the known datacenters" <| fun _ ->
-      let listing = Catalog.datacenters state
-      listing |> ignore      
-      ensureSuccess listing <| fun (listing) ->
-        let logger = state.logger
-        for l in listing do
-          logger.logSimple (Message.sprintf [] "value: %s" l)
+//    testCase "catalog.datacenters -> all the known datacenters" <| fun _ ->
+//      let listing = Catalog.datacenters state
+//      listing |> ignore      
+//      ensureSuccess listing <| fun (listing) ->
+//        let logger = state.logger
+//        for l in listing do
+//          logger.logSimple (Message.sprintf [] "value: %s" l)
 
     testCase "catalog.nodes -> all the known nodes" <| fun _ ->
       let listing = Catalog.nodes state []
@@ -31,14 +31,14 @@ let tests =
     
 
     testCase "catalog.node -> service information about a single node" <| fun _ ->
-      let listing = Catalog.node state "COMP05" []
+      let listing = Catalog.node state ("COMP05", [])
       ensureSuccess listing <| fun (node, meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "key: %s" node.node.node)
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
 
     testCase "catalog.service -> entries for a given service" <| fun _ ->
-      let listing = Catalog.service state "consul" "" []
+      let listing = Catalog.service state (("consul", ""), [])
       ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do
@@ -75,13 +75,15 @@ let tests =
           createIndex = 12
           modifyIndex = 18 }
 
-      let listing = Catalog.register state (CatalogRegistration.Instance "COMP05" "127.0.0.1" "" agentCheck agentService) []
+      let catalogReg = (CatalogRegistration.Instance "COMP05" "127.0.0.1" "" agentCheck agentService)
+      let listing = Catalog.register state (catalogReg, [])
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
 
     testCase "catalog.deregister" <| fun _ ->
-      let listing = Catalog.deregister state (CatalogDeregistration.Instance "COMP05" "dc1" "127.0.0.1" "consul" "") []
+      let catalogDereg = (CatalogDeregistration.Instance "COMP05" "dc1" "127.0.0.1" "consul" "")
+      let listing = Catalog.deregister state (catalogDereg, [])
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
