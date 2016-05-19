@@ -121,7 +121,7 @@ let private setServiceMaintenance state enable : WriteCall<Id * (*reason*) strin
 /// simply to aid human operators. If no reason is provided, a default value
 /// will be used instead.
 let disableServiceMaintenance (state : FaktaState) : WriteCall<Id * (*reason*) string, unit> =
-  setServiceMaintenance state false
+  setServiceMaintenance state false 
 
 /// The service maintenance endpoint allows placing a given service into
 /// "maintenance mode". During maintenance mode, the service will be marked as
@@ -259,14 +259,14 @@ let services state : QueryCall<Map<string, AgentService>> =
 //}
 
 
-let updateTTL state status: WriteCall<(Id * (*note*) string), unit> =  
+let updateTTL state (action:string): WriteCall<Id * (*note*) string, unit> =  
   let createRequest ((checkId, note), opts) =    
-    writeCallEntity state.config ("agent/check/"+status) (checkId, opts)
+    writeCallEntity state.config ("agent/check/"+action) (checkId, opts)
     |> Request.queryStringItem "note" note
-    |> withJsonBodyT (CheckUpdate.GetUpdateJson status note)
+    |> withJsonBodyT (CheckUpdate.GetUpdateJson action note)
 
   let filters =
-    writeFilters state ("agent.check."+status)
+    writeFilters state ("agent.check."+action)
     >> codec createRequest hasNoRespBody
 
   HttpFs.Client.getResponse |> filters
@@ -285,16 +285,22 @@ let updateTTL state status: WriteCall<(Id * (*note*) string), unit> =
 //}
 
 /// PassTTL is used to set a TTL check to the passing state
-let passTTL (state : FaktaState) (checkId : string) (note : string) : WriteCall<Id * (*note*) string, unit> =
-  updateTTL state "pass"
+let passTTL (state : FaktaState) : WriteCall<Id * (*note*) string, unit> =
+  let pass((checkId,note), wo) =
+    updateTTL state "pass" ((checkId,note), wo)
+  pass
 
 /// WarnTTL is used to set a TTL check to the warning state
-let warnTTL (state : FaktaState) (checkId : string) (note : string) : WriteCall<Id * (*note*) string, unit> =
-  updateTTL state "warn"
+let warnTTL (state : FaktaState)  : WriteCall<Id * (*note*) string, unit> =
+  let warn((checkId,note), wo) =
+    updateTTL state "warn" ((checkId,note), wo)
+  warn
 
 /// FailTTL is used to set a TTL check to the failing state
-let failTTL (state : FaktaState) (checkId : string) (note : string) : WriteCall<Id * (*note*) string, unit> =
-  updateTTL state "fail"
+let failTTL (state : FaktaState) : WriteCall<Id * (*note*) string, unit> =
+  let fail((checkId,note), wo) =
+    updateTTL state "fail" ((checkId,note), wo)
+  fail
 
 
 let forceLeave state : WriteCall<string, unit> =

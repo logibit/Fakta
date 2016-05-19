@@ -38,21 +38,21 @@ let tests =
 //    testCase "renew session periodically" <| fun _ ->
 //      Async.RunSynchronously (Session.renewPeriodic state (Duration.FromSeconds 10L) sessionId [] (Duration.FromSeconds 30L))
 
-//    testCase "get list of sessions" <| fun _ ->
-//      let listing = Session.list state []
-//      ensureSuccess listing <| fun (entry, meta) ->
-//        let logger = state.logger
-//        for entry in listing do
-//          logger.logSimple (Message.sprintf [] "session id: %O name: %s" entry.id entry.name)
-//        logger.logSimple (Message.sprintf [] "value: %A" meta)
-//
-//    testCase "get list of sessions for a node" <| fun _ ->
-//      let listing = Session.node state ("COMP05")
-//      ensureSuccess listing <| fun (listing, meta) ->
-//        let logger = state.logger
-//        for entry in listing do
-//          logger.logSimple (Message.sprintf [] "session id: %O name: %s" entry.id entry.name)
-//        logger.logSimple (Message.sprintf [] "value: %A" meta)
+    testCase "get list of sessions" <| fun _ ->
+      let listing = Session.list state []
+      ensureSuccess listing <| fun (list, meta) ->
+        let logger = state.logger
+        for entry in list do
+          logger.logSimple (Message.sprintf [] "session id: %O name: %s" entry.id entry.name)
+        logger.logSimple (Message.sprintf [] "value: %A" meta)
+
+    testCase "get list of sessions for a node" <| fun _ ->
+      let listing = Session.node state ("COMP05", [])
+      ensureSuccess listing <| fun (node, meta) ->
+        let logger = state.logger
+        for entry in node do
+          logger.logSimple (Message.sprintf [] "session id: %O name: %s" entry.id entry.name)
+        logger.logSimple (Message.sprintf [] "value: %A" meta)
 
     testCase "create sessions with no heathchecks" <| fun _ ->
       let listing = Session.createNoChecks state ([ttl], [])

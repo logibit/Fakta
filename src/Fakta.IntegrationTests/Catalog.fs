@@ -13,13 +13,13 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   testList "Catalog tests" [
-//    testCase "catalog.datacenters -> all the known datacenters" <| fun _ ->
-//      let listing = Catalog.datacenters state
-//      listing |> ignore      
-//      ensureSuccess listing <| fun (listing) ->
-//        let logger = state.logger
-//        for l in listing do
-//          logger.logSimple (Message.sprintf [] "value: %s" l)
+    testCase "catalog.datacenters -> all the known datacenters" <| fun _ ->
+      let listing = Catalog.datacenters state []
+      listing |> ignore      
+      ensureSuccess listing <| fun (dcs, meta) ->
+        let logger = state.logger
+        for l in dcs do
+          logger.logSimple (Message.sprintf [] "value: %s" l)
 
     testCase "catalog.nodes -> all the known nodes" <| fun _ ->
       let listing = Catalog.nodes state []

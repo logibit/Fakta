@@ -70,11 +70,10 @@ let getRaw (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<b
 let keys (s : FaktaState) (key : Key) (sep : string option) (opts : QueryOptions) : Job<Choice<Keys * QueryMeta, Error>> =
   raise (TBD "TODO")
 
-let list state (prefix: Key): QueryCall<string, KVPairs> =
-  let createRequest =
-    queryCallEntityUri state.config "kv"
-    >> basicRequest state.config Get
-    >> Request.queryStringItem "recurse" prefix
+let list state : QueryCall<string, KVPairs> =
+  let createRequest (prefix, qo) =
+    queryCall state.config "kv" qo
+    |> Request.queryStringItem "recurse" prefix
 
   let filters =
     queryFilters state "list"

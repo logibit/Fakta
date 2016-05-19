@@ -26,12 +26,12 @@ let writeFilters state =
 let queryFilters state =
   sessionPath >> queryFilters state
 
-let getSessionEntries (action: string) (state : FaktaState): QueryCall<SessionEntry list> =
+let getSessionEntries (action: string) (path: string) (state : FaktaState): QueryCall<SessionEntry list> =
   let createRequest =
-    queryCall state.config action    
+    queryCall state.config path
 
   let filters =
-    queryFilters state ""
+    queryFilters state action
     >> codec createRequest fstOfJson
 
   HttpFs.Client.getResponse |> filters
@@ -180,19 +180,16 @@ let info state: QueryCall<string, SessionEntry> =
 
 /// List gets all active sessions
 let list (state : FaktaState) : QueryCall<SessionEntry list> =
-  //getSessionEntries "list" state
-  let createRequest =
-    queryCall state.config "session/list"    
-
-  let filters =
-    queryFilters state ""
-    >> codec createRequest fstOfJson
-
-  HttpFs.Client.getResponse |> filters
+  let list (qo) = 
+    getSessionEntries "list" "session/list" state qo
+  list
+  
 
 /// List gets sessions for a node
-let node (state : FaktaState) (node : string) (qo : QueryOptions) : QueryCall<SessionEntry list> =
-  getSessionEntries ("node/"+node) state
+let node (state : FaktaState) : QueryCall<string, SessionEntry list> =
+  let node (n, qo) = 
+    getSessionEntries "node" ("session/node/"+n) state qo
+  node
 
 
 let renew state: WriteCall<string, SessionEntry> =

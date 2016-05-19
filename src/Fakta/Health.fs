@@ -23,13 +23,13 @@ let writeFilters state =
 let queryFilters state =
   healthPath >> queryFilters state
 
-let getValuesByName state (action:string) (path : string): QueryCall<string, HealthCheck list> =
+let getValuesByName state (path : string) (action:string): QueryCall<string, HealthCheck list> =
   let createRequest =
-    queryCallEntityUri state.config action
+    queryCallEntityUri state.config path
     >> basicRequest state.config Get
 
   let filters =
-    queryFilters state path
+    queryFilters state action
     >> codec createRequest (fstOfJsonPrism ConsulResult.firstObjectOfArray)
 
   HttpFs.Client.getResponse |> filters
@@ -48,18 +48,27 @@ let getValuesByName state (action:string) (path : string): QueryCall<string, Hea
 //}
 
 /// Checks is used to return the checks associated with a service
-let checks (state : FaktaState) (service : string) (opts : QueryOptions) : QueryCall<string, HealthCheck list> =
-  getValuesByName state ("health/checks/" + service)  "checks"
+let checks (state : FaktaState) : QueryCall<string, HealthCheck list> =
+  let checks = 
+    fun (n, wo) ->
+      getValuesByName state ("health/checks/")  "checks" (n, wo)
+  checks
 
 
 /// Node is used to query for checks belonging to a given node
-let node (state : FaktaState) (node : string) (opts : QueryOptions) : QueryCall<string, HealthCheck list> =
-  getValuesByName state ("health/node/" + node)  "node"
+let node (state : FaktaState) : QueryCall<string, HealthCheck list> =
+  let node = 
+    fun (n, wo) ->
+      getValuesByName state ("health/node/")  "node" (n, wo)
+  node
 
-let state (state : FaktaState) (endpointState : string) (opts : QueryOptions) : QueryCall<string, HealthCheck list> =
-  getValuesByName state ("health/state/" + endpointState)  "state"
+let state (state : FaktaState): QueryCall<string, HealthCheck list> =
+  let state = 
+    fun (n, wo) ->
+      getValuesByName state ("health/state/")  "node" (n, wo)
+  state
 
-let service state: QueryCall<(string * (*tag*) string * (*passingOnly*) bool), ServiceEntry list> =
+let service state: QueryCall<string * (*tag*) string * (*passingOnly*) bool, ServiceEntry list> =
   let createRequest ((serviceName, tag, passingOnly), opts) =
     queryCall state.config "health/service" opts
     |> Request.queryStringItem "tag" tag
