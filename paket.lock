@@ -29,3 +29,9 @@ GITHUB
   remote: haf/YoLo
   specs:
     YoLo.fs (10b225acf83c93e2e8bbd730cbeec8a42d1347d0)
+GROUP Test
+REDIRECTS: ON
+NUGET
+  remote: https://www.nuget.org/api/v2
+  specs:
+    FSharp.Core (4.0.0.1)
