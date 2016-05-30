@@ -1,6 +1,6 @@
 init:
   - git config --global core.autocrlf input
-  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 build:
   verbosity: detailed
@@ -10,7 +10,6 @@ install:
   - cmd: cd tools
   - ps: (new-object net.webclient).DownloadFile('https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_windows_amd64.zip', "$pwd\consul.zip")
   - cmd: 7z e consul.zip
-  - cmd: start consul agent -dev -bind 127.0.0.1 -config-file=server.json
   - cmd: cd ..
   
 os: Visual Studio 2015
@@ -18,9 +17,12 @@ before_build:
   - cmd: set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
 build_script:
   - cmd: bundle
+  - cmd: cd tools
+  - cmd: start consul agent -dev -bind 127.0.0.1 -config-file=server.json
+  - cmd: cd ..
   - cmd: bundle exec rake
 test: off
 version: 0.0.1.{build}
  
-on_finish:
-- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#on_finish:
+#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
