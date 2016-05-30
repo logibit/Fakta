@@ -220,6 +220,16 @@ let queryCallEntity config moduleAndOp (entity, opts) =
   queryCallEntityUri config moduleAndOp opts
   |> basicRequest config Get
 
+let basicCallUri config moduleAndOp =
+  { inner = UriBuilder(config.serverBaseUri,
+                       Path = sprintf "/%s/%s" APIVersion moduleAndOp)
+    kvs   = Map.empty }
+  |> UriBuilder.toUri
+
+let basicCall config moduleAndOp =
+  basicCallUri config moduleAndOp
+  |> basicRequest config Get
+
 //let queryCall
 
 let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
@@ -250,8 +260,11 @@ let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuil
   }
 
 type WriteCall<'i, 'o> = JobFunc<'i * WriteOptions, Choice<'o, Error>>
+type WriteCall<'o> = JobFunc<WriteOptions, Choice<'o * WriteMeta, Error>>
 type QueryCall<'i, 'o> = JobFunc<'i * QueryOptions, Choice<'o * QueryMeta, Error>>
 type QueryCall<'o> = JobFunc<QueryOptions, Choice<'o * QueryMeta, Error>>
+type BasicCall<'i, 'o> = JobFunc<'i, Choice<'o, Error>>
+type BasicCall<'o> = JobFunc<Request, Choice<'o, Error>>
 
 let timerFilter (state : FaktaState) path : JobFilter<_, _> =
   fun next value ->
@@ -304,6 +317,20 @@ let respQueryFilter : JobFilter<Request, Choice<Response, Error>, Request, Choic
         return Choice.createSnd error
     }
 
+let respBasicFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice<string, Error>> =
+  fun next req ->
+    job {
+      let! resp, dur = Logging.timeJob (next req)
+
+      match resp with
+      | Choice1Of2 resp ->
+        let! body = Response.readBodyAsString resp
+        return Choice.create body
+
+      | Choice2Of2 error ->
+        return Choice.createSnd error
+    }
+
 let writeFilters state path =
   timerFilter state path
   >> unknownsFilter
@@ -315,7 +342,17 @@ let queryFilters state path =
   >> exnsFilter
   >> respQueryFilter
 
+let basicFilters state path =
+  timerFilter state path
+  >> unknownsFilter
+  >> exnsFilter
+  >> respBasicFilter
+
 let codec prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>> =
+  JobFunc.mapLeft prepare
+  >> JobFunc.map (Choice.bind interpret)
+
+let codec2 prepare interpret : JobFilter<Request, Choice<'b, Error>> =
   JobFunc.mapLeft prepare
   >> JobFunc.map (Choice.bind interpret)
 
@@ -356,3 +393,12 @@ let inline internal fstOfJson (item1, item2) : Choice< ^a * 'b, Error> =
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
+
+  /// Convert the first value in the tuple in the choice to some type 'a.
+//let inline internal fstOfJson2 (item1, item2) : Choice< 'a, Error> =
+//  Json.tryParse item1
+//  |> Choice.bind Json.tryDeserialize
+//  |> Choice.map (fun x -> x, item2)
+//  |> Choice.mapSnd (fun msg ->
+//    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+//  |> Choice.mapSnd Error.Message

@@ -9,39 +9,59 @@ open Fakta.Logging
 open Fakta.Impl
 open Hopac
 
+let kvPath (operation: string) =
+  [| "Fakta"; "KV"; operation |]
+
+let writeFilters state =
+  kvPath >> writeFilters state
+
+let queryFilters state =
+  kvPath >> queryFilters state
+
 ////////////////////// QUERYING /////////////////////
 
+let get state: QueryCall<string, KVPair> =
+  let createRequest =
+    queryCallEntityUri state.config "kv"
+    >> basicRequest state.config Get
+
+  let filters =
+    queryFilters state "get"
+    >> codec createRequest (fstOfJsonPrism ConsulResult.firstObjectOfArray)
+
+  HttpFs.Client.getResponse |> filters
+
 /// Get is used to lookup a single key
-let get (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<KVPair * QueryMeta, Error>> =
-  let getResponse = getResponse state [| "Fakta"; "KV"; "get" |]
-  let req =
-    UriBuilder.ofKVKey state.config key
-    |> UriBuilder.mappendRange (queryOptsKvs opts)
-    |> UriBuilder.toUri
-    |> basicRequest state.config Get
-
-  job {
-    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-    match resp with
-    | Choice1Of2 resp ->
-      use resp = resp
-      if not (resp.statusCode = 200 || resp.statusCode = 404) then
-        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.statusCode))
-      else
-        match resp.statusCode with
-        | 404 -> return Choice2Of2 (KeyNotFound key)
-        | _ ->
-          let! body = Response.readBodyAsString resp
-          match Json.parse body |> Json.deserialize with
-          | [ x ] ->
-            return Choice1Of2 (x, queryMeta dur resp)
-
-          | xs ->
-            return failwithf "unexpected case %A" xs
-
-    | Choice2Of2 exx ->
-      return Choice2Of2 (Error.ConnectionFailed exx)
-  }
+//let get (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<KVPair * QueryMeta, Error>> =
+//  let getResponse = getResponse state [| "Fakta"; "KV"; "get" |]
+//  let req =
+//    UriBuilder.ofKVKey state.config key
+//    |> UriBuilder.mappendRange (queryOptsKvs opts)
+//    |> UriBuilder.toUri
+//    |> basicRequest state.config Get
+//
+//  job {
+//    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+//    match resp with
+//    | Choice1Of2 resp ->
+//      use resp = resp
+//      if not (resp.statusCode = 200 || resp.statusCode = 404) then
+//        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.statusCode))
+//      else
+//        match resp.statusCode with
+//        | 404 -> return Choice2Of2 (KeyNotFound key)
+//        | _ ->
+//          let! body = Response.readBodyAsString resp
+//          match Json.parse body |> Json.deserialize with
+//          | [ x ] ->
+//            return Choice1Of2 (x, queryMeta dur resp)
+//
+//          | xs ->
+//            return failwithf "unexpected case %A" xs
+//
+//    | Choice2Of2 exx ->
+//      return Choice2Of2 (Error.ConnectionFailed exx)
+//  }
 
 let getRaw (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<byte [] * QueryMeta, Error>> =
   raise (TBD "TODO")
@@ -50,31 +70,42 @@ let getRaw (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<b
 let keys (s : FaktaState) (key : Key) (sep : string option) (opts : QueryOptions) : Job<Choice<Keys * QueryMeta, Error>> =
   raise (TBD "TODO")
 
+let list state : QueryCall<string, KVPairs> =
+  let createRequest (prefix, qo) =
+    queryCall state.config "kv" qo
+    |> Request.queryStringItem "recurse" prefix
+
+  let filters =
+    queryFilters state "list"
+    >> codec createRequest fstOfJson
+
+  HttpFs.Client.getResponse |> filters
+
 /// List is used to lookup all keys (and their values) under a prefix
-let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Job<Choice<KVPairs * QueryMeta, Error>> =
-  let getResponse = getResponse state [| "Fakta"; "KV"; "list" |]
-  let req =
-    UriBuilder.ofKVKey state.config prefix
-    |> UriBuilder.mappendRange [ yield! queryOptsKvs opts
-                                 yield "recurse", None ]
-    |> UriBuilder.toUri
-    |> basicRequest state.config Get
-
-  job {
-    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
-    match resp with
-    | Choice1Of2 resp ->
-      use resp = resp
-      if not (resp.statusCode = 200 || resp.statusCode = 404) then
-        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.statusCode))
-      else
-        let! body = Response.readBodyAsString resp
-        let items = if body = "" then [] else Json.deserialize (Json.parse body)
-        return Choice1Of2 (items, queryMeta dur resp)
-
-    | Choice2Of2 exx ->
-      return Choice2Of2 (Error.ConnectionFailed exx)
-  }
+//let list (state : FaktaState) (prefix : Key) (opts : QueryOptions) : Job<Choice<KVPairs * QueryMeta, Error>> =
+//  let getResponse = getResponse state [| "Fakta"; "KV"; "list" |]
+//  let req =
+//    UriBuilder.ofKVKey state.config prefix
+//    |> UriBuilder.mappendRange [ yield! queryOptsKvs opts
+//                                 yield "recurse", None ]
+//    |> UriBuilder.toUri
+//    |> basicRequest state.config Get
+//
+//  job {
+//    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+//    match resp with
+//    | Choice1Of2 resp ->
+//      use resp = resp
+//      if not (resp.statusCode = 200 || resp.statusCode = 404) then
+//        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.statusCode))
+//      else
+//        let! body = Response.readBodyAsString resp
+//        let items = if body = "" then [] else Json.deserialize (Json.parse body)
+//        return Choice1Of2 (items, queryMeta dur resp)
+//
+//    | Choice2Of2 exx ->
+//      return Choice2Of2 (Error.ConnectionFailed exx)
+//  }
 
 ////////////////////// WRITING /////////////////////
 

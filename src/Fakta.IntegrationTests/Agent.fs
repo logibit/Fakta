@@ -17,10 +17,10 @@ let tests =
 
   testList "Agent tests" [
     testCase "agent.services -> locally registered services" <| fun _ ->
-      let listing = Agent.services state
-      ensureSuccess listing <| fun (listing) ->
+      let listing = Agent.services state []
+      ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
-        for l in listing do
+        for l in services do
           logger.logSimple (Message.sprintf [] "value: %s" l.Value.id)
 
     testCase "agent.members -> the known gossip members" <| fun _ ->
@@ -56,19 +56,19 @@ let tests =
         logger.logSimple (Message.sprintf [] "key: %O" (listing))
 
     testCase "can agent set pass ttl" <| fun _ ->
-      let listing = Agent.passTTL state checkId "optional parameter - passing"
-      ensureSuccess listing <| fun (listing) ->
+      let listing = Agent.passTTL state  ((checkId, "optional parameter - passing"),[])
+      ensureSuccess listing <| fun () ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "ttl updated: %s" "passing")
 
     testCase "can agent set warn ttl" <| fun _ ->
-      let listing = Agent.warnTTL state checkId "optional parameter - warning"
+      let listing = Agent.warnTTL state ((checkId, "optional parameter - warning"),[])
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "ttl updated: %s" "warning")
 
     testCase "can agent set fail ttl" <| fun _ ->
-      let listing = Agent.failTTL state checkId "optional parameter - failing"
+      let listing = Agent.failTTL state ((checkId, "optional parameter - failing"),[])
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "ttl updated: %s" "failing")
@@ -80,13 +80,13 @@ let tests =
         logger.logSimple (Message.sprintf [] "key: %s" "can service deregister service")
 
     testCase "agent.register service -> register a new service with the local agent" <| fun _ ->
-      let listing = Agent.serviceRegister state (AgentServiceRegistration.serviceRegistration serviceId)
+      let listing = Agent.serviceRegister state ((AgentServiceRegistration.serviceRegistration serviceId),[])
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
         logger.logSimple (Message.sprintf [] "key: %s" "can service register service")
 
     testCase "agent.deregister service" <| fun _ ->
-      let listing = Agent.serviceDeregister state serviceId
+      let listing = Agent.serviceDeregister state (serviceId,[])
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger 
         logger.logSimple (Message.sprintf [] "key: %s" "can service deregister service")
@@ -123,7 +123,7 @@ let tests =
 
     testCase "agent.force.leave -> the agent ejects a failed node" <| fun _ ->
       let node = "COMP05"
-      let listing = Agent.forceLeave state node
+      let listing = Agent.forceLeave state (node, [])
       ensureSuccess listing <| fun (listing) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Node left: %s" node)
