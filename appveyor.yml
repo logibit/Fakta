@@ -1,5 +1,6 @@
 init:
   - git config --global core.autocrlf input
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 build:
   verbosity: detailed
@@ -21,3 +22,5 @@ build_script:
 test: off
 version: 0.0.1.{build}
  
+on_finish:
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
