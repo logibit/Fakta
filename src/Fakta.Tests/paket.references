@@ -1,4 +1,6 @@
 FsCheck
-FSharp.Core
 Fuchu
 Fuchu.FsCheck
+
+group Test
+FSharp.Core

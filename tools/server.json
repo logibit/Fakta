@@ -1,0 +1,11 @@
+{
+ "bootstrap": false,
+ "server": true,
+ "datacenter": "ams1",
+ "encrypt": "yJqVBxe12ZfE3z+4QSk8qA==",
+ "log_level": "INFO",
+ "acl_datacenter": "ams1",
+ "acl_default_policy": "allow",
+ "acl_master_token": "secret",
+ "acl_token": "secret"
+}

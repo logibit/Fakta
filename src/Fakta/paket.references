@@ -2,3 +2,6 @@ Http.fs-prerelease
 FSharp.Core
 Chiron
 NodaTime
+Hopac
+Hopac.Extras
+File:YoLo.fs

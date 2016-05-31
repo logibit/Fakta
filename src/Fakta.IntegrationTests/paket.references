@@ -1,7 +1,11 @@
 FsCheck
-FSharp.Core
 Fuchu
 Fuchu.FsCheck
 Chiron
 NodaTime
 Http.fs-prerelease
+Aether
+FParsec
+
+group Test
+FSharp.Core

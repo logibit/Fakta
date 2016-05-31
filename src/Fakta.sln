@@ -1,9 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{AB0EED29-9476-4EF9-AAD8-9B789286C14B}"
 	ProjectSection(SolutionItems) = preProject
 		..\paket.dependencies = ..\paket.dependencies
+		..\paket.lock = ..\paket.lock
 	EndProjectSection
 EndProject
 Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Fakta", "Fakta\Fakta.fsproj", "{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}"
@@ -37,5 +40,8 @@ Global
 		{811E8DDA-F8A2-44E7-B6FA-E93A7F279D62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

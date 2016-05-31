@@ -1,5 +1,5 @@
-#I "../../packages/Hopac/lib/net45"
-#I "../../packages/Hopac.Extras/lib/net45"
+#I @"../../packages/Hopac/lib/net45"
+#I @"../../packages/Hopac.Extras/lib/net45"
 
 #r "Hopac.Core.dll"
 #r "Hopac.dll"
@@ -16,7 +16,7 @@ open Hopac
 type Request<'a> =
   | Get
   | Put of 'a
-(*
+
 type Cell<'a> = {
   reqCh: Ch<Request<'a>>
   replyCh: Ch<'a>
@@ -45,4 +45,3 @@ let cell (x: 'a) : Job<Cell<'a>> = job {
   do! Job.start (server x)
   return c
 }
-*)

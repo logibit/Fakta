@@ -4,8 +4,9 @@ set -e
 # see https://www.consul.io/downloads.html
 
 if [[ ! -f consul ]]; then
-  file=0.5.2_darwin_amd64.zip
-  curl --silent -L  https://dl.bintray.com/mitchellh/consul/$file -o consul.zip
+  version=0.6.4
+  file=consul_${version}_darwin_amd64.zip
+  curl --silent -L https://releases.hashicorp.com/consul/${version}/${file} -o consul.zip
   unzip consul.zip
 fi
 
