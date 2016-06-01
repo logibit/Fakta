@@ -14,3 +14,9 @@ nuget NuGet.CommandLine
 nuget Aether
 nuget FParsec
 github haf/YoLo YoLo.fs
+
+group Test
+redirects: on
+source https://nuget.org/api/v2
+nuget FSharp.Core
+
