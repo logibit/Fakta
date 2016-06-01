@@ -214,12 +214,12 @@ let serviceDeregister (state: FaktaState) : WriteCall<Id, unit> =
 
 let serviceRegister (state: FaktaState) : WriteCall<AgentServiceRegistration, unit> =
   let createRequest (registration, opts) =
-    writeCallUri state.config "service/register" opts
+    writeCallUri state.config "agent/service/register" opts
     |> basicRequest state.config Put
     |> withJsonBodyT registration
 
   let filters =
-    writeFilters state "service.register"
+    writeFilters state "agent.service.register"
     >> codec createRequest hasNoRespBody
 
   HttpFs.Client.getResponse |> filters
@@ -238,7 +238,7 @@ let serviceRegister (state: FaktaState) : WriteCall<AgentServiceRegistration, un
 
 let services state : QueryCall<Map<string, AgentService>> =
   let createRequest =
-    queryCall state.config "service/services"
+    queryCall state.config "agent/services"
 
   let filters =
     queryFilters state "services"

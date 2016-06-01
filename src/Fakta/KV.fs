@@ -72,8 +72,8 @@ let keys (s : FaktaState) (key : Key) (sep : string option) (opts : QueryOptions
 
 let list state : QueryCall<string, KVPairs> =
   let createRequest (prefix, qo) =
-    queryCall state.config "kv" qo
-    |> Request.queryStringItem "recurse" prefix
+    queryCall state.config ("kv"+prefix) qo
+    |> Request.queryStringItem "recurse" ""
 
   let filters =
     queryFilters state "list"

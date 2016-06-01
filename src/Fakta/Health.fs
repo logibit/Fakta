@@ -23,14 +23,15 @@ let writeFilters state =
 let queryFilters state =
   healthPath >> queryFilters state
 
-let getValuesByName state (path : string) (action:string): QueryCall<string, HealthCheck list> =
+let getValuesByName state (path : string) (action:string): QueryCall<string, HealthCheck list> =  
   let createRequest =
-    queryCallEntityUri state.config path
-    >> basicRequest state.config Get
+      fun (name, opts) -> string name, opts
+      >> queryCallEntityUri state.config path
+      >> basicRequest state.config Get
 
   let filters =
     queryFilters state action
-    >> codec createRequest (fstOfJsonPrism ConsulResult.firstObjectOfArray)
+    >> codec createRequest fstOfJson
 
   HttpFs.Client.getResponse |> filters
 
@@ -65,12 +66,12 @@ let node (state : FaktaState) : QueryCall<string, HealthCheck list> =
 let state (state : FaktaState): QueryCall<string, HealthCheck list> =
   let state = 
     fun (n, wo) ->
-      getValuesByName state ("health/state/")  "node" (n, wo)
+      getValuesByName state ("health/state/")  "state" (n, wo)
   state
 
 let service state: QueryCall<string * (*tag*) string * (*passingOnly*) bool, ServiceEntry list> =
   let createRequest ((serviceName, tag, passingOnly), opts) =
-    queryCall state.config "health/service" opts
+    queryCall state.config ("health/service/"+serviceName) opts
     |> Request.queryStringItem "tag" tag
     |> Request.queryStringItem "passing" (string passingOnly |> String.toLowerInvariant)
 

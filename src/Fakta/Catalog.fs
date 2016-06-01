@@ -50,15 +50,16 @@ let datacenters state : QueryCall<string list> =
 //}
 
 let node state : QueryCall<string, CatalogNode> =
-  let createRequest =
-    queryCallEntityUri state.config "catalog/node"
-    >> basicRequest state.config Get
+    let createRequest =
+      fun (name, opts) -> string name, opts
+      >> queryCallEntityUri state.config "catalog/node" 
+      >> basicRequest state.config Get
 
-  let filters =
-    queryFilters state "node"
-    >> codec createRequest (fstOfJsonPrism ConsulResult.firstObjectOfArray)
+    let filters =
+        queryFilters state "node"
+        >> codec createRequest fstOfJson 
 
-  HttpFs.Client.getResponse |> filters
+    HttpFs.Client.getResponse |> filters
 
 /// Node is used to query for service information about a single node
 //let node (state : FaktaState) (node : string) (opts : QueryOptions) : Job<Choice<CatalogNode * QueryMeta, Error>> = job {
@@ -103,7 +104,7 @@ let nodes state : QueryCall<Node list> =
 /// instead to use the agent endpoints for deregistration as they are simpler and perform anti-entropy.
 let deregister state : WriteCall<CatalogDeregistration, unit> =
   let createRequest (dereg, opts) =
-    writeCallUri state.config "catelog/deregister" opts
+    writeCallUri state.config "catalog/deregister" opts
     |> basicRequest state.config Put
     |> withJsonBodyT dereg
 
@@ -129,7 +130,7 @@ let deregister state : WriteCall<CatalogDeregistration, unit> =
 ///instead to use the agent endpoints for registration as they are simpler and perform anti-entropy.
 let register state : WriteCall<CatalogRegistration, unit> =
   let createRequest (reg, opts) =
-    writeCallUri state.config "catelog/register" opts
+    writeCallUri state.config "catalog/register" opts
     |> basicRequest state.config Put
     |> withJsonBodyT reg
 
@@ -153,7 +154,7 @@ let register state : WriteCall<CatalogRegistration, unit> =
 
 let service state : QueryCall<((*service*) string * (*tag*) string), CatalogService list> =
   let createRequest ((service, tag), opts) =
-    queryCall state.config "catalog/service" opts
+    queryCall state.config ("catalog/service/"+service) opts
     |> Request.queryStringItem "near" tag
     
   let filters =
