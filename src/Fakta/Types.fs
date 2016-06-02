@@ -595,6 +595,29 @@ type PortMapping =
     serfWan : Port
     server : Port }
 
+  static member FromJson (_ : PortMapping) =
+    (fun d h r slan swan s ->
+      { dns = d
+        http = h
+        rpc = r
+        serfLan = slan
+        serfWan = swan
+        server = s })
+    <!> Json.read "DNS"
+    <*> Json.read "HTTP"
+    <*> Json.read "RPC"
+    <*> Json.read "SerfLan"
+    <*> Json.read "SerfWan"
+    <*> Json.read "Server"
+
+  static member ToJson (pm : PortMapping) =
+    Json.write "DNS" pm.dns
+    *> Json.write "HTTP" pm.http
+    *> Json.write "RPC" pm.rpc
+    *> Json.write "SerfLan" pm.serfLan
+    *> Json.write "SerfWan" pm.serfWan
+    *> Json.write "Server" pm.server
+
 type ConfigData =
   { boostrap : bool
     server   : bool
@@ -603,15 +626,15 @@ type ConfigData =
     dnsRecursor : string
     dnsRecursors : string list
     domain : string
-    logLevel : LogLevel
+    logLevel : string
     nodeName : string
-    clientAddr : IPAddress
-    bindAddr : IPAddress
-    advertiseAddr : IPAddress
+    clientAddr : string
+    bindAddr : string
+    advertiseAddr : string
     ports : PortMapping
     leaveOnTerm : bool
     skipLeaveOnInt : bool
-    statsiteAddr : string
+    //statsiteAddr : string
     protocol : uint16
     enableDebug : bool
     verifyIncoming : bool
@@ -625,10 +648,114 @@ type ConfigData =
     enableSyslog : bool
     rejoinAfterLeave : bool }
 
+  static member FromJson (_ : ConfigData) =
+    (fun boot srv dc ddir dnsrec dnsrecs d llvl node ca binda adva ps lot slot pr edeb vi vo caf certf kf stj udir pf esl ral ->
+      { boostrap = boot
+        server = srv
+        datacenter = dc
+        dataDir = ddir
+        dnsRecursor = dnsrec
+        dnsRecursors = dnsrecs
+        domain = d
+        logLevel = llvl
+        nodeName = node
+        clientAddr = ca
+        bindAddr = binda
+        advertiseAddr = adva
+        ports = ps
+        leaveOnTerm = lot
+        skipLeaveOnInt = slot
+        //statsiteAddr = statsa 
+        protocol = pr
+        enableDebug = edeb
+        verifyIncoming = vi
+        verifyOutgoing = vo
+        caFile = caf
+        certFile = certf
+        keyFile = kf
+        startJoin = stj
+        uiDir = udir
+        pidFile = pf
+        enableSyslog = esl
+        rejoinAfterLeave = ral})
+    <!> Json.read "Bootstrap"
+    <*> Json.read "Server"
+    <*> Json.read "Datacenter"
+    <*> Json.read "DataDir"
+    <*> Json.read "DNSRecursor"
+    <*> Json.read "DNSRecursors"
+    <*> Json.read "Domain"
+    <*> Json.read "LogLevel"
+    <*> Json.read "NodeName"
+    <*> Json.read "ClientAddr"
+    <*> Json.read "BindAddr"
+    <*> Json.read "AdvertiseAddr"
+    <*> Json.read "Ports"
+    <*> Json.read "LeaveOnTerm"
+    <*> Json.read "SkipLeaveOnInt"
+    //<*> Json.read "StatsiteAddr"
+    <*> Json.read "Protocol"
+    <*> Json.read "EnableDebug"
+    <*> Json.read "VerifyIncoming"
+    <*> Json.read "VerifyOutgoing"
+    <*> Json.read "CAFile"
+    <*> Json.read "CertFile"
+    <*> Json.read "KeyFile"
+    <*> Json.read "StartJoin"
+    <*> Json.read "UiDir"
+    <*> Json.read "PidFile"
+    <*> Json.read "EnableSyslog"
+    <*> Json.read "RejoinAfterLeave"
+
+  static member ToJson (cd : ConfigData) =
+    Json.write "Bootstrap" cd.boostrap
+    *> Json.write "Server" cd.server
+    *> Json.write "Datacenter" cd.datacenter
+    *> Json.write "DataDir" cd.dataDir
+    *> Json.write "DNSRecursor" cd.dnsRecursor
+    *> Json.write "DNSRecursors" cd.dnsRecursors
+    *> Json.write "Domain" cd.domain
+    *> Json.write "LogLevel" cd.logLevel
+    *> Json.write "NodeName" cd.nodeName
+    *> Json.write "ClientAddr" cd.clientAddr
+    *> Json.write "BindAddr" cd.bindAddr
+    *> Json.write "AdvertiseAddr" cd.advertiseAddr
+    *> Json.write "Ports" cd.ports
+    *> Json.write "LeaveOnTerm" cd.leaveOnTerm
+    *> Json.write "SkipLeaveOnInt" cd.skipLeaveOnInt
+    //*> Json.write "StatsiteAddr" cd.statsiteAddr
+    *> Json.write "Protocol" cd.protocol
+    *> Json.write "EnableDebug" cd.enableDebug
+    *> Json.write "VerifyIncoming" cd.verifyIncoming
+    *> Json.write "VerifyOutgoing" cd.verifyOutgoing
+    *> Json.write "CAFile" cd.caFile
+    *> Json.write "CertFile" cd.certFile
+    *> Json.write "KeyFile" cd.keyFile
+    *> Json.write "StartJoin" cd.startJoin
+    *> Json.write "UiDir" cd.uiDir
+    *> Json.write "PidFile" cd.pidFile
+    *> Json.write "EnableSyslog" cd.enableSyslog
+    *> Json.write "RejoinAfterLeave" cd.rejoinAfterLeave
+
 type CoordData =
   { adjustment : int
     error : float
     vec : int list }
+
+  static member FromJson (_ : CoordData) =
+    (fun a e v ->
+      { adjustment = a
+        error = e
+        vec = v})
+    <!> Json.read "Adjustment"
+    <*> Json.read "Error"
+    <*> Json.read "Vec"
+   
+
+  static member ToJson (cd : CoordData) =
+    Json.write "Adjustment" cd.adjustment
+    *> Json.write "Error" cd.error
+    *> Json.write "Vec" cd.vec
 
 type MemberData =
   { name : string
@@ -643,10 +770,63 @@ type MemberData =
     delegateMax : uint16
     delegateCur : uint16 }
 
+    static member FromJson (_ : MemberData) =
+      (fun n add p ts st pmin pmax pcur dmin dmax dcur ->
+        { name = n
+          addr = add
+          port = p
+          tags = ts
+          status = st
+          protocolMin = pmin 
+          protocolMax = pmax
+          protocolCur = pcur
+          delegateMin = dmin
+          delegateMax = dmax
+          delegateCur = dcur})
+      <!> Json.read "Name"
+      <*> Json.read "Addr"
+      <*> Json.read "Port"
+      <*> Json.read "Tags"
+      <*> Json.read "Status"
+      <*> Json.read "ProtocolMin"
+      <*> Json.read "ProtocolMax"
+      <*> Json.read "ProtocolCur"
+      <*> Json.read "DelegateMin"
+      <*> Json.read "DelegateMax"
+      <*> Json.read "DelegateCur"
+
+  static member ToJson (md : MemberData) =
+    Json.write "Name" md.name
+    *> Json.write "Addr" md.addr
+    *> Json.write "Port" md.port
+    *> Json.write "Tags" md.tags
+    *> Json.write "Status" md.status
+    *> Json.write "ProtocolMin" md.protocolMin
+    *> Json.write "ProtocolMax" md.protocolMax
+    *> Json.write "ProtocolCur" md.protocolCur
+    *> Json.write "DelegateMin" md.delegateMin
+    *> Json.write "DelegateMax" md.delegateMax
+    *> Json.write "DelegateCur" md.delegateCur
+
 type SelfData =
   { config : ConfigData
     coord  : CoordData
     ``member`` : MemberData }
+
+  static member FromJson (_ : SelfData) =
+    (fun conf coord mem ->
+      { config = conf
+        coord = coord
+        ``member`` = mem })
+    <!> Json.read "Config"
+    <*> Json.read "Coord"
+    <*> Json.read "Member"
+
+  static member ToJson (s : SelfData) =
+    Json.write "Config" s.config
+    *> Json.write "Coord" s.coord
+    *> Json.write "Member" s.``member``
+
 
 
 // [{"CreateIndex":10,"ModifyIndex":17,"LockIndex":0,"Key":"fortnox/apikey","Flags":0,"Value":"MTMzOA=="}]

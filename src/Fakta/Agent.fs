@@ -173,7 +173,14 @@ let members state : QueryCall<bool, AgentMember list> =
   HttpFs.Client.getResponse |> filters
 
 let self state : QueryCall<SelfData> =
-  raise (TBD "finish Agent.self by writing FromJson and ToJson on SelfConfig")
+  let createRequest =
+    queryCall state.config "agent/self"
+  
+  let filters =
+    queryFilters state "self"
+    >> codec createRequest fstOfJson
+
+  HttpFs.Client.getResponse |> filters
 
 let nodeName state : QueryCall<string> =
   let createRequest =
