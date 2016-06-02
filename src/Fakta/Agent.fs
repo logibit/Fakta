@@ -198,6 +198,7 @@ let nodeName state : QueryCall<string> =
 
   HttpFs.Client.getResponse |> filters
 
+/// ServiceDeregister is used to deregister a service with the local agent
 let serviceDeregister (state: FaktaState) : WriteCall<Id, unit> =
   let createRequest =
     writeCallEntity state.config "agent/service/deregister"
@@ -208,17 +209,8 @@ let serviceDeregister (state: FaktaState) : WriteCall<Id, unit> =
 
   HttpFs.Client.getResponse |> filters
 
-/// ServiceDeregister is used to deregister a service with the local agent
-//let serviceDeregister (state : FaktaState) (serviceId : Id) : Job<Choice<unit, Error>> = job {
-//  let urlPath = (sprintf "check/deregister/%s" serviceId)
-//  let uriBuilder = UriBuilder.ofAgent state.config urlPath
-//  let! result = call state (agentPath "service.deregister") id uriBuilder HttpMethod.Put
-//  match result with
-//  | Choice1Of2 id ->
-//      return Choice1Of2 ()
-//  | Choice2Of2 err -> return Choice2Of2(err)
-//}
 
+/// ServiceRegister is used to register a new service with the local agent
 let serviceRegister (state: FaktaState) : WriteCall<AgentServiceRegistration, unit> =
   let createRequest (registration, opts) =
     writeCallUri state.config "agent/service/register" opts
@@ -231,18 +223,8 @@ let serviceRegister (state: FaktaState) : WriteCall<AgentServiceRegistration, un
 
   HttpFs.Client.getResponse |> filters
 
-/// ServiceRegister is used to register a new service with the local agent
-//let serviceRegister (state : FaktaState) (service : AgentServiceRegistration) : Job<Choice<unit, Error>> = job {
-//  let urlPath = "service/register"
-//  let uriBuilder = UriBuilder.ofAgent state.config urlPath
-//  let serializedCheckReg = Json.serialize service
-//  let! result = call state (agentPath "service.register") (withJsonBody serializedCheckReg) uriBuilder HttpMethod.Put
-//  match result with
-//  | Choice1Of2 id ->
-//      return Choice1Of2 ()
-//  | Choice2Of2 err -> return Choice2Of2(err)
-//}
 
+/// Services returns the locally registered services
 let services state : QueryCall<Map<string, AgentService>> =
   let createRequest =
     queryCall state.config "agent/services"
@@ -253,19 +235,8 @@ let services state : QueryCall<Map<string, AgentService>> =
 
   HttpFs.Client.getResponse |> filters
 
-/// Services returns the locally registered services
-//let services (state : FaktaState) : Job<Choice<Map<string, AgentService>, Error>> = job {
-//  let urlPath = "services"
-//  let uriBuilder = UriBuilder.ofAgent state.config urlPath
-//  let! result = call state (agentPath urlPath) id uriBuilder HttpMethod.Get
-//  match result with
-//  | Choice1Of2 (body, (dur, resp)) ->
-//      let  item:Map<string,AgentService> = if body = "" then Map.empty else Json.deserialize (Json.parse body)
-//      return Choice1Of2 (item)
-//  | Choice2Of2 err -> return Choice2Of2(err)
-//}
 
-
+/// UpdateTTL is used to update the TTL of a check
 let updateTTL state (action:string): WriteCall<Id * (*note*) string, unit> =  
   let createRequest ((checkId, note), opts) =    
     writeCallEntity state.config ("agent/check/"+action) (checkId, opts)
@@ -278,18 +249,6 @@ let updateTTL state (action:string): WriteCall<Id * (*note*) string, unit> =
 
   HttpFs.Client.getResponse |> filters
 
-/// UpdateTTL is used to update the TTL of a check
-//let updateTTL (state : FaktaState) (checkId : string) (note : string) (status : string) : Job<Choice<unit, Error>> = job {
-//  let urlPath = (sprintf  "check/%s/%s" status checkId)
-//  let uriBuilder = UriBuilder.ofAgent state.config urlPath
-//                    |> UriBuilder.mappendRange [ yield "note", Some(note) ]
-//  let checkUpdate = Json.serialize (CheckUpdate.GetUpdateJson status note )
-//  let! result = call state (agentPath (sprintf "check.%s" status)) (withJsonBody checkUpdate) uriBuilder HttpMethod.Put
-//  match result with
-//  | Choice1Of2 id ->
-//      return Choice1Of2 ()
-//  | Choice2Of2 err -> return Choice2Of2(err)
-//}
 
 /// PassTTL is used to set a TTL check to the passing state
 let passTTL (state : FaktaState) : WriteCall<Id * (*note*) string, unit> =
@@ -309,7 +268,7 @@ let failTTL (state : FaktaState) : WriteCall<Id * (*note*) string, unit> =
     updateTTL state "fail" ((checkId,note), wo)
   fail
 
-
+/// ForceLeave is used to have the agent eject a failed node
 let forceLeave state : WriteCall<string, unit> =
   let createRequest =
     writeCallEntity state.config "agent/force-leave"
@@ -319,15 +278,3 @@ let forceLeave state : WriteCall<string, unit> =
     >> codec createRequest hasNoRespBody
 
   HttpFs.Client.getResponse |> filters
-
-
-/// ForceLeave is used to have the agent eject a failed node
-//let forceLeave (state : FaktaState) (node : string) : Job<Choice<unit, Error>> = job {
-//  let urlPath = (sprintf "force-leave/%s" node)
-//  let uriBuilder = UriBuilder.ofAgent state.config urlPath
-//  let! result = call state (agentPath "force-leave") id uriBuilder HttpMethod.Put
-//  match result with
-//    | Choice1Of2 id ->
-//        return Choice1Of2 ()
-//    | Choice2Of2 err -> return Choice2Of2(err)
-//}
