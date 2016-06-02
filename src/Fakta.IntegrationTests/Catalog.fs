@@ -31,7 +31,7 @@ let tests =
     
 
     testCase "catalog.node -> service information about a single node" <| fun _ ->
-      let listing = Catalog.node state ("COMP05", [])
+      let listing = Catalog.node state ("COMP09", [])
       ensureSuccess listing <| fun (node, meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "key: %s" node.node.node)
