@@ -55,6 +55,8 @@ let idToIndex (state : FaktaState) (uuid : Guid) : uint64 =
   let highVal = UInt64.Parse(upper, System.Globalization.NumberStyles.HexNumber)
   lowVal ^^^ highVal
 
+/// List is used to get the most recent events an agent has received. This list can be optionally filtered by the name. 
+/// This endpoint supports quasi-blocking queries. The index is not monotonic, nor does it provide provide LastContact or KnownLeader.
 let list state: QueryCall<(*name*) string, UserEvent list> =
   let createRequest (name, opts) =
     queryCall state.config "event/list" opts
@@ -66,14 +68,4 @@ let list state: QueryCall<(*name*) string, UserEvent list> =
 
   HttpFs.Client.getResponse |> filters
 
-/// List is used to get the most recent events an agent has received. This list can be optionally filtered by the name. This endpoint supports quasi-blocking queries. The index is not monotonic, nor does it provide provide LastContact or KnownLeader.
-//let list (state : FaktaState) (name : string) (opts : QueryOptions) : Job<Choice<UserEvent list * QueryMeta, Error>> = job {
-//  let urlPath = "list"
-//  let uriBuilder = UriBuilder.ofEvent state.config urlPath
-//  let! result = call state (eventDottedPath urlPath) id uriBuilder HttpMethod.Get
-//  match result with
-//  | Choice1Of2 (body, (dur, resp)) ->
-//      let  items = if body = "[]" then [] else Json.deserialize (Json.parse body)
-//      return Choice1Of2 (items, queryMeta dur resp)
-//  | Choice2Of2 err -> return Choice2Of2(err)
-//}
+

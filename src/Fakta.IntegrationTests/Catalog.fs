@@ -31,7 +31,7 @@ let tests =
     
 
     testCase "catalog.node -> service information about a single node" <| fun _ ->
-      let listing = Catalog.node state ("COMP05", [])
+      let listing = Catalog.node state (System.Environment.MachineName, [])
       ensureSuccess listing <| fun (node, meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "key: %s" node.node.node)
@@ -82,7 +82,7 @@ let tests =
         logger.logSimple (Message.sprintf [] "meta: %A" meta)
 
     testCase "catalog.deregister" <| fun _ ->
-      let catalogDereg = (CatalogDeregistration.Instance "COMP05" "dc1" "127.0.0.1" "consul" "")
+      let catalogDereg = (CatalogDeregistration.Instance "COMP05" "" "127.0.0.1" "consul" "")
       let listing = Catalog.deregister state (catalogDereg, [])
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger

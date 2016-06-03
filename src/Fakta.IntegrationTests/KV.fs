@@ -21,14 +21,6 @@ let tests =
     ensureSuccess (Session.create state ([SessionOption.Name "kv-interactions-test"], [])) id
 
   testList "KV interactions" [
-    testCase "can list" <| fun _ ->
-      let listing = KV.list state ("/", [])
-      ensureSuccess listing <| fun (kvpairs, meta) ->
-        let logger = state.logger
-        for kvp in kvpairs do
-          logger.logSimple (Message.sprintf [] "key: %s, value: %A" kvp.key kvp.value)
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
-
     testCase "can put" <| fun _ ->
       let pair = KVPair.Create("world", "goodbye")
       let put = KV.put state pair None []
@@ -38,6 +30,14 @@ let tests =
       given (KV.put state (KVPair.Create("monkey", "business")) None [])
       ensureSuccess (KV.get state ("monkey", [])) <| fun (kvp, _) ->
         Assert.Equal("monkeys do monkey business", "business", kvp.utf8String)
+
+    testCase "can list" <| fun _ ->
+      let listing = KV.list state ("/", [])
+      ensureSuccess listing <| fun (kvpairs, meta) ->
+        let logger = state.logger
+        for kvp in kvpairs do
+          logger.logSimple (Message.sprintf [] "key: %s, value: %A" kvp.key kvp.value)
+        logger.logSimple (Message.sprintf [] "meta: %A" meta)
 
     testCase "can acquire -> release" <| fun _ ->
       let epInfo = { ep = IPEndPoint(IPAddress.IPv6Loopback, 8083) }
