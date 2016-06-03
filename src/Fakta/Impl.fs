@@ -406,12 +406,3 @@ let inline internal fstOfJsonNoMeta (item1) : Choice<'a, Error> =
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
-
-  /// Convert the first value in the tuple in the choice to some type 'a.
-//let inline internal fstOfJson2 (item1, item2) : Choice< 'a, Error> =
-//  Json.tryParse item1
-//  |> Choice.bind Json.tryDeserialize
-//  |> Choice.map (fun x -> x, item2)
-//  |> Choice.mapSnd (fun msg ->
-//    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
-//  |> Choice.mapSnd Error.Message

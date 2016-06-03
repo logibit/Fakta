@@ -1198,12 +1198,21 @@ type FaktaConfig =
     /// which overrides the agent's default token.
     token         : Token option }
 
-  static member empty =
+  static member ConsulEmpty =
     { serverBaseUri  = Uri "http://127.0.0.1:8500"
       datacenter     = None
       credentials    = None
       waitTime       = DefaultLockWaitTime
       token          = None }
+
+  static member VaultEmpty (token: Token) =
+    { serverBaseUri  = Uri "http://127.0.0.1:8200"
+      datacenter     = None
+      credentials    = None
+      waitTime       = DefaultLockWaitTime
+      token          = Some(token) }
+
+  
 
 open System.Threading
 
@@ -1214,14 +1223,20 @@ let random =
             let seed = seedGenerator.Next()
             new Random(seed)))
 
+type APIType =
+  | Consul
+  | Vault
+
 type FaktaState =
   { config : FaktaConfig
     logger : Logger
     clock  : IClock
     random : Random }
 
-  static member empty =
-    { config = FaktaConfig.empty
+  static member empty (api: APIType) (token: Token) =
+    { config = match api with 
+               | APIType.Consul -> FaktaConfig.ConsulEmpty
+               | APIType.Vault -> FaktaConfig.VaultEmpty token
       logger = NoopLogger
       clock  = SystemClock.Instance
       random = random.Value

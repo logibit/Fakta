@@ -8,7 +8,8 @@ open Fakta.Logging
 open Fuchu
 open Hopac
 
-let config = FaktaConfig.empty
+let consulConfig = FaktaConfig.ConsulEmpty
+
 
 let logger =
   { new Logger with
@@ -25,7 +26,7 @@ let logger =
     }
 
 let state =
-  { config = config
+  { config = consulConfig
     logger = logger// NoopLogger
     clock  = SystemClock.Instance 
     random = Random () }
