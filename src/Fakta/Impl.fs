@@ -89,6 +89,9 @@ let acceptJson =
   //withHeader (Accept "application/json")
   Request.setHeader (Accept "*/*")
 
+let withVaultHeader (config : FaktaConfig) =
+  Request.setHeader (Custom  ("X-Vault-Token", config.token.Value.ToString()))
+
 let withIntroductions =
   Request.setHeader (UserAgent ("Fakta " + (App.getVersion ())))
 
@@ -133,6 +136,7 @@ let queryMeta dur (resp : Response) =
     lastContact = headerFor "X-Consul-Lastcontact" |> Option.fold (fun s t -> Duration.FromSeconds (int64 t)) Duration.Epsilon
     knownLeader = headerFor "X-Consul-Knownleader" |> Option.fold (fun s t -> Boolean.Parse(string t)) false
     requestTime = dur }
+
 
 let writeMeta (dur: Duration) : (WriteMeta) =
   let res:WriteMeta = {requestTime = dur}
@@ -230,8 +234,6 @@ let basicCall config moduleAndOp =
   basicCallUri config moduleAndOp
   |> basicRequest config Get
 
-//let queryCall
-
 let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
   let getResponse = getResponse state dottedPath
   let req =
@@ -261,10 +263,13 @@ let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuil
 
 type WriteCall<'i, 'o> = JobFunc<'i * WriteOptions, Choice<'o, Error>>
 type WriteCall<'o> = JobFunc<WriteOptions, Choice<'o * WriteMeta, Error>>
+type WriteCallNoMeta<'i, 'o> = JobFunc<'i * WriteOptions, Choice<'o, Error>>
+type WriteCallNoMeta<'o> = JobFunc<WriteOptions, Choice<'o, Error>>
+
 type QueryCall<'i, 'o> = JobFunc<'i * QueryOptions, Choice<'o * QueryMeta, Error>>
 type QueryCall<'o> = JobFunc<QueryOptions, Choice<'o * QueryMeta, Error>>
-type BasicCall<'i, 'o> = JobFunc<'i, Choice<'o, Error>>
-type BasicCall<'o> = JobFunc<Request, Choice<'o, Error>>
+type QueryCallNoMeta<'i, 'o> = JobFunc<'i * QueryOptions, Choice<'o, Error>>
+type QueryCallNoMeta<'o> = JobFunc<QueryOptions, Choice<'o, Error>>
 
 let timerFilter (state : FaktaState) path : JobFilter<_, _> =
   fun next value ->
@@ -317,10 +322,10 @@ let respQueryFilter : JobFilter<Request, Choice<Response, Error>, Request, Choic
         return Choice.createSnd error
     }
 
-let respBasicFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice<string, Error>> =
+let respQueryFilterNoMeta : JobFilter<Request, Choice<Response, Error>, Request, Choice<string, Error>> =
   fun next req ->
     job {
-      let! resp, dur = Logging.timeJob (next req)
+      let! resp, _ = Logging.timeJob (next req)
 
       match resp with
       | Choice1Of2 resp ->
@@ -342,17 +347,17 @@ let queryFilters state path =
   >> exnsFilter
   >> respQueryFilter
 
-let basicFilters state path =
+let queryFiltersNoMeta state path =
   timerFilter state path
   >> unknownsFilter
   >> exnsFilter
-  >> respBasicFilter
+  >> respQueryFilterNoMeta
 
 let codec prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>> =
   JobFunc.mapLeft prepare
   >> JobFunc.map (Choice.bind interpret)
 
-let codec2 prepare interpret : JobFilter<Request, Choice<'b, Error>> =
+let codecNoMeta prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>> =
   JobFunc.mapLeft prepare
   >> JobFunc.map (Choice.bind interpret)
 
@@ -390,6 +395,14 @@ let inline internal fstOfJson (item1, item2) : Choice< ^a * 'b, Error> =
   Json.tryParse item1
   |> Choice.bind Json.tryDeserialize
   |> Choice.map (fun x -> x, item2)
+  |> Choice.mapSnd (fun msg ->
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+  |> Choice.mapSnd Error.Message
+
+let inline internal fstOfJsonNoMeta (item1) : Choice<'a, Error> =
+  Json.tryParse item1
+  |> Choice.bind Json.tryDeserialize
+  |> Choice.map (fun x -> x)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
