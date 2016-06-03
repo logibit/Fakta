@@ -1241,3 +1241,43 @@ type FaktaState =
       clock  = SystemClock.Instance
       random = random.Value
     }
+
+/// Vault types ///
+
+type InitRequest =
+  { secretShares: int
+    secretThreshold: int
+    pgpKeys : string list }
+
+  static member FromJson (_ : InitRequest) =
+    (fun shs tr pgp ->
+      { secretShares = shs
+        secretThreshold = tr
+        pgpKeys  = pgp })
+    <!> Json.read "secret_shares"
+    <*> Json.read "secret_threshold"
+    <*> Json.read "pgp_keys"
+
+  static member ToJson (se : InitRequest) =
+    Json.write "secret_shares" se.secretShares
+    *> Json.write "secret_threshold" se.secretThreshold
+    *> Json.write "pgp_keys" se.pgpKeys
+
+type InitResponse =
+  { keys: string list
+    recoveryKeys: string list
+    rootToken : string }
+
+  static member FromJson (_ : InitResponse) =
+    (fun shs tr pgp ->
+      { secretShares = shs
+        secretThreshold = tr
+        pgpKeys  = pgp })
+    <!> Json.read "keys"
+    <*> Json.read "recovery_keys"
+    <*> Json.read "root_token"
+
+  static member ToJson (se : InitResponse) =
+    Json.write "keys" se.keys
+    *> Json.write "recovery_keys" se.recoveryKeys
+    *> Json.write "root_token" se.rootToken

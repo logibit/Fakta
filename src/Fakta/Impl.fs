@@ -90,7 +90,10 @@ let acceptJson =
   Request.setHeader (Accept "*/*")
 
 let withVaultHeader (config : FaktaConfig) =
-  Request.setHeader (Custom  ("X-Vault-Token", config.token.Value.ToString()))
+  let token = match config.token with 
+              | None -> String.Empty
+              | _ -> config.token.Value.ToString()
+  Request.setHeader (Custom  ("X-Vault-Token", token))
 
 let withIntroductions =
   Request.setHeader (UserAgent ("Fakta " + (App.getVersion ())))
@@ -224,15 +227,6 @@ let queryCallEntity config moduleAndOp (entity, opts) =
   queryCallEntityUri config moduleAndOp opts
   |> basicRequest config Get
 
-let basicCallUri config moduleAndOp =
-  { inner = UriBuilder(config.serverBaseUri,
-                       Path = sprintf "/%s/%s" APIVersion moduleAndOp)
-    kvs   = Map.empty }
-  |> UriBuilder.toUri
-
-let basicCall config moduleAndOp =
-  basicCallUri config moduleAndOp
-  |> basicRequest config Get
 
 let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
   let getResponse = getResponse state dottedPath
@@ -340,6 +334,7 @@ let writeFilters state path =
   timerFilter state path
   >> unknownsFilter
   >> exnsFilter
+
 
 let queryFilters state path =
   timerFilter state path

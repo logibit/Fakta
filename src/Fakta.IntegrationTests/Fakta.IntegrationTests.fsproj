@@ -43,6 +43,7 @@
     <Compile Include="Health.fs" />
     <Compile Include="Session.fs" />
     <Compile Include="Status.fs" />
+    <Compile Include="Init.fs" />
     <Compile Include="Program.fs" />
     <None Include="paket.references" />
     <Content Include="App.config">

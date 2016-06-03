@@ -4,7 +4,7 @@ open Fuchu
 
 [<EntryPoint>]
 let main argv = 
-  Tests.defaultMainThisAssembly argv
+  //Tests.defaultMainThisAssembly argv
   //Tests.run Agent.tests
   //Tests.run ACL.tests
   //Tests.run Catalog.tests
@@ -13,4 +13,6 @@ let main argv =
   //Tests.run KV.tests
   //Tests.run Session.tests
   //Tests.run Status.tests
+
+  Tests.run Init.tests
  
