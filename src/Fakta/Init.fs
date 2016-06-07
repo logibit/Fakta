@@ -11,14 +11,14 @@ open Chiron
 open Hopac
 
 
-let statusPath (funcName: string) =
-  [| "Fakta"; "Vault"; "Sys"; funcName |]
+let initPath (funcName: string) =
+  [| "Fakta"; "Vault"; "Sys"; "init"; funcName |]
 
 let queryFilters state =
-  statusPath >> queryFiltersNoMeta state
+  initPath >> queryFiltersNoMeta state
 
 let writeFilters state =
-  statusPath >> writeFilters state
+  initPath >> writeFilters state
 
 /// Leader is used to query for a known leader
 let InitStatus state: QueryCallNoMeta<Map<string, bool>> =
@@ -32,7 +32,6 @@ let InitStatus state: QueryCallNoMeta<Map<string, bool>> =
 
   HttpFs.Client.getResponse |> filters
 
-//WIP
 let Init state: WriteCallNoMeta<InitRequest, InitResponse> =     
   let createRequest (reqJson, opts) =
     writeCallUri state.config "sys/init" opts

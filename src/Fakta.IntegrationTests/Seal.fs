@@ -11,7 +11,6 @@ open Fakta.Logging
 open Fakta.Vault
 
 let vaultState = FaktaState.empty APIType.Vault "" []
-let initState = initVault true
 
 [<Tests>]
 let tests =

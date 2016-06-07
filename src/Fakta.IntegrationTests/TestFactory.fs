@@ -11,7 +11,7 @@ open Fakta.Vault
 
 let consulConfig = FaktaConfig.ConsulEmpty
 
-let initVault (trm: bool) =
+let initVault =
   let reqJson : InitRequest =
          {secretShares = 1
           secretThreshold =1
@@ -22,6 +22,7 @@ let initVault (trm: bool) =
   | Choice1Of2 r -> FaktaState.empty APIType.Vault r.rootToken r.keys
   | Choice2Of2 _ -> FaktaState.empty APIType.Vault "" []
 
+let initState = initVault
 
 let logger =
   { new Logger with

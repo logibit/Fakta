@@ -23,13 +23,10 @@ let tests =
           logger.logSimple (Message.sprintf [] "key: %s value: %A" key value)
 
     testCase "sys.init -> initialize application" <| fun _ ->
-      let reqJson : InitRequest =
-         {secretShares = 1
-          secretThreshold =1
-          pgpKeys = []}
-      let listing = Init.Init vaultState (reqJson, [])
-      ensureSuccess listing <| fun resp ->
+      let s = initVault
+      match s.config.token with
+      | None -> Tests.failtest "Vault init failed."
+      | _ -> 
         let logger = state.logger
-        //for peer in resp do
-        logger.logSimple (Message.sprintf [] "value: %s" resp.rootToken)
+        logger.logSimple (Message.sprintf [] "value: %s" s.config.token.Value)
 ]
