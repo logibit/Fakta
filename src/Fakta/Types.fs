@@ -1308,3 +1308,39 @@ type SealStatusResponse =
     *> Json.write "t" se.t
     *> Json.write "n" se.n
     *> Json.write "progress" se.progress
+
+type GenerateRootStatusResponse =
+  { Nonce   : string
+    Started : bool
+    Progress: int
+    Required: int
+    Complete: bool
+    EncodedRootToken : string
+    PGPFingerprint : string }
+
+  static member FromJson (_ : GenerateRootStatusResponse) =
+    (fun nc s p r c er pgp ->
+      { Nonce = nc
+        Started = s
+        Progress = p
+        Required = r
+        Complete = c
+        EncodedRootToken = er
+        PGPFingerprint = pgp
+        })
+    <!> Json.read "nonce"
+    <*> Json.read "started"
+    <*> Json.read "progress"
+    <*> Json.read "required"
+    <*> Json.read "complete"
+    <*> Json.read "encoded_root_token"
+    <*> Json.read "pgp_fingerprint"
+
+  static member ToJson (se : GenerateRootStatusResponse) =
+    Json.write "nonce" se.Nonce
+    *> Json.write "started" se.Started
+    *> Json.write "progress" se.Progress
+    *> Json.write "required" se.Required
+    *> Json.write "complete" se.Complete
+    *> Json.write "encoded_root_token" se.EncodedRootToken
+    *> Json.write "pgp_fingerprint" se.PGPFingerprint

@@ -14,6 +14,7 @@ let main argv =
   //Tests.run Session.tests
   //Tests.run Status.tests
 
-  //Tests.run Init.tests
-  Tests.run Seal.tests
+  Tests.run Init.tests |> ignore
+  Tests.run Seal.tests |> ignore
+  Tests.run GenerateRoot.tests
  
