@@ -33,21 +33,17 @@ let InitStatus state: QueryCallNoMeta<Map<string, bool>> =
   HttpFs.Client.getResponse |> filters
 
 //WIP
-//let Init state: QueryCallNoMeta<InitResponse> =
-//  let reqJson : InitRequest =
-//    {secretShares = 1
-//     secretThreshold =1
-//     pgpKeys = []}
-//
-//  let createRequest =
-//    writeCallEntityUri state.config "sys/init"
-//    >> basicRequest state.config Put
-//    >> withVaultHeader state.config
-//    >> withJsonBodyT reqJson
-//    
-//
-//  let filters =
-//    writeFilters state "init"
-//    >> codec createRequest fstOfJsonNoMeta
-//
-//  HttpFs.Client.getResponse |> filters
+let Init state: WriteCallNoMeta<InitRequest, InitResponse> =     
+  let createRequest (reqJson, opts) =
+    writeCallUri state.config "sys/init" opts
+    |> basicRequest state.config Put 
+    |> withVaultHeader state.config
+    |> withJsonBodyT reqJson
+    
+
+  let filters =
+    writeFilters state "init"
+    >> respBodyFilter
+    >> codec createRequest fstOfJsonNoMeta
+
+  HttpFs.Client.getResponse |> filters
