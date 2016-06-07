@@ -12,6 +12,7 @@ open Chiron
 open Hopac
 open Aether.Operators
 
+
 /// API version that we talk with consul
 [<Literal>]
 let APIVersion = "v1"
@@ -275,7 +276,7 @@ let timerFilter (state : FaktaState) path : JobFilter<_, _> =
 let unknownsFilter : JobFilter<Request, Response, Request, Choice<Response, Error>> =
   fun next ->
     next >> Job.map (fun resp ->
-      if not (resp.statusCode = 200 || resp.statusCode = 404) then
+      if not (resp.statusCode = 200 || resp.statusCode = 204 || resp.statusCode = 404) then
         Choice.createSnd (Message (sprintf "unknown response code %d" resp.statusCode))
       elif resp.statusCode = 404 then
         Choice.createSnd (Error.ResourceNotFound)
@@ -352,10 +353,6 @@ let codec prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>
   JobFunc.mapLeft prepare
   >> JobFunc.map (Choice.bind interpret)
 
-let codecNoMeta prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>> =
-  JobFunc.mapLeft prepare
-  >> JobFunc.map (Choice.bind interpret)
-
 let hasNoRespBody _ =
   Choice.create ()
 
@@ -381,6 +378,15 @@ let inline internal fstOfJsonPrism jsonPrism (item1, item2) : Choice< ^a * 'b, E
   |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
   |> Choice.bind Json.tryDeserialize
   |> Choice.map (fun x -> x, item2)
+  |> Choice.mapSnd (fun msg ->
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+  |> Choice.mapSnd Error.Message
+
+let inline internal fstOfJsonPrismNoMeta jsonPrism (item1) : Choice<'a, Error> =
+  Json.tryParse item1
+  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
+  |> Choice.bind Json.tryDeserialize
+  |> Choice.map (fun x -> x)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message

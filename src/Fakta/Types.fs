@@ -1196,21 +1196,24 @@ type FaktaConfig =
     waitTime      : Duration
     /// Token is used to provide a per-request ACL token
     /// which overrides the agent's default token.
-    token         : Token option }
+    token         : Token option
+    keys          : Token list option }
 
   static member ConsulEmpty =
     { serverBaseUri  = Uri "http://127.0.0.1:8500"
       datacenter     = None
       credentials    = None
       waitTime       = DefaultLockWaitTime
-      token          = None }
+      token          = None 
+      keys           = None}
 
-  static member VaultEmpty (token: Token) =
+  static member VaultEmpty (token: Token) (keys: Token list) =
     { serverBaseUri  = Uri "http://127.0.0.1:8200"
       datacenter     = None
       credentials    = None
       waitTime       = DefaultLockWaitTime
-      token          = Some(token) }
+      token          = Some(token) 
+      keys           = Some(keys)}
 
   
 
@@ -1233,10 +1236,10 @@ type FaktaState =
     clock  : IClock
     random : Random }
 
-  static member empty (api: APIType) (token: Token) =
+  static member empty (api: APIType) (token: Token) (keys: Token list) =
     { config = match api with 
                | APIType.Consul -> FaktaConfig.ConsulEmpty
-               | APIType.Vault -> FaktaConfig.VaultEmpty token
+               | APIType.Vault -> FaktaConfig.VaultEmpty token keys
       logger = NoopLogger
       clock  = SystemClock.Instance
       random = random.Value
@@ -1265,19 +1268,43 @@ type InitRequest =
 
 type InitResponse =
   { keys: string list
-    recoveryKeys: string list
+    recoveryKeys: string list option
     rootToken : string }
 
   static member FromJson (_ : InitResponse) =
-    (fun shs tr pgp ->
-      { secretShares = shs
-        secretThreshold = tr
-        pgpKeys  = pgp })
+    (fun ks rcs rt ->
+      { keys =ks
+        recoveryKeys = rcs
+        rootToken  = rt })
     <!> Json.read "keys"
-    <*> Json.read "recovery_keys"
+    <*> Json.tryRead "recovery_keys"
     <*> Json.read "root_token"
 
   static member ToJson (se : InitResponse) =
     Json.write "keys" se.keys
-    *> Json.write "recovery_keys" se.recoveryKeys
+    *> Json.maybeWrite "recovery_keys" se.recoveryKeys
     *> Json.write "root_token" se.rootToken
+
+
+type SealStatusResponse =
+  { ``sealed`` : bool
+    t : int
+    n : int
+    progress : int}
+
+  static member FromJson (_ : SealStatusResponse) =
+    (fun s t n p ->
+      { ``sealed`` = s
+        t = t
+        n  = n
+        progress  = p })
+    <!> Json.read "sealed"
+    <*> Json.read "t"
+    <*> Json.read "n"
+    <*> Json.read "progress"
+
+  static member ToJson (se : SealStatusResponse) =
+    Json.write "sealed" se.``sealed``
+    *> Json.write "t" se.t
+    *> Json.write "n" se.n
+    *> Json.write "progress" se.progress
