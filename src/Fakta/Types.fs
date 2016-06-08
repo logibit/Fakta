@@ -1344,3 +1344,75 @@ type GenerateRootStatusResponse =
     *> Json.write "complete" se.Complete
     *> Json.write "encoded_root_token" se.EncodedRootToken
     *> Json.write "pgp_fingerprint" se.PGPFingerprint
+
+type MountConfigInput =
+  { DefaultLeaseTTL : string
+    MaxLeaseTTL     : string}
+
+  static member FromJson (_ : MountConfigInput) =
+    (fun d m ->
+      { DefaultLeaseTTL = d
+        MaxLeaseTTL = m})
+    <!> Json.read "default_lease_ttl"
+    <*> Json.read "max_lease_ttl"
+    
+
+  static member ToJson (se : MountConfigInput) =
+    Json.write "default_lease_ttl" se.DefaultLeaseTTL
+    *> Json.write "max_lease_ttl" se.MaxLeaseTTL
+
+type MountConfigOutput =
+  { DefaultLeaseTTL : int
+    MaxLeaseTTL     : int}
+
+  static member FromJson (_ : MountConfigOutput) =
+    (fun d m ->
+      { DefaultLeaseTTL = d
+        MaxLeaseTTL = m})
+    <!> Json.read "default_lease_ttl"
+    <*> Json.read "max_lease_ttl"
+    
+
+  static member ToJson (se : MountConfigOutput) =
+    Json.write "default_lease_ttl" se.DefaultLeaseTTL
+    *> Json.write "max_lease_ttl" se.MaxLeaseTTL
+
+type MountOutput =
+  { ``Type``    : string
+    Description : string
+    Config      : MountConfigOutput option}
+
+  static member FromJson (_ : MountOutput) =
+    (fun t d c ->
+      { ``Type`` = t
+        Description = d
+        Config = c})
+    <!> Json.read "type"
+    <*> Json.read "description"
+    <*> Json.tryRead "config"
+    
+
+  static member ToJson (se : MountOutput) =
+    Json.write "type" se.Type
+    *> Json.write "description" se.Description
+    *> Json.maybeWrite "config" se.Config
+
+type MountInput =
+  { ``Type``    : string
+    Description : string
+    Config      : MountConfigInput option}
+
+  static member FromJson (_ : MountInput) =
+    (fun t d c ->
+      { ``Type`` = t
+        Description = d
+        Config = c})
+    <!> Json.read "type"
+    <*> Json.read "description"
+    <*> Json.tryRead "config"
+    
+
+  static member ToJson (se : MountInput) =
+    Json.write "type" se.Type
+    *> Json.write "description" se.Description
+    *> Json.maybeWrite "config" se.Config
