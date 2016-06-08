@@ -1416,3 +1416,24 @@ type MountInput =
     Json.write "type" se.Type
     *> Json.write "description" se.Description
     *> Json.maybeWrite "config" se.Config
+
+
+type LeaderResponse =
+  { HAEnabled     : bool
+    IsSelf        : bool
+    LeaderAddress : string }
+
+  static member FromJson (_ : LeaderResponse) =
+    (fun t d c ->
+      { HAEnabled = t
+        IsSelf = d
+        LeaderAddress = c})
+    <!> Json.read "ha_enabled"
+    <*> Json.read "is_self"
+    <*> Json.read "leader_address"
+    
+
+  static member ToJson (se : LeaderResponse) =
+    Json.write "ha_enabled" se.HAEnabled
+    *> Json.write "is_self" se.IsSelf
+    *> Json.write "leader_address" se.LeaderAddress

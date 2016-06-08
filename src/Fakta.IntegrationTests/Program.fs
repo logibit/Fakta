@@ -17,5 +17,7 @@ let main argv =
   Tests.run Init.tests |> ignore
   Tests.run Seal.tests |> ignore
   Tests.run GenerateRoot.tests |> ignore
-  Tests.run Mounts.tests
+  Tests.run Mounts.tests |> ignore
+  Tests.run Leader.tests |> ignore
+  Tests.run Stepdown.tests
  

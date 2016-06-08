@@ -44,6 +44,8 @@
     <Compile Include="Session.fs" />
     <Compile Include="Status.fs" />
     <Compile Include="Init.fs" />
+    <Compile Include="Leader.fs" />
+    <Compile Include="Stepdown.fs" />
     <Compile Include="Seal.fs" />
     <Compile Include="GenerateRoot.fs" />
     <Compile Include="Mounts.fs" />
