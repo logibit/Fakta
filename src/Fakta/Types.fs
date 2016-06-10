@@ -1437,3 +1437,221 @@ type LeaderResponse =
     Json.write "ha_enabled" se.HAEnabled
     *> Json.write "is_self" se.IsSelf
     *> Json.write "leader_address" se.LeaderAddress
+
+type SecretWrapInfo = 
+  { Token         : Token
+    TTL           : int
+    CreationTime  : string
+  }
+
+  
+  static member FromJson (_ : SecretWrapInfo) =
+    (fun t d c ->
+      { Token = t
+        TTL = d
+        CreationTime = c})
+    <!> Json.read "token"
+    <*> Json.read "ttl"
+    <*> Json.read "creation_time"
+    
+
+  static member ToJson (se : SecretWrapInfo) =
+    Json.write "token" se.Token
+    *> Json.write "ttl" se.TTL
+    *> Json.write "creation_time" se.CreationTime
+
+type SecretAuth = 
+  { ClientToken   : Token
+    Accessor      : string
+    Policies      : string list
+    Metadata      : Map<string, string>
+    LeaseDuration : int
+    Renewable     : bool
+  }
+
+  static member FromJson (_ : SecretAuth) =
+    (fun ct a p m l r ->
+      { ClientToken = ct
+        Accessor = a
+        Policies = p
+        Metadata = m
+        LeaseDuration = l
+        Renewable = r})
+    <!> Json.read "client_token"
+    <*> Json.read "accessor"
+    <*> Json.read "policies"
+    <*> Json.read "metadata"
+    <*> Json.read "lease_duration"
+    <*> Json.read "renewable"
+    
+
+  static member ToJson (se : SecretAuth) =
+    Json.write "client_token" se.ClientToken
+    *> Json.write "accessor" se.Accessor
+    *> Json.write "policies" se.Policies
+    *> Json.write "metadata" se.Metadata
+    *> Json.write "lease_duration" se.LeaseDuration
+    *> Json.write "renewable" se.Renewable
+
+type Secret =
+  { LeaseId       : string
+    LeaseDuration : int
+    Renewable     : bool
+    Data          : Map<string, string>
+    Warnings      : string list
+    Auth          : SecretAuth
+    WrapInfo      : SecretWrapInfo}
+
+  static member FromJson (_ : Secret) =
+    (fun li ld r d w a wi ->
+      { LeaseId = li
+        LeaseDuration = ld
+        Renewable = r
+        Data = d
+        Warnings = w
+        Auth = a
+        WrapInfo = wi})
+    <!> Json.read "lease_id"
+    <*> Json.read "lease_duration"
+    <*> Json.read "renewable"
+    <*> Json.read "data"
+    <*> Json.read "warnings"
+    <*> Json.read "auth"
+    <*> Json.read "wrap_info"
+    
+
+  static member ToJson (se : Secret) =
+    Json.write "lease_id" se.LeaseId
+    *> Json.write "lease_duration" se.LeaseDuration
+    *> Json.write "renewable" se.Renewable
+    *> Json.write "data" se.Data
+    *> Json.write "warnings" se.Warnings
+    *> Json.write "auth" se.Auth
+    *> Json.write "wrap_info" se.WrapInfo
+
+
+type KeyStatus =
+  { Term        : int
+    InstallTime : string }
+
+  static member FromJson (_ : KeyStatus) =
+    (fun t it ->
+      { Term = t
+        InstallTime = it})
+    <!> Json.read "term"
+    <*> Json.read "install_time"
+    
+
+  static member ToJson (se : KeyStatus) =
+    Json.write "term" se.Term
+    *> Json.write "install_time" se.InstallTime
+
+
+type RekeyInitRequest =
+  { SecretShares    : int
+    SecretTreshold  : int
+    PGPKeys         : string list option
+    Backup          : bool option}
+
+  static member FromJson (_ : RekeyInitRequest) =
+    (fun ss st pgp b ->
+      { SecretShares = ss
+        SecretTreshold = st
+        PGPKeys = pgp
+        Backup = b})
+    <!> Json.read "secret_shares"
+    <*> Json.read "secret_threshold"
+    <*> Json.tryRead "pgp_keys"
+    <*> Json.tryRead "backup"
+    
+
+  static member ToJson (se : RekeyInitRequest) =
+    Json.write "secret_shares" se.SecretShares
+    *> Json.write "secret_threshold" se.SecretTreshold
+    *> Json.maybeWrite "pgp_keys" se.PGPKeys
+    *> Json.maybeWrite "backup" se.Backup
+
+
+type RekeyStatusResponse =
+  { Nonce           : string
+    Started         : bool
+    T               : int 
+    N               : int
+    Progress        : int
+    Required        : int
+    PGPFIngerPrints : string list option
+    Backup          : bool }
+
+  static member FromJson (_ : RekeyStatusResponse) =
+    (fun nc s t n p r pgp b ->
+      { Nonce = nc
+        Started = s
+        T = t
+        N = n
+        Progress = p
+        Required = r
+        PGPFIngerPrints = pgp
+        Backup = b})
+    <!> Json.read "nonce"
+    <*> Json.read "started"
+    <*> Json.read "t"
+    <*> Json.read "n"
+    <*> Json.read "progress"
+    <*> Json.read "required"
+    <*> Json.tryRead "pgp_fingerprints"
+    <*> Json.read "backup"
+    
+
+  static member ToJson (se : RekeyStatusResponse) =
+    Json.write "nonce" se.Nonce
+    *> Json.write "started" se.Started
+    *> Json.write "t" se.T
+    *> Json.write "n" se.N
+    *> Json.write "progress" se.Progress
+    *> Json.write "required" se.Required
+    *> Json.maybeWrite "pgp_fingerprints" se.PGPFIngerPrints
+    *> Json.write "backup" se.Backup
+
+type RekeyUpdateResponse =
+  { Nonce           : string
+    Complete        : bool
+    Keys            : string list
+    PGPFIngerPrints : string list
+    Backup          : bool }
+
+  static member FromJson (_ : RekeyUpdateResponse) =
+    (fun nc c k pgp b ->
+      { Nonce = nc
+        Complete = c
+        Keys = k
+        PGPFIngerPrints = pgp
+        Backup = b})
+    <!> Json.read "nonce"
+    <*> Json.read "complete"
+    <*> Json.read "keys"
+    <*> Json.read "pgp_keys"
+    <*> Json.read "backup"
+    
+
+  static member ToJson (se : RekeyUpdateResponse) =
+    Json.write "nonce" se.Nonce
+    *> Json.write "complete" se.Complete
+    *> Json.write "keys" se.Keys
+    *> Json.write "pgp_keys" se.PGPFIngerPrints
+    *> Json.write "backup" se.Backup
+
+type RekeyRetrieveResponse =
+  { Nonce : string
+    Keys  : string list }
+
+  static member FromJson (_ : RekeyRetrieveResponse) =
+    (fun t it ->
+      { Nonce = t
+        Keys = it})
+    <!> Json.read "nonce"
+    <*> Json.read "keys"
+    
+
+  static member ToJson (se : RekeyRetrieveResponse) =
+    Json.write "nonce" se.Nonce
+    *> Json.write "keys" se.Keys
