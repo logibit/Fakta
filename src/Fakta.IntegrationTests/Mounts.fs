@@ -15,16 +15,22 @@ let mountConfig: MountConfigInput = { DefaultLeaseTTL = "0"
                                       MaxLeaseTTL = "0"}
 
 let mountInput: MountInput =
-            { ``Type`` = "aws"
-              Description = "test aws mountpoint"
+            { ``Type`` = "consul"
+              Description = "test consul mountpoint"
               Config = Some mountConfig}
-let mountPointName = "awsTest"
+let mountPointName = "consulTest"
 
 [<Tests>]
 let tests =
   testList "Vault mounts tests" [
     testCase "sys.mounts.mount -> Mount a new secret backend" <| fun _ ->
       let listing = Mounts.Mount initState ((mountPointName, mountInput),[])
+      ensureSuccess listing <| fun resp ->
+        let logger = state.logger
+        logger.logSimple (Message.sprintf [] "Mountpoint created.")
+
+    testCase "sys.mounts.mount -> Mount second secret backend" <| fun _ ->
+      let listing = Mounts.Mount initState (("consul", mountInput),[])
       ensureSuccess listing <| fun resp ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Mountpoint created.")

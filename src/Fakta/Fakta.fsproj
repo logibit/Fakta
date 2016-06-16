@@ -59,14 +59,13 @@
     <Compile Include="Auth.fs" />
     <Compile Include="Audit.fs" />
     <Compile Include="Debug.fs" />
-    <Compile Include="HA.fs" />
     <Compile Include="HealthVault.fs" />
     <Compile Include="Init.fs" />
     <Compile Include="Leases.fs" />
     <Compile Include="Keys.fs" />
     <Compile Include="Mounts.fs" />
     <Compile Include="Seal.fs" />
-    <Compile Include="Secret.fs" />
+    <Compile Include="Secrets.fs" />
     <Compile Include="SysAuth.fs" />
     <Compile Include="Policy.fs" />
     <Compile Include="Token.fs" />

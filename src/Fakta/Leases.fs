@@ -20,20 +20,19 @@ let queryFilters state =
 let writeFilters state =
   leasesPath >> writeFilters state
 
-let Renew state: WriteCallNoMeta<(string*int), Secret> =
-  let createRequest ((id, increment), opts) =
-    writeCallEntityUri state.config "sys/renew" (id, opts)
-    |> basicRequest state.config Put 
-    |> withVaultHeader state.config
-    |> withJsonBodyT (Map.empty.Add("increment", increment))
-    
-
-  let filters =
-    writeFilters state "renew"
-    >> respBodyFilter
-    >> codec createRequest fstOfJsonNoMeta
-
-  HttpFs.Client.getResponse |> filters
+//let Renew state: WriteCallNoMeta<(string*int), Secret> =
+//  let createRequest ((id, increment), opts) =
+//    writeCallEntityUri state.config "sys/renew" (id, opts)
+//    |> basicRequest state.config Put 
+//    |> withVaultHeader state.config
+//    |> withJsonBodyT (Map.empty.Add("increment", increment))    
+//
+//  let filters =
+//    writeFilters state "renew"
+//    >> respBodyFilter
+//    >> codec createRequest fstOfJsonNoMeta
+//
+//  HttpFs.Client.getResponse |> filters
 
 let Revoke state: WriteCallNoMeta<string, unit> =
   let createRequest (id, opts) =

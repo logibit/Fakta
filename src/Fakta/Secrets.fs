@@ -1,4 +1,4 @@
-﻿module Fakta.Vault.Secret
+﻿module Fakta.Vault.Secrets
 
 open Fakta
 open Fakta.Logging
@@ -20,19 +20,29 @@ let queryFilters state =
 let writeFilters state =
   secretPath >> writeFilters state
 
-
-let Read state: QueryCallNoMeta<string, Secret> =
+let ReadNonRenewable state: QueryCallNoMeta<string, unit> =
   let createRequest (path, opts) =
     queryCall state.config path opts
     |> withVaultHeader state.config
 
   let filters =
-    queryFilters state "secretRead"
+    queryFilters state "renewableSecretRead"
+    >> codec createRequest hasNoRespBody
+
+  HttpFs.Client.getResponse |> filters
+
+let ReadRenewable state: QueryCallNoMeta<string, SecretDataString> =
+  let createRequest (path, opts) =
+    queryCall state.config path opts
+    |> withVaultHeader state.config
+
+  let filters =
+    queryFilters state "nonRenewableSecretRead"
     >> codec createRequest fstOfJsonNoMeta
 
   HttpFs.Client.getResponse |> filters
 
-let List state: QueryCallNoMeta<string, Secret> =
+let List state: QueryCallNoMeta<string, SecretDataList> =
   let createRequest (path, opts) =
     queryCall state.config path opts
     |> withVaultHeader state.config
@@ -44,12 +54,12 @@ let List state: QueryCallNoMeta<string, Secret> =
 
   HttpFs.Client.getResponse |> filters
 
-let Write state: WriteCallNoMeta<string, unit> =     
-  let createRequest (path, opts) =
+let Write state: WriteCallNoMeta<(Map<string,string> * string), unit> =     
+  let createRequest ((data, path), opts) =
     writeCallUri state.config path opts
     |> basicRequest state.config Put 
     |> withVaultHeader state.config
-    //|> withJsonBodyT json    
+    |> withJsonBodyT data    
 
   let filters =
     writeFilters state "secretWrite"
