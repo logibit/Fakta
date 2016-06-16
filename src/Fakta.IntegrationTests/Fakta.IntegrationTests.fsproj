@@ -50,6 +50,7 @@
     <Compile Include="GenerateRoot.fs" />
     <Compile Include="Mounts.fs" />
     <Compile Include="Keys.fs" />
+    <Compile Include="Secrets.fs" />
     <Compile Include="Program.fs" />
     <None Include="paket.references" />
     <Content Include="App.config">

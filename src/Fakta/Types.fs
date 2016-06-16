@@ -1493,16 +1493,16 @@ type SecretAuth =
     *> Json.write "lease_duration" se.LeaseDuration
     *> Json.write "renewable" se.Renewable
 
-type Secret =
+type SecretDataList =
   { LeaseId       : string
     LeaseDuration : int
     Renewable     : bool
-    Data          : Map<string, string>
-    Warnings      : string list
-    Auth          : SecretAuth
-    WrapInfo      : SecretWrapInfo}
+    Data          : Map<string, string list>
+    Warnings      : string list option
+    Auth          : SecretAuth option
+    WrapInfo      : SecretWrapInfo option}
 
-  static member FromJson (_ : Secret) =
+  static member FromJson (_ : SecretDataList) =
     (fun li ld r d w a wi ->
       { LeaseId = li
         LeaseDuration = ld
@@ -1515,19 +1515,55 @@ type Secret =
     <*> Json.read "lease_duration"
     <*> Json.read "renewable"
     <*> Json.read "data"
-    <*> Json.read "warnings"
-    <*> Json.read "auth"
-    <*> Json.read "wrap_info"
+    <*> Json.tryRead "warnings"
+    <*> Json.tryRead "auth"
+    <*> Json.tryRead "wrap_info"
     
 
-  static member ToJson (se : Secret) =
+  static member ToJson (se : SecretDataList) =
     Json.write "lease_id" se.LeaseId
     *> Json.write "lease_duration" se.LeaseDuration
     *> Json.write "renewable" se.Renewable
     *> Json.write "data" se.Data
-    *> Json.write "warnings" se.Warnings
-    *> Json.write "auth" se.Auth
-    *> Json.write "wrap_info" se.WrapInfo
+    *> Json.maybeWrite "warnings" se.Warnings
+    *> Json.maybeWrite "auth" se.Auth
+    *> Json.maybeWrite "wrap_info" se.WrapInfo
+
+type SecretDataString =
+  { LeaseId       : string
+    LeaseDuration : int
+    Renewable     : bool
+    Data          : Map<string, string>
+    Warnings      : string list option
+    Auth          : SecretAuth option
+    WrapInfo      : SecretWrapInfo option}
+
+  static member FromJson (_ : SecretDataString) =
+    (fun li ld r d w a wi ->
+      { LeaseId = li
+        LeaseDuration = ld
+        Renewable = r
+        Data = d
+        Warnings = w
+        Auth = a
+        WrapInfo = wi})
+    <!> Json.read "lease_id"
+    <*> Json.read "lease_duration"
+    <*> Json.read "renewable"
+    <*> Json.read "data"
+    <*> Json.tryRead "warnings"
+    <*> Json.tryRead "auth"
+    <*> Json.tryRead "wrap_info"
+    
+
+  static member ToJson (se : SecretDataString) =
+    Json.write "lease_id" se.LeaseId
+    *> Json.write "lease_duration" se.LeaseDuration
+    *> Json.write "renewable" se.Renewable
+    *> Json.write "data" se.Data
+    *> Json.maybeWrite "warnings" se.Warnings
+    *> Json.maybeWrite "auth" se.Auth
+    *> Json.maybeWrite "wrap_info" se.WrapInfo
 
 
 type KeyStatus =
@@ -1616,7 +1652,7 @@ type RekeyUpdateResponse =
   { Nonce           : string
     Complete        : bool
     Keys            : string list
-    PGPFIngerPrints : string list
+    PGPFIngerPrints : string list option
     Backup          : bool }
 
   static member FromJson (_ : RekeyUpdateResponse) =
@@ -1629,7 +1665,7 @@ type RekeyUpdateResponse =
     <!> Json.read "nonce"
     <*> Json.read "complete"
     <*> Json.read "keys"
-    <*> Json.read "pgp_keys"
+    <*> Json.tryRead "pgp_fingerprints"
     <*> Json.read "backup"
     
 
@@ -1637,7 +1673,7 @@ type RekeyUpdateResponse =
     Json.write "nonce" se.Nonce
     *> Json.write "complete" se.Complete
     *> Json.write "keys" se.Keys
-    *> Json.write "pgp_keys" se.PGPFIngerPrints
+    *> Json.maybeWrite "pgp_fingerprints" se.PGPFIngerPrints
     *> Json.write "backup" se.Backup
 
 type RekeyRetrieveResponse =

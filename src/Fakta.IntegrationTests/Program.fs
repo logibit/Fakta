@@ -6,7 +6,7 @@ open Fuchu
 let main argv = 
   //Tests.defaultMainThisAssembly argv
   //Tests.run Agent.tests
-  //Tests.run ACL.tests
+  Tests.run ACL.tests |> ignore
   //Tests.run Catalog.tests
   //Tests.run Event.tests
   //Tests.run Health.tests
@@ -20,5 +20,7 @@ let main argv =
   Tests.run Mounts.tests |> ignore
   Tests.run Leader.tests |> ignore
   Tests.run Stepdown.tests |> ignore
-  Tests.run Keys.tests
+  Tests.run Keys.tests |> ignore
+  Tests.run Secrets.testsGeneric |> ignore
+  Tests.run Secrets.testsConsul
  
