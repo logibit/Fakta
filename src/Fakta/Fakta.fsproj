@@ -58,7 +58,6 @@
     <Compile Include="Status.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Audit.fs" />
-    <Compile Include="Debug.fs" />
     <Compile Include="HealthVault.fs" />
     <Compile Include="Init.fs" />
     <Compile Include="Leases.fs" />
