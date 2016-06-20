@@ -1691,3 +1691,29 @@ type RekeyRetrieveResponse =
   static member ToJson (se : RekeyRetrieveResponse) =
     Json.write "nonce" se.Nonce
     *> Json.write "keys" se.Keys
+
+
+type Audit =
+  { Path        : string option
+    Type        : string
+    Description : string
+    Options     : Map<string, string> option} 
+
+  static member FromJson (_ : Audit) =
+    (fun p t d o ->
+      { Path = p
+        Type = t
+        Description = d
+        Options = o})
+    <!> Json.tryRead "file_path"
+    <*> Json.read "type"
+    <*> Json.read "description"
+    <*> Json.tryRead "options"
+    
+
+  static member ToJson (se : Audit) =
+    Json.maybeWrite "path" se.Path
+    *> Json.write "type" se.Type
+    *> Json.write "description" se.Description
+    *> Json.maybeWrite "options" se.Options
+
