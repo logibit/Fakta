@@ -23,5 +23,6 @@ let main argv =
   Tests.run Keys.tests |> ignore
   Tests.run Secrets.testsGeneric |> ignore
   //Tests.run Secrets.testsConsul
-  Tests.run Audit.tests
+  Tests.run Audit.tests |> ignore
+  Tests.run HealthVault.tests
  

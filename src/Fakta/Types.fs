@@ -1717,3 +1717,27 @@ type Audit =
     *> Json.write "description" se.Description
     *> Json.maybeWrite "options" se.Options
 
+type HealthResponse =
+  { Initialized        : bool
+    ``Sealed``         : bool
+    Standby            : bool
+    ServerTimeUtc      : int option}
+
+  static member FromJson (_ : HealthResponse) =
+    (fun p t d o ->
+      { Initialized = p
+        ``Sealed`` = t
+        Standby = d
+        ServerTimeUtc = o})
+    <!> Json.read "initialized"
+    <*> Json.read "sealed"
+    <*> Json.read "standby"
+    <*> Json.tryRead "server_time_utc"
+    
+
+  static member ToJson (se : HealthResponse) =
+    Json.write "initialized" se.Initialized
+    *> Json.write "sealed" se.Sealed
+    *> Json.write "standby" se.Standby
+    *> Json.maybeWrite "server_time_utc" se.ServerTimeUtc
+

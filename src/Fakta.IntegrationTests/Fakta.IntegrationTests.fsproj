@@ -52,6 +52,7 @@
     <Compile Include="Keys.fs" />
     <Compile Include="Secrets.fs" />
     <Compile Include="Audit.fs" />
+    <Compile Include="HealthVault.fs" />
     <Compile Include="Program.fs" />
     <None Include="paket.references" />
     <Content Include="App.config">
