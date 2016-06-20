@@ -60,9 +60,16 @@ let testsConsul =
         "read"
         |> UTF8Encoding.UTF8.GetBytes
         |> Convert.ToBase64String
-      let config = Map.empty.Add("policy", policy64)
-      let listing = Secrets.Write initState ((config, consulSecretPath+"/roles/readonly"), [])
+      let config = Map.empty.Add("token_type", "management")
+      let listing = Secrets.Write initState ((config, consulSecretPath+"/roles/management"), [])
       ensureSuccess listing <| fun sc ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Consul role sent to vault.")
+
+
+    testCase "consul.roles -> queries a consul role definiton" <| fun _ ->
+      let listing = Secrets.ReadRenewable initState (consulSecretPath+"/roles/management", [])
+      ensureSuccess listing <| fun sc ->
+        let logger = state.logger
+        logger.logSimple (Message.sprintf [] "Consul role read: %A" sc)
 ]
