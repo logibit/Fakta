@@ -366,6 +366,11 @@ module ConsulResult =
     Json.Array_
     >?> Aether.Optics.List.head_
 
+module VaultResult = 
+  let getProperty (name: string) =
+    Json.Object_
+    >?> Aether.Optics.Map.key_ name
+
 let inline ofJsonPrism jsonPrism : string -> Choice<'a, Error> =
   Json.tryParse
   >> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
