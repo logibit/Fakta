@@ -11,19 +11,6 @@ open Fakta.Vault
 
 let consulConfig = FaktaConfig.ConsulEmpty
 
-let initVault =
-  let reqJson : InitRequest =
-         {secretShares = 1
-          secretThreshold =1
-          pgpKeys = []}
-  let state = FaktaState.empty APIType.Vault "" []
-  let req = run (Fakta.Vault.Init.Init state (reqJson, []))
-  match req with 
-  | Choice1Of2 r -> FaktaState.empty APIType.Vault r.rootToken r.keys
-  | Choice2Of2 _ -> FaktaState.empty APIType.Vault "" []
-
-let initState = initVault
-
 let logger =
   { new Logger with
       member x.log message =
@@ -37,6 +24,20 @@ let logger =
       member x.logSimple message =
         printfn "%A" message
     }
+
+let initVault =
+  let reqJson : InitRequest =
+         {secretShares = 1
+          secretThreshold =1
+          pgpKeys = []}
+  let state = FaktaState.empty APIType.Vault "" [] logger
+  let req = run (Fakta.Vault.Init.Init state (reqJson, []))
+  match req with 
+  | Choice1Of2 r -> FaktaState.empty APIType.Vault r.rootToken r.keys logger
+  | Choice2Of2 _ -> state
+
+let initState = initVault
+let vaultState = FaktaState.empty APIType.Vault "" [] logger
 
 let state =
   { config = consulConfig

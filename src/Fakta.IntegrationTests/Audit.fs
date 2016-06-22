@@ -10,7 +10,6 @@ open Fakta
 open Fakta.Logging
 open Fakta.Vault
 
-let vaultState = FaktaState.empty APIType.Vault "" []
 let filePath = @"C:\audit.log"
 let path = "vault-audit"
 

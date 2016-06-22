@@ -11,9 +11,6 @@ open Fakta.Logging
 open Fakta.Vault
 open System.Text
 
-let vaultState = FaktaState.empty APIType.Vault "" []
-
-
 let generateRootInitTest =
   let otp = 
     Array.init 16 (fun i -> byte(i*i))

@@ -10,8 +10,6 @@ open Fakta
 open Fakta.Logging
 open Fakta.Vault
 
-let vaultState = FaktaState.empty APIType.Vault "" []
-
 [<Tests>]
 let tests =
   testList "Vault un/seal tests" [

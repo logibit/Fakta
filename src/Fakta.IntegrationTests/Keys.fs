@@ -11,8 +11,6 @@ open Fakta.Logging
 open Fakta.Vault
 open System.Text
 
-let vaultState = FaktaState.empty APIType.Vault "" []
-
 let pgpKey = "-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v2.0.0
 mQENBFda0SUBCADaUqQYQPjPm1eMTpj0pf7o6lBO3L/xH16+/XBzAPTBaShZrpnf

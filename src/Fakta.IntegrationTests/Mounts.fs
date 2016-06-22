@@ -10,7 +10,6 @@ open Fakta
 open Fakta.Logging
 open Fakta.Vault
 
-let vaultState = FaktaState.empty APIType.Vault "" []
 let mountConfig: MountConfigInput = { DefaultLeaseTTL = "0"
                                       MaxLeaseTTL = "0"}
 

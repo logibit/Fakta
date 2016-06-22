@@ -10,7 +10,6 @@ open Fakta
 open Fakta.Logging
 open Fakta.Vault
 
-let vaultState = FaktaState.empty APIType.Vault "" []
 let genericSecretPath = "secret"
 let consulSecretPath = "consul"
 
@@ -43,33 +42,33 @@ let testsGeneric =
         logger.logSimple (Message.sprintf [] "Secret deleted.")
 ]
 
-open System.Text
-
-[<Tests>]
-let testsConsul =
-  testList "Vault consul secrets tests" [
-    testCase "consul.config.access -> configure vault to know how to contact consul" <| fun _ ->
-      let config = Map.empty.Add("token", ACL.tokenId).Add("address", state.config.serverBaseUri.ToString())
-      let listing = Secrets.Write initState ((config, consulSecretPath+"/config/access"), [])
-      ensureSuccess listing <| fun sc ->
-        let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Consul config sent to vault.")
-
-    testCase "consul.roles -> create a new role" <| fun _ ->
-      let policy64 =
-        "read"
-        |> UTF8Encoding.UTF8.GetBytes
-        |> Convert.ToBase64String
-      let config = Map.empty.Add("token_type", "management")
-      let listing = Secrets.Write initState ((config, consulSecretPath+"/roles/management"), [])
-      ensureSuccess listing <| fun sc ->
-        let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Consul role sent to vault.")
-
-
-    testCase "consul.roles -> queries a consul role definiton" <| fun _ ->
-      let listing = Secrets.ReadRenewable initState (consulSecretPath+"/roles/management", [])
-      ensureSuccess listing <| fun sc ->
-        let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Consul role read: %A" sc)
-]
+//open System.Text
+//
+//[<Tests>]
+//let testsConsul =
+//  testList "Vault consul secrets tests" [
+//    testCase "consul.config.access -> configure vault to know how to contact consul" <| fun _ ->
+//      let config = Map.empty.Add("token", ACL.tokenId).Add("address", state.config.serverBaseUri.ToString())
+//      let listing = Secrets.Write initState ((config, consulSecretPath+"/config/access"), [])
+//      ensureSuccess listing <| fun sc ->
+//        let logger = state.logger
+//        logger.logSimple (Message.sprintf [] "Consul config sent to vault.")
+//
+//    testCase "consul.roles -> create a new role" <| fun _ ->
+//      let policy64 =
+//        "read"
+//        |> UTF8Encoding.UTF8.GetBytes
+//        |> Convert.ToBase64String
+//      let config = Map.empty.Add("token_type", "management")
+//      let listing = Secrets.Write initState ((config, consulSecretPath+"/roles/management"), [])
+//      ensureSuccess listing <| fun sc ->
+//        let logger = state.logger
+//        logger.logSimple (Message.sprintf [] "Consul role sent to vault.")
+//
+//
+//    testCase "consul.roles -> queries a consul role definiton" <| fun _ ->
+//      let listing = Secrets.ReadRenewable initState (consulSecretPath+"/roles/management", [])
+//      ensureSuccess listing <| fun sc ->
+//        let logger = state.logger
+//        logger.logSimple (Message.sprintf [] "Consul role read: %A" sc)
+//]
