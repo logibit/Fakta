@@ -1236,11 +1236,11 @@ type FaktaState =
     clock  : IClock
     random : Random }
 
-  static member empty (api: APIType) (token: Token) (keys: Token list) =
+  static member empty (api: APIType) (token: Token) (keys: Token list) (logger: Logger) =
     { config = match api with 
                | APIType.Consul -> FaktaConfig.ConsulEmpty
                | APIType.Vault -> FaktaConfig.VaultEmpty token keys
-      logger = NoopLogger
+      logger = logger
       clock  = SystemClock.Instance
       random = random.Value
     }
@@ -1740,4 +1740,71 @@ type HealthResponse =
     *> Json.write "sealed" se.Sealed
     *> Json.write "standby" se.Standby
     *> Json.maybeWrite "server_time_utc" se.ServerTimeUtc
+
+type AuthConfig =
+  { DefaultLeaseTTL        : string  
+    MaxLeaseTTL            : string}
+
+  static member FromJson (_ : AuthConfig) =
+    (fun p o ->
+      { DefaultLeaseTTL = p
+        MaxLeaseTTL = o})
+    <!> Json.read "default_lease_ttl"
+    <*> Json.read "max_lease_ttl"
+
+  static member ToJson (se : AuthConfig) =
+    Json.write "default_lease_ttl" se.DefaultLeaseTTL
+    *> Json.write "max_lease_ttl" se.MaxLeaseTTL
+
+type AuthMount =
+  { Type        : string  
+    Description : string
+    Config      : AuthConfig option}
+
+  static member FromJson (_ : AuthMount) =
+    (fun p o c->
+      { Type = p
+        Description = o
+        Config = c})
+    <!> Json.read "type"
+    <*> Json.read "description"
+    <*> Json.tryRead "config"
+    
+    
+
+  static member ToJson (se : AuthMount) =
+    Json.write "type" se.Type
+    *> Json.write "description" se.Description
+    *> Json.maybeWrite "config" se.Config
+
+type AuthMethod =
+  | AppID
+  | GitHub
+  | LDAP
+  | TLS
+  | Tokens
+  | UserPass
+  | AWS
+  with
+    override x.ToString () =
+      match x with
+      | AppID -> "app-id"
+      | GitHub -> "github"
+      | LDAP -> "ldap"
+      | TLS -> "cert"
+      | Tokens -> "token"
+      | UserPass -> "userpass"
+      | AWS -> "aws-ec2"
+
+    [<System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)>]
+    static member FromString str =
+      match str with
+      | "app-id" -> AppID
+      | "github" -> GitHub
+      | "ldap" ->  LDAP
+      | "cert" -> TLS
+      | "token" -> Tokens
+      | "userpass" -> UserPass
+      | "aws-ec2" -> AWS
+
 
