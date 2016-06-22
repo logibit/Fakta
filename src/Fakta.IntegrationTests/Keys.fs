@@ -86,47 +86,10 @@ let tests =
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Rekey operation cancelled")
 
-//    testCase "sys.rekeyBackupRetrieve ->  return the backup copy of PGP-encrypted unseal keys" <| fun _ ->
-//      let listing = Keys.RekeyRetrieveBackup initState []
-//      ensureSuccess listing <| fun backup ->
-//        let logger = state.logger
-//        logger.logSimple (Message.sprintf [] "Backup retrieved: %s, %A" backup.Nonce backup.Keys)
-
     testCase "sys.rekeyBackupRetrieve ->  delete the backup copy of PGP-encrypted unseal keys" <| fun _ ->
       let listing = Keys.RekeyDeleteBackup initState []
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Backup deleted")
-
-/// 500 - unsupported path
-//    testCase "sys.rekeyRecoveryStatus ->  progress of the current rekey attempt" <| fun _ ->
-//      let listing = Keys.RekeyRecoveryKeyStatus initState []
-//      ensureSuccess listing <| fun (resp) ->
-//        let logger = state.logger
-//        logger.logSimple (Message.sprintf [] "Nonce: %s PGPFIngerPrints: %A" resp.Nonce resp.PGPFIngerPrints)
-//
-//    testCase "sys.rekeyRecoveryInit ->  new rekey attempt" <| fun _ ->
-//      let listing = Keys.RekeyRecoveryKeyInit initState (initRequest, [])
-//      ensureSuccess listing <| fun (resp) ->
-//        let logger = state.logger
-//        logger.logSimple (Message.sprintf [] "Nonce: %s PGPFIngerPrints: %A" resp.Nonce resp.PGPFIngerPrints)
-//
-//    testCase "sys.rekeyRecoveryUpdate ->  new rekey attempt" <| fun _ ->
-//      let listing = Keys.RekeyRecoveryKeyUpdate initState ((Map.empty.Add("nonce", nonce).Add("key", initState.config.keys.Value.[0])), [])
-//      ensureSuccess listing <| fun (resp) ->
-//        let logger = state.logger
-//        logger.logSimple (Message.sprintf [] "Nonce: %s PGPFIngerPrints: %A" resp.Nonce resp.PGPFIngerPrints)
-//
-//    testCase "sys.rekeyRecoveryCancel ->  cancel rekey attempts" <| fun _ ->
-//      let listing = Keys.RekeyRecoveryKeyCancel initState []
-//      ensureSuccess listing <| fun _ ->
-//        let logger = state.logger
-//        logger.logSimple (Message.sprintf [] "Rekey operation cancelled")
-//
-//    testCase "sys.rekeyRecoveryBackupRetrieve ->  delete the backup copy of PGP-encrypted recovery unseal keys" <| fun _ ->
-//      let listing = Keys.RekeyDeleteRecoveryBackup initState []
-//      ensureSuccess listing <| fun _ ->
-//        let logger = state.logger
-//        logger.logSimple (Message.sprintf [] "Backup deleted")
 
 ]
