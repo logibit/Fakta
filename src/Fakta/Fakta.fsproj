@@ -58,20 +58,21 @@
     <Compile Include="Status.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Audit.fs" />
-    <Compile Include="Debug.fs" />
-    <Compile Include="HA.fs" />
     <Compile Include="HealthVault.fs" />
     <Compile Include="Init.fs" />
     <Compile Include="Leases.fs" />
     <Compile Include="Keys.fs" />
     <Compile Include="Mounts.fs" />
     <Compile Include="Seal.fs" />
-    <Compile Include="Secret.fs" />
-    <Compile Include="SysAuth.fs" />
+    <Compile Include="Secrets.fs" />
     <Compile Include="Policy.fs" />
     <Compile Include="Token.fs" />
     <Content Include="hopac.fsx" />
     <None Include="paket.references" />
+    <Compile Include="GenerateRoot.fs" />
+    <Compile Include="Leader.fs" />
+    <Compile Include="Stepdown.fs" />
+    <Compile Include="Capabilities.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=4.4.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />

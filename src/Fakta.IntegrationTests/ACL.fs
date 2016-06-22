@@ -9,16 +9,16 @@ open NodaTime
 open Fakta
 open Fakta.Logging
 
+let tokenId =
+  let aclInstance = ACLEntry.ClientTokenInstance "" "test management token" "management"
+  let listing = ACL.create state (aclInstance , [])
+  ensureSuccess listing <| fun createdId ->
+    let logger = state.logger
+    logger.logSimple (Message.sprintf [] "created acl id: %O" createdId)
+    createdId
+
 [<Tests>]
 let tests =
-  let tokenId =
-    let aclInstance = ACLEntry.ClientTokenInstance "" "client token" "client"
-    let listing = ACL.create state (aclInstance , [])
-    ensureSuccess listing <| fun createdId ->
-      let logger = state.logger
-      logger.logSimple (Message.sprintf [] "created acl id: %O" createdId)
-      createdId
-
   testList "ACL tests" [
     testCase "ACL.list -> all the ACL tokens " <| fun _ ->
       let listing = ACL.list state []

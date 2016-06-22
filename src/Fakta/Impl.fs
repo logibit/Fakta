@@ -12,6 +12,7 @@ open Chiron
 open Hopac
 open Aether.Operators
 
+
 /// API version that we talk with consul
 [<Literal>]
 let APIVersion = "v1"
@@ -90,7 +91,10 @@ let acceptJson =
   Request.setHeader (Accept "*/*")
 
 let withVaultHeader (config : FaktaConfig) =
-  Request.setHeader (Custom  ("X-Vault-Token", config.token.Value.ToString()))
+  let token = match config.token with 
+              | None -> String.Empty
+              | _ -> config.token.Value.ToString()
+  Request.setHeader (Custom  ("X-Vault-Token", token))
 
 let withIntroductions =
   Request.setHeader (UserAgent ("Fakta " + (App.getVersion ())))
@@ -224,15 +228,6 @@ let queryCallEntity config moduleAndOp (entity, opts) =
   queryCallEntityUri config moduleAndOp opts
   |> basicRequest config Get
 
-let basicCallUri config moduleAndOp =
-  { inner = UriBuilder(config.serverBaseUri,
-                       Path = sprintf "/%s/%s" APIVersion moduleAndOp)
-    kvs   = Map.empty }
-  |> UriBuilder.toUri
-
-let basicCall config moduleAndOp =
-  basicCallUri config moduleAndOp
-  |> basicRequest config Get
 
 let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
   let getResponse = getResponse state dottedPath
@@ -281,7 +276,7 @@ let timerFilter (state : FaktaState) path : JobFilter<_, _> =
 let unknownsFilter : JobFilter<Request, Response, Request, Choice<Response, Error>> =
   fun next ->
     next >> Job.map (fun resp ->
-      if not (resp.statusCode = 200 || resp.statusCode = 404) then
+      if not (resp.statusCode = 200 || resp.statusCode = 204 || resp.statusCode = 404) then
         Choice.createSnd (Message (sprintf "unknown response code %d" resp.statusCode))
       elif resp.statusCode = 404 then
         Choice.createSnd (Error.ResourceNotFound)
@@ -341,6 +336,7 @@ let writeFilters state path =
   >> unknownsFilter
   >> exnsFilter
 
+
 let queryFilters state path =
   timerFilter state path
   >> unknownsFilter
@@ -357,10 +353,6 @@ let codec prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>
   JobFunc.mapLeft prepare
   >> JobFunc.map (Choice.bind interpret)
 
-let codecNoMeta prepare interpret : JobFilter<'a, Choice<'b, Error>, 'i, Choice<'o, _>> =
-  JobFunc.mapLeft prepare
-  >> JobFunc.map (Choice.bind interpret)
-
 let hasNoRespBody _ =
   Choice.create ()
 
@@ -374,6 +366,11 @@ module ConsulResult =
     Json.Array_
     >?> Aether.Optics.List.head_
 
+module VaultResult = 
+  let getProperty (name: string) =
+    Json.Object_
+    >?> Aether.Optics.Map.key_ name
+
 let inline ofJsonPrism jsonPrism : string -> Choice<'a, Error> =
   Json.tryParse
   >> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
@@ -386,6 +383,15 @@ let inline internal fstOfJsonPrism jsonPrism (item1, item2) : Choice< ^a * 'b, E
   |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
   |> Choice.bind Json.tryDeserialize
   |> Choice.map (fun x -> x, item2)
+  |> Choice.mapSnd (fun msg ->
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+  |> Choice.mapSnd Error.Message
+
+let inline internal fstOfJsonPrismNoMeta jsonPrism (item1) : Choice<'a, Error> =
+  Json.tryParse item1
+  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
+  |> Choice.bind Json.tryDeserialize
+  |> Choice.map (fun x -> x)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
@@ -406,12 +412,3 @@ let inline internal fstOfJsonNoMeta (item1) : Choice<'a, Error> =
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
-
-  /// Convert the first value in the tuple in the choice to some type 'a.
-//let inline internal fstOfJson2 (item1, item2) : Choice< 'a, Error> =
-//  Json.tryParse item1
-//  |> Choice.bind Json.tryDeserialize
-//  |> Choice.map (fun x -> x, item2)
-//  |> Choice.mapSnd (fun msg ->
-//    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
-//  |> Choice.mapSnd Error.Message

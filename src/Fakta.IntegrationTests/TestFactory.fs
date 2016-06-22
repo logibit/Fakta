@@ -7,8 +7,9 @@ open Fakta
 open Fakta.Logging
 open Fuchu
 open Hopac
+open Fakta.Vault
 
-let config = FaktaConfig.empty
+let consulConfig = FaktaConfig.ConsulEmpty
 
 let logger =
   { new Logger with
@@ -24,8 +25,22 @@ let logger =
         printfn "%A" message
     }
 
+let initVault =
+  let reqJson : InitRequest =
+         {secretShares = 1
+          secretThreshold =1
+          pgpKeys = []}
+  let state = FaktaState.empty APIType.Vault "" [] logger
+  let req = run (Fakta.Vault.Init.Init state (reqJson, []))
+  match req with 
+  | Choice1Of2 r -> FaktaState.empty APIType.Vault r.rootToken r.keys logger
+  | Choice2Of2 _ -> state
+
+let initState = initVault
+let vaultState = FaktaState.empty APIType.Vault "" [] logger
+
 let state =
-  { config = config
+  { config = consulConfig
     logger = logger// NoopLogger
     clock  = SystemClock.Instance 
     random = Random () }
