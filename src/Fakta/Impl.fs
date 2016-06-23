@@ -391,7 +391,6 @@ let inline internal fstOfJsonPrismNoMeta jsonPrism (item1) : Choice<'a, Error> =
   Json.tryParse item1
   |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
   |> Choice.bind Json.tryDeserialize
-  |> Choice.map (fun x -> x)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
@@ -408,7 +407,6 @@ let inline internal fstOfJson (item1, item2) : Choice< ^a * 'b, Error> =
 let inline internal fstOfJsonNoMeta (item1) : Choice<'a, Error> =
   Json.tryParse item1
   |> Choice.bind Json.tryDeserialize
-  |> Choice.map (fun x -> x)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
