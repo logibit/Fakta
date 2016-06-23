@@ -11,11 +11,15 @@ open Fakta.Logging
 open Fakta.Vault
 
 let mountConfig: MountConfigInput = { DefaultLeaseTTL = "0"
-                                      MaxLeaseTTL = "0"}
+                                      MaxLeaseTTL = "87600h"}
 
-let mountInput: MountInput =
+let consulMountInput: MountInput =
             { ``Type`` = "consul"
               Description = "test consul mountpoint"
+              Config = Some mountConfig}
+let pkiMountInput: MountInput =
+            { ``Type`` = "pki"
+              Description = "pki mountpoint"
               Config = Some mountConfig}
 let mountPointName = "consulTest"
 
@@ -23,13 +27,19 @@ let mountPointName = "consulTest"
 let tests =
   testList "Vault mounts tests" [
     testCase "sys.mounts.mount -> Mount a new secret backend" <| fun _ ->
-      let listing = Mounts.Mount initState ((mountPointName, mountInput),[])
+      let listing = Mounts.Mount initState ((mountPointName, consulMountInput),[])
       ensureSuccess listing <| fun resp ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Mountpoint created.")
 
     testCase "sys.mounts.mount -> Mount second secret backend" <| fun _ ->
-      let listing = Mounts.Mount initState (("consul", mountInput),[])
+      let listing = Mounts.Mount initState (("consul", consulMountInput),[])
+      ensureSuccess listing <| fun resp ->
+        let logger = state.logger
+        logger.logSimple (Message.sprintf [] "Mountpoint created.")
+
+    testCase "sys.mounts.mount -> Mount pki secret backend" <| fun _ ->
+      let listing = Mounts.Mount initState (("pki", pkiMountInput),[])
       ensureSuccess listing <| fun resp ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Mountpoint created.")
@@ -45,7 +55,13 @@ let tests =
       let listing = Mounts.TuneMount initState ((mountPointName, mountConfig), [])
       ensureSuccess listing <| fun resp ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Mounpoint tuned.")
+        logger.logSimple (Message.sprintf [] "%s mounpoint tuned." mountPointName)
+
+    testCase "sys.mounts.tuneMount -> tune configuration parameters for pki mount point" <| fun _ ->
+      let listing = Mounts.TuneMount initState (("pki", mountConfig), [])
+      ensureSuccess listing <| fun resp ->
+        let logger = state.logger
+        logger.logSimple (Message.sprintf [] "PKI mounpoint tuned.")
 
     testCase "sys.mounts.remount -> remount an already-mounted backend to a new mount point." <| fun _ ->
       let listing = Mounts.Remount initState ((mountPointName, "test"), [])

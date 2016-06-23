@@ -24,6 +24,7 @@ let main argv =
   Tests.run Stepdown.tests |> ignore
   Tests.run Keys.tests |> ignore
   Tests.run Secrets.testsGeneric |> ignore
+  Tests.run Secrets.testsConsul  |> ignore
   Tests.run Audit.tests |> ignore
   Tests.run HealthVault.tests |> ignore
   Tests.run Auth.tests  |> ignore
