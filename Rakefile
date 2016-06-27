@@ -52,7 +52,7 @@ end
 directory 'build/pkg'
 
 desc 'package nugets - finds all projects and package them'
-nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
+nugets_pack :create_nugets => ['build/pkg', :versioning, :compile, :tests] do |p|
   p.configuration = Configuration
   p.files   = FileList['src/**/*.{csproj,fsproj,nuspec}'].
     exclude(/Tests/)
