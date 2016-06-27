@@ -85,7 +85,7 @@ task :tests => [:'tests:unit', :'tests:integration']
 task :default => [:compile, :tests, :create_nugets]
 
 task :ensure_nuget_key do
-  raise 'missing env MYGET_KEY value' unless ENV['MYGET_KEY']
+  raise 'missing env NUGET_KEY value' unless ENV['NUGET_KEY']
 end
 
 Albacore::Tasks::Release.new :release,
