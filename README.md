@@ -33,7 +33,7 @@ service architectures easily.
 First, run:
 
 ``` bash
-./tools/consul.sh agent -dev -bind 127.0.0.1 -config-file=server.json
+./tools/consul.sh agent -dev -bind 127.0.0.1 -config-file=tools/server.json
 ```
 
 Then in another terminal:
