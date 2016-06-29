@@ -10,6 +10,8 @@ install:
   - cmd: cd tools
   - ps: (new-object net.webclient).DownloadFile('https://releases.hashicorp.com/consul/0.6.4/consul_0.6.4_windows_amd64.zip', "$pwd\consul.zip")
   - cmd: 7z e consul.zip
+  - ps: (new-object net.webclient).DownloadFile('https://releases.hashicorp.com/vault/0.6.0/vault_0.6.0_windows_amd64.zip', "$pwd\vault.zip")
+  - cmd: 7z e vault.zip
   - cmd: cd ..
   
 os: Visual Studio 2015

@@ -168,24 +168,42 @@ write unit tests for your changes and it shall be fine.
 
 ### Running local instance of Consul 
 1. enable [ACL support][acl-support] by creating json config file "server.json" looking like this:
-```
-{
- "bootstrap": false,
- "server": true,
- "datacenter": "ams1",
- "encrypt": "yJqVBxe12ZfE3z+4QSk8qA==",
- "log_level": "INFO",
- "acl_datacenter": "ams1",
- "acl_default_policy": "allow",
- "acl_master_token": "secret",
- "acl_token": "secret"
-}
-```
+ ```
+ {
+  "bootstrap": false,
+  "server": true,
+  "datacenter": "ams1",
+  "encrypt": "yJqVBxe12ZfE3z+4QSk8qA==",
+  "log_level": "INFO",
+  "acl_datacenter": "ams1",
+  "acl_default_policy": "allow",
+  "acl_master_token": "secret",
+  "acl_token": "secret"
+ }
+ ```
 2. run consul agent with: 
-```
-consul agent -dev -bind 127.0.0.1 -config-file=path to server.json
-```
+ ```
+ consul agent -dev -bind 127.0.0.1 -config-file=path to server.json
+ ```
 3. Open *http://localhost:consul_port/ui/#/ams1/acls (typically http://127.0.0.1:8500/ui/#/ams1/acls )* and create token called the same like the master token in config file
+
+### Running local instance of Consul 
+1. create config file (do not use this in production)
+ ```
+ backend "file" {
+   path = "vault"
+ }
+ 
+ listener "tcp" {
+   tls_disable = 1
+ }
+ 
+ disable_cache = true
+ disable_mlock = true
+ ```
+2. run vault server with
+  ```vault server -config=config_file_name.conf```
+3. you have to restart your local vault server and delete vault directory contents everytime you want to re-run tests.
 
 ### Compiling
 
