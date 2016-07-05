@@ -1,23 +1,17 @@
 ﻿module Fakta.Vault.Leases
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let leasesPath (funcName: string) =
+let internal leasesPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   leasesPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   leasesPath >> writeFilters state
 
 //let Renew state: WriteCallNoMeta<(string*int), Secret> =
@@ -34,7 +28,7 @@ let writeFilters state =
 //
 //  HttpFs.Client.getResponse |> filters
 
-let Revoke state: WriteCallNoMeta<string, unit> =
+let revoke state: WriteCallNoMeta<string, unit> =
   let createRequest (id, opts) =
     writeCallEntityUri state.config "sys/renew" (id, opts)
     |> basicRequest state.config Put 
@@ -48,7 +42,7 @@ let Revoke state: WriteCallNoMeta<string, unit> =
 
   HttpFs.Client.getResponse |> filters
 
-let RevokePrefix state: WriteCallNoMeta<string, unit> =
+let revokePrefix state: WriteCallNoMeta<string, unit> =
   let createRequest (id, opts) =
     writeCallEntityUri state.config "sys/revoke-prefix" (id, opts)
     |> basicRequest state.config Put 
@@ -62,7 +56,7 @@ let RevokePrefix state: WriteCallNoMeta<string, unit> =
 
   HttpFs.Client.getResponse |> filters
 
-let RevokeForce state: WriteCallNoMeta<string, unit> =
+let revokeForce state: WriteCallNoMeta<string, unit> =
   let createRequest (id, opts) =
     writeCallEntityUri state.config "sys/revoke-force" (id, opts)
     |> basicRequest state.config Put 

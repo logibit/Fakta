@@ -1,14 +1,8 @@
 ﻿module Fakta.Catalog
-open System
-open System.Text
+
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 let faktaCatalogString = "Fakta.catalog"
 
@@ -18,13 +12,13 @@ let catalogDottedPath (funcName: string) =
 // no warnings for lesser generalisation
 #nowarn "64"
 
-let catalogPath (operation: string) =
+let internal catalogPath (operation: string) =
   [| "Fakta"; "Catalog"; operation |]
 
-let writeFilters state =
+let internal writeFilters state =
   catalogPath >> writeFilters state
 
-let queryFilters state =
+let internal queryFilters state =
   catalogPath >> queryFilters state
 
 /// Datacenters is used to query for all the known datacenters

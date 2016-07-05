@@ -1,21 +1,17 @@
 ﻿module Fakta.KV
 
-open System
-open NodaTime
 open HttpFs.Client
-open Chiron
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
 open Hopac
 
-let kvPath (operation: string) =
+let internal kvPath (operation: string) =
   [| "Fakta"; "KV"; operation |]
 
-let writeFilters state =
+let internal writeFilters state =
   kvPath >> writeFilters state
 
-let queryFilters state =
+let internal queryFilters state =
   kvPath >> queryFilters state
 
 ////////////////////// QUERYING /////////////////////
@@ -34,11 +30,11 @@ let get state: QueryCall<string, KVPair> =
 
 
 let getRaw (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<byte [] * QueryMeta, Error>> =
-  raise (TBD "TODO")
+  raise (TBDException "TODO")
 
 /// Keys is used to list all the keys under a prefix. Optionally, a separator can be used to limit the responses.
 let keys (s : FaktaState) (key : Key) (sep : string option) (opts : QueryOptions) : Job<Choice<Keys * QueryMeta, Error>> =
-  raise (TBD "TODO")
+  raise (TBDException "TODO")
 
 /// List is used to lookup all keys (and their values) under a prefix
 let list state : QueryCall<string, KVPairs> =

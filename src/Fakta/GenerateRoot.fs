@@ -1,27 +1,21 @@
 ﻿module Fakta.Vault.GenerateRoot
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let genRootPath (funcName: string) =
+let internal genRootPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; "generate-root"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   genRootPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   genRootPath >> writeFilters state
 
 
-let Status state: QueryCallNoMeta<GenerateRootStatusResponse> =
+let status state: QueryCallNoMeta<GenerateRootStatusResponse> =
   let createRequest =
     queryCall state.config "sys/generate-root/attempt"
     >> withVaultHeader state.config
@@ -33,7 +27,7 @@ let Status state: QueryCallNoMeta<GenerateRootStatusResponse> =
   HttpFs.Client.getResponse |> filters 
 
 
-let Init state: WriteCallNoMeta<string * string, GenerateRootStatusResponse> =
+let init state: WriteCallNoMeta<string * string, GenerateRootStatusResponse> =
   let createRequest ((key, value), opts) =
     writeCallUri state.config "sys/generate-root/attempt" opts
     |> basicRequest state.config Put
@@ -46,7 +40,7 @@ let Init state: WriteCallNoMeta<string * string, GenerateRootStatusResponse> =
 
   HttpFs.Client.getResponse |> filters
 
-let Cancel state: WriteCallNoMeta<unit> =
+let cancel state: WriteCallNoMeta<unit> =
   let createRequest  =
     writeCallUri state.config "sys/generate-root/attempt" 
     >> basicRequest state.config Delete
@@ -59,7 +53,7 @@ let Cancel state: WriteCallNoMeta<unit> =
   HttpFs.Client.getResponse |> filters
 
 
-let Update state: WriteCallNoMeta<string * string, GenerateRootStatusResponse> =
+let update state: WriteCallNoMeta<string * string, GenerateRootStatusResponse> =
   let createRequest ((key, nonce), opts)  =
     writeCallUri state.config "sys/generate-root/update" opts
     |> basicRequest state.config Put

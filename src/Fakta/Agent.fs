@@ -5,26 +5,21 @@
 /// performs anti-entropy to recover from outages.
 module Fakta.Agent
 
-open System
-open System.Text
+
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open NodaTime
 open HttpFs.Client
 open Aether
 open Aether.Operators
 open Chiron
-open Hopac
 
-let agentPath (funcName: string) =
+let internal agentPath (funcName: string) =
   [| "Fakta"; "Agent"; funcName |]
 
-let writeFilters state =
+let internal writeFilters state =
   agentPath >> writeFilters state
 
-let queryFilters state =
+let internal queryFilters state =
   agentPath >> queryFilters state
 
 let checkDeregister state : WriteCall<Id, unit> =

@@ -1,27 +1,21 @@
 ﻿module Fakta.Vault.Seal
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let sealPath (funcName: string) =
+let internal sealPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   sealPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   sealPath >> writeFilters state
 
 
-let SealStatus state : QueryCallNoMeta<SealStatusResponse> =
+let sealStatus state : QueryCallNoMeta<SealStatusResponse> =
   let createRequest =
     queryCall state.config "sys/seal-status"
     >> withVaultHeader state.config
@@ -33,7 +27,7 @@ let SealStatus state : QueryCallNoMeta<SealStatusResponse> =
   HttpFs.Client.getResponse |> filters
 
 
-let Seal state : WriteCallNoMeta<unit> =
+let seal state : WriteCallNoMeta<unit> =
   let createRequest =
     writeCall state.config "sys/seal"
     >> withVaultHeader state.config
@@ -44,7 +38,7 @@ let Seal state : WriteCallNoMeta<unit> =
 
   HttpFs.Client.getResponse |> filters
 
-let Unseal state  : WriteCallNoMeta<string, SealStatusResponse> =   
+let unseal state  : WriteCallNoMeta<string, SealStatusResponse> =   
   let createRequest (key, opts) =
     writeCallUri state.config "sys/unseal" opts
     |> basicRequest state.config Put
@@ -57,7 +51,7 @@ let Unseal state  : WriteCallNoMeta<string, SealStatusResponse> =
 
   HttpFs.Client.getResponse |> filters
 
-let ResetUnsealProcess state  : WriteCallNoMeta<SealStatusResponse> =   
+let resetUnsealProcess state  : WriteCallNoMeta<SealStatusResponse> =   
   let createRequest opts =
     writeCallUri state.config "sys/unseal" opts
     |> basicRequest state.config Put

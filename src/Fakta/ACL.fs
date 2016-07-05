@@ -3,22 +3,19 @@
 module Fakta.ACL
 
 open HttpFs.Client
-open HttpFs.Composition
-open Chiron
-open Aether.Operators
 open Fakta
 open Fakta.Impl
 
 // no warnings for lesser generalisation
 #nowarn "64"
 
-let aclPath (operation: string) =
+let internal aclPath (operation: string) =
   [| "Fakta"; "ACL"; operation |]
 
-let writeFilters state =
+let internal writeFilters state =
   aclPath >> writeFilters state
 
-let queryFilters state =
+let internal queryFilters state =
   aclPath >> queryFilters state
 
 ///The clone endpoint must be hit with a PUT. It clones the ACL identified by the id portion of the path and returns a new token ID. This allows a token to serve as a template for others, making it simple to generate new tokens without complex rule management.

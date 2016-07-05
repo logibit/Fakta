@@ -31,3 +31,4 @@ consul
 consul.zip
 serf/
 tools/consul.exe
+src/Settings.FSharpLint

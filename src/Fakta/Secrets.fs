@@ -1,26 +1,20 @@
 ﻿module Fakta.Vault.Secrets
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let secretPath (funcName: string) =
+let internal secretPath (funcName: string) =
   [| "Fakta"; "Vault"; "Secret"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   secretPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   secretPath >> writeFilters state
 
-let Read state: QueryCallNoMeta<string, SecretDataString> =
+let read state: QueryCallNoMeta<string, SecretDataString> =
   let createRequest (path, opts) =
     queryCall state.config path opts
     |> withVaultHeader state.config
@@ -31,7 +25,7 @@ let Read state: QueryCallNoMeta<string, SecretDataString> =
 
   HttpFs.Client.getResponse |> filters
 
-let List state: QueryCallNoMeta<string, SecretDataList> =
+let list state: QueryCallNoMeta<string, SecretDataList> =
   let createRequest (path, opts) =
     queryCall state.config path opts
     |> withVaultHeader state.config
@@ -43,7 +37,7 @@ let List state: QueryCallNoMeta<string, SecretDataList> =
 
   HttpFs.Client.getResponse |> filters
 
-let Write state: WriteCallNoMeta<(Map<string,string> * string), unit> =     
+let write state: WriteCallNoMeta<(Map<string,string> * string), unit> =     
   let createRequest ((data, path), opts) =
     writeCallUri state.config path opts
     |> basicRequest state.config Put 
@@ -57,7 +51,7 @@ let Write state: WriteCallNoMeta<(Map<string,string> * string), unit> =
 
   HttpFs.Client.getResponse |> filters
 
-let WriteWithReturnValue state: WriteCallNoMeta<(Map<string,string> * string), SecretDataString> =     
+let writeWithReturnValue state: WriteCallNoMeta<(Map<string,string> * string), SecretDataString> =     
   let createRequest ((data, path), opts) =
     writeCallUri state.config path opts
     |> basicRequest state.config Post 
@@ -71,7 +65,7 @@ let WriteWithReturnValue state: WriteCallNoMeta<(Map<string,string> * string), S
 
   HttpFs.Client.getResponse |> filters
 
-let Delete state: WriteCallNoMeta<string, unit> =     
+let delete state: WriteCallNoMeta<string, unit> =     
   let createRequest (path, opts) =
     writeCallUri state.config path opts
     |> basicRequest state.config Delete 

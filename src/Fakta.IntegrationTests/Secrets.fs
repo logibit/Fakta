@@ -1,11 +1,7 @@
 ﻿module Fakta.IntegrationTests.Secrets
 
 open System
-open System.Net
-open Chiron
-open Chiron.Operators
 open Fuchu
-open NodaTime
 open Fakta
 open Fakta.Logging
 open Fakta.Vault
@@ -19,25 +15,25 @@ let testsGeneric =
   testList "Vault generic secrets tests" [
     testCase "sys.secret.write -> create a new secret" <| fun _ ->
       let data = Map.empty.Add("foo", "bar")
-      let listing = Secrets.Write initState ((data, genericSecretPath+"/secretOne"), [])
+      let listing = Secrets.write initState ((data, genericSecretPath+"/secretOne"), [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Secret created.")
 
     testCase "sys.secret.read-> read a secret" <| fun _ ->
-      let listing = Secrets.Read initState (genericSecretPath+"/secretOne", [])
+      let listing = Secrets.read initState (genericSecretPath+"/secretOne", [])
       ensureSuccess listing <| fun sc ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Secret read: %A" sc)
 
     testCase "sys.secret.list-> get a list of secret's names" <| fun _ ->
-      let listing = Secrets.List initState (genericSecretPath, [])
+      let listing = Secrets.list initState (genericSecretPath, [])
       ensureSuccess listing <| fun sc ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Secret list: %A" sc)
 
     testCase "sys.secret.delete-> delete a secret" <| fun _ ->
-      let listing = Secrets.Delete initState (genericSecretPath+"/secretOne", [])
+      let listing = Secrets.delete initState (genericSecretPath+"/secretOne", [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Secret deleted.")
@@ -50,8 +46,8 @@ let testsConsul =
   testList "Vault consul secrets tests" [
     testCase "consul.config.access -> configure vault to know how to contact consul" <| fun _ ->
       let config = Map.empty.Add("token", ACL.tokenId).Add("address", state.config.serverBaseUri.ToString())
-      let listing = Secrets.Write initState ((config, consulSecretPath+"/config/access"), [])
-      ensureSuccess listing <| fun sc ->
+      let listing = Secrets.write initState ((config, consulSecretPath+"/config/access"), [])
+      ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Consul config sent to vault.")
 
@@ -61,14 +57,14 @@ let testsConsul =
         |> UTF8Encoding.UTF8.GetBytes
         |> Convert.ToBase64String
       let config = Map.empty.Add("token_type", "management")
-      let listing = Secrets.Write initState ((config, consulSecretPath+"/roles/management"), [])
-      ensureSuccess listing <| fun sc ->
+      let listing = Secrets.write initState ((config, consulSecretPath+"/roles/management"), [])
+      ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Consul role sent to vault.")
 
 
     testCase "consul.roles -> queries a consul role definiton" <| fun _ ->
-      let listing = Secrets.Read initState (consulSecretPath+"/roles/management", [])
+      let listing = Secrets.read initState (consulSecretPath+"/roles/management", [])
       ensureSuccess listing <| fun sc ->
         let logger = state.logger
         logger.logSimple (Message.sprintf [] "Consul role read: %A" sc)

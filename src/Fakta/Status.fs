@@ -1,22 +1,15 @@
 ﻿module Fakta.Status
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
-open HttpFs.Client
-open Chiron
-open Hopac
 
 let statusDottedPath (funcName: string) =
   [| "Fakta"; "Status"; funcName |]
 
-let statusPath (funcName: string) =
+let internal statusPath (funcName: string) =
   [| "Fakta"; "Status"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   statusPath >> queryFiltersNoMeta state
 
 /// Leader is used to query for a known leader
