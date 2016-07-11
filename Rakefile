@@ -52,7 +52,7 @@ end
 directory 'build/pkg'
 
 desc 'package nugets - finds all projects and package them'
-nugets_pack :create_nugets => ['build/pkg', :versioning, :compile, :tests] do |p|
+nugets_pack :create_nugets => ['build/pkg', :versioning, :compile] do |p|
   p.configuration = Configuration
   p.files   = FileList['src/**/*.{csproj,fsproj,nuspec}'].
     exclude(/Tests/)
@@ -85,11 +85,12 @@ task :tests => [:'tests:unit', :'tests:integration']
 task :default => [:compile, :tests, :create_nugets]
 
 task :ensure_nuget_key do
-  raise 'missing env NUGET_KEY value' unless ENV['NUGET_KEY']
+  raise 'missing env MYGET_KEY value' unless ENV['MYGET_KEY']
 end
 
 Albacore::Tasks::Release.new :release,
                              pkg_dir: 'build/pkg',
                              depend_on: [:create_nugets, :ensure_nuget_key],
                              nuget_exe: 'packages/NuGet.CommandLine/tools/NuGet.exe',
-                             api_key: ENV['NUGET_KEY']
+                             nuget_source: 'https://www.myget.org/F/logibit/api/v2/package',
+                             api_key: ENV['MYGET_KEY']

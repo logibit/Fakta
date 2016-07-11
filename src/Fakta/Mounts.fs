@@ -1,26 +1,20 @@
 ﻿module Fakta.Vault.Mounts
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let mountsPath (funcName: string) =
+let internal mountsPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; "mounts"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   mountsPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   mountsPath >> writeFilters state
 
-let Mounts state : QueryCallNoMeta<Map<string, MountOutput>> =
+let mounts state : QueryCallNoMeta<Map<string, MountOutput>> =
   let createRequest =
     queryCall state.config "sys/mounts"
     >> withVaultHeader state.config
@@ -31,7 +25,7 @@ let Mounts state : QueryCallNoMeta<Map<string, MountOutput>> =
 
   HttpFs.Client.getResponse |> filters
 
-let Mount state: WriteCallNoMeta<(string * MountInput), unit> =
+let mount state: WriteCallNoMeta<(string * MountInput), unit> =
   let createRequest ((mountPoint, mountConf), opts)  =
     writeCallUri state.config (sprintf "sys/mounts/%s" mountPoint) opts
     |> basicRequest state.config Post
@@ -46,7 +40,7 @@ let Mount state: WriteCallNoMeta<(string * MountInput), unit> =
   HttpFs.Client.getResponse |> filters
 
 
-let TuneMount state : WriteCallNoMeta<(string * MountConfigInput), unit> =
+let tuneMount state : WriteCallNoMeta<(string * MountConfigInput), unit> =
   let createRequest ((name, mountConfig), opts) =
     writeCallUri state.config (sprintf "sys/mounts/%s/tune" name) opts
     |> basicRequest state.config Post
@@ -61,7 +55,7 @@ let TuneMount state : WriteCallNoMeta<(string * MountConfigInput), unit> =
   HttpFs.Client.getResponse |> filters
 
 
-let Unmount state: WriteCallNoMeta<string, unit> =
+let unmount state: WriteCallNoMeta<string, unit> =
   let createRequest (mountPoint, opts)  =
     writeCallUri state.config (sprintf "sys/mounts/%s" mountPoint) opts
     |> basicRequest state.config Delete
@@ -74,7 +68,7 @@ let Unmount state: WriteCallNoMeta<string, unit> =
 
   HttpFs.Client.getResponse |> filters
 
-let Remount state : WriteCallNoMeta<(string * string), unit> =
+let remount state : WriteCallNoMeta<(string * string), unit> =
   let createRequest ((fromMP, toMP), opts) =
     writeCallUri state.config "sys/remount" opts
     |> basicRequest state.config Post

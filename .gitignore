@@ -31,6 +31,4 @@ consul
 consul.zip
 serf/
 tools/consul.exe
-vault
-vault.zip
-vaultData/
+src/Settings.FSharpLint

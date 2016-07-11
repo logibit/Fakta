@@ -1,11 +1,6 @@
 ﻿module Fakta.IntegrationTests.Init
 
-open System
-open System.Net
-open Chiron
-open Chiron.Operators
 open Fuchu
-open NodaTime
 open Fakta
 open Fakta.Logging
 open Fakta.Vault
@@ -15,7 +10,7 @@ open Fakta.Vault
 let tests =
   testList "Vault init tests" [
     testCase "sys.initStatus -> get application init status" <| fun _ ->
-      let listing = Init.InitStatus vaultState []
+      let listing = Init.initStatus vaultState []
       ensureSuccess listing <| fun (map) ->
         let logger = state.logger
         for KeyValue (key, value) in map do

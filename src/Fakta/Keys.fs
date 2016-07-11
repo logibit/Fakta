@@ -1,26 +1,20 @@
 ﻿module Fakta.Vault.Keys
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let keysPath (funcName: string) =
+let internal keysPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   keysPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   keysPath >> writeFilters state
 
-let KeyStatus state : QueryCallNoMeta<KeyStatus> =
+let keyStatus state : QueryCallNoMeta<KeyStatus> =
   let createRequest =
     queryCall state.config "sys/key-status"
     >> withVaultHeader state.config
@@ -32,7 +26,7 @@ let KeyStatus state : QueryCallNoMeta<KeyStatus> =
   HttpFs.Client.getResponse |> filters
 
 
-let Rotate state : WriteCallNoMeta<unit> =
+let rotate state : WriteCallNoMeta<unit> =
   let createRequest =
     writeCallUri state.config "sys/rotate" 
     >> basicRequest state.config Post
@@ -45,7 +39,7 @@ let Rotate state : WriteCallNoMeta<unit> =
 
   HttpFs.Client.getResponse |> filters
 
-let RekeyStatus state : QueryCallNoMeta<RekeyStatusResponse> =
+let rekeyStatus state : QueryCallNoMeta<RekeyStatusResponse> =
   let createRequest =
     queryCall state.config "sys/rekey/init"
     >> withVaultHeader state.config
@@ -57,7 +51,7 @@ let RekeyStatus state : QueryCallNoMeta<RekeyStatusResponse> =
   HttpFs.Client.getResponse |> filters  
 
 
-let RekeyInit state : WriteCallNoMeta<RekeyInitRequest, RekeyStatusResponse> =
+let rekeyInit state : WriteCallNoMeta<RekeyInitRequest, RekeyStatusResponse> =
   let createRequest (reqJson, opts) =
     writeCallUri state.config "sys/rekey/init" opts
     |> basicRequest state.config Put 
@@ -71,7 +65,7 @@ let RekeyInit state : WriteCallNoMeta<RekeyInitRequest, RekeyStatusResponse> =
 
   HttpFs.Client.getResponse |> filters
 
-let RekeyCancel state : WriteCallNoMeta<unit> =
+let rekeyCancel state : WriteCallNoMeta<unit> =
   let createRequest =
     writeCallUri state.config "sys/rekey/init" 
     >> basicRequest state.config Delete
@@ -84,7 +78,7 @@ let RekeyCancel state : WriteCallNoMeta<unit> =
 
   HttpFs.Client.getResponse |> filters
 
-let RekeyUpdate state : WriteCallNoMeta<Map<string, string>, RekeyUpdateResponse> =
+let rekeyUpdate state : WriteCallNoMeta<Map<string, string>, RekeyUpdateResponse> =
   let createRequest (respJson, opts) =
     writeCallUri state.config "sys/rekey/update" opts
     |> basicRequest state.config Put
@@ -98,7 +92,7 @@ let RekeyUpdate state : WriteCallNoMeta<Map<string, string>, RekeyUpdateResponse
 
   HttpFs.Client.getResponse |> filters
 
-let RekeyRetrieveBackup state : QueryCallNoMeta<RekeyRetrieveResponse> =
+let rekeyRetrieveBackup state : QueryCallNoMeta<RekeyRetrieveResponse> =
   let createRequest =
     queryCall state.config "sys/rekey/backup"
     >> withVaultHeader state.config
@@ -109,7 +103,7 @@ let RekeyRetrieveBackup state : QueryCallNoMeta<RekeyRetrieveResponse> =
 
   HttpFs.Client.getResponse |> filters
 
-let RekeyDeleteBackup state : WriteCallNoMeta<unit> =
+let rekeyDeleteBackup state : WriteCallNoMeta<unit> =
   let createRequest =
     writeCallUri state.config "sys/rekey/backup" 
     >> basicRequest state.config Delete
@@ -122,7 +116,7 @@ let RekeyDeleteBackup state : WriteCallNoMeta<unit> =
 
   HttpFs.Client.getResponse |> filters  
 
-let RekeyDeleteRecoveryBackup state : WriteCallNoMeta<unit> =
+let rekeyDeleteRecoveryBackup state : WriteCallNoMeta<unit> =
   let createRequest =
     writeCallUri state.config "sys/rekey/recovery-backup" 
     >> basicRequest state.config Delete
@@ -135,7 +129,7 @@ let RekeyDeleteRecoveryBackup state : WriteCallNoMeta<unit> =
 
   HttpFs.Client.getResponse |> filters 
 
-let RekeyRecoveryKeyRetrieveBackup state : QueryCallNoMeta<RekeyRetrieveResponse> =
+let rekeyRecoveryKeyRetrieveBackup state : QueryCallNoMeta<RekeyRetrieveResponse> =
   let createRequest =
     queryCall state.config "sys/rekey/recovery-backup"
     >> withVaultHeader state.config
@@ -147,7 +141,7 @@ let RekeyRecoveryKeyRetrieveBackup state : QueryCallNoMeta<RekeyRetrieveResponse
   HttpFs.Client.getResponse |> filters
   
 
-let RekeyRecoveryKeyUpdate state : WriteCallNoMeta<Map<string, string>, RekeyUpdateResponse> =
+let rekeyRecoveryKeyUpdate state : WriteCallNoMeta<Map<string, string>, RekeyUpdateResponse> =
   let createRequest (respJson, opts) =
     writeCallUri state.config "sys/rekey-recovery-key/update" opts
     |> basicRequest state.config Put
@@ -162,7 +156,7 @@ let RekeyRecoveryKeyUpdate state : WriteCallNoMeta<Map<string, string>, RekeyUpd
   HttpFs.Client.getResponse |> filters
 
 
-let RekeyRecoveryKeyCancel state : WriteCallNoMeta<unit> =
+let rekeyRecoveryKeyCancel state : WriteCallNoMeta<unit> =
   let createRequest =
     writeCallUri state.config "sys/rekey-recovery-key/init" 
     >> basicRequest state.config Delete
@@ -176,7 +170,7 @@ let RekeyRecoveryKeyCancel state : WriteCallNoMeta<unit> =
   HttpFs.Client.getResponse |> filters
   
 
-let RekeyRecoveryKeyInit state : WriteCallNoMeta<RekeyInitRequest, RekeyStatusResponse> =
+let rekeyRecoveryKeyInit state : WriteCallNoMeta<RekeyInitRequest, RekeyStatusResponse> =
   let createRequest (reqJson, opts) =
     writeCallUri state.config "sys/rekey-recovery-key/init" opts
     |> basicRequest state.config Put 
@@ -191,7 +185,7 @@ let RekeyRecoveryKeyInit state : WriteCallNoMeta<RekeyInitRequest, RekeyStatusRe
   HttpFs.Client.getResponse |> filters
   
 
-let RekeyRecoveryKeyStatus state : QueryCallNoMeta<RekeyStatusResponse> =
+let rekeyRecoveryKeyStatus state : QueryCallNoMeta<RekeyStatusResponse> =
   let createRequest =
     queryCall state.config "sys/rekey-recovery-key/init"
     >> withVaultHeader state.config

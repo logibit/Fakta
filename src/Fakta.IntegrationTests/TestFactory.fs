@@ -7,9 +7,8 @@ open Fakta
 open Fakta.Logging
 open Fuchu
 open Hopac
-open Fakta.Vault
 
-let consulConfig = FaktaConfig.ConsulEmpty
+let consulConfig = FaktaConfig.consulEmpty
 
 let logger =
   { new Logger with
@@ -27,17 +26,17 @@ let logger =
 
 let initVault =
   let reqJson : InitRequest =
-         {secretShares = 1
-          secretThreshold =1
-          pgpKeys = []}
-  let state = FaktaState.empty APIType.Vault "" [] logger
-  let req = run (Fakta.Vault.Init.Init state (reqJson, []))
+    { secretShares = 1
+      secretThreshold =1
+      pgpKeys = []}
+  let state = FaktaState.create APIType.Vault "" [] logger
+  let req = run (Fakta.Vault.Init.init state (reqJson, []))
   match req with 
-  | Choice1Of2 r -> FaktaState.empty APIType.Vault r.rootToken r.keys logger
+  | Choice1Of2 r -> FaktaState.create APIType.Vault r.rootToken r.keys logger
   | Choice2Of2 _ -> state
 
 let initState = initVault
-let vaultState = FaktaState.empty APIType.Vault "" [] logger
+let vaultState = FaktaState.create APIType.Vault "" [] logger
 
 let state =
   { config = consulConfig

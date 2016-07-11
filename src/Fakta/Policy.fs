@@ -1,27 +1,21 @@
 ﻿module Fakta.Vault.Policy
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let policyPath (funcName: string) =
+let internal policyPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; "policy"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   policyPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   policyPath >> writeFilters state
 
 
-let PoliciesList state: QueryCallNoMeta<string list> =
+let policiesList state: QueryCallNoMeta<string list> =
   let createRequest =
     queryCall state.config "sys/policy"
     >> withVaultHeader state.config
@@ -32,7 +26,7 @@ let PoliciesList state: QueryCallNoMeta<string list> =
 
   HttpFs.Client.getResponse |> filters
 
-let GetPolicy state: QueryCallNoMeta<string, string> =
+let getPolicy state: QueryCallNoMeta<string, string> =
   let createRequest (name, opts) =
     queryCall state.config ("sys/policy/"+name) opts
     |> withVaultHeader state.config
@@ -44,7 +38,7 @@ let GetPolicy state: QueryCallNoMeta<string, string> =
   HttpFs.Client.getResponse |> filters
 
 
-let PutPolicy state : WriteCallNoMeta<Map<string, string>*string, unit> = 
+let putPolicy state : WriteCallNoMeta<Map<string, string>*string, unit> = 
   let createRequest ((map, path), opts) =
     writeCallUri state.config ("sys/policy/"+path) opts
     |> basicRequest state.config Put 
@@ -59,7 +53,7 @@ let PutPolicy state : WriteCallNoMeta<Map<string, string>*string, unit> =
   HttpFs.Client.getResponse |> filters
 
 
-let DeletePolicy state : WriteCallNoMeta<string, unit> = 
+let deletePolicy state : WriteCallNoMeta<string, unit> = 
   let createRequest (path, opts) =
     writeCallUri state.config ("sys/policy/"+path) opts
     |> basicRequest state.config Delete 

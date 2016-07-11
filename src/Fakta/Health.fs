@@ -1,26 +1,20 @@
 ﻿module Fakta.Health
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 let healthDottedPath (funcName: string) =
   [| "Fakta"; "Health"; funcName |]
 
 #nowarn "64"
 
-let healthPath (operation: string) =
+let internal healthPath (operation: string) =
   [| "Fakta"; "Health"; operation |]
 
-let writeFilters state =
+let internal writeFilters state =
   healthPath >> writeFilters state
 
-let queryFilters state =
+let internal queryFilters state =
   healthPath >> queryFilters state
 
 let getValuesByName state (path : string) (action:string): QueryCall<string, HealthCheck list> =  

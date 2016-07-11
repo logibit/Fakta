@@ -1,14 +1,9 @@
 ﻿module Fakta.IntegrationTests.Event
 
-open System
-open System.Net
-open Chiron
-open Chiron.Operators
 open Fuchu
-open NodaTime
-
 open Fakta
 open Fakta.Logging
+open System
 
 [<Tests>]
 let tests =

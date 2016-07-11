@@ -1,12 +1,8 @@
 ﻿module Fakta.Event
 
-open System
-open System.Text
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
 open System
-open NodaTime
 open HttpFs.Client
 open Chiron
 open Hopac
@@ -19,13 +15,13 @@ let eventDottedPath (funcName: string) =
 // no warnings for lesser generalisation
 #nowarn "64"
 
-let eventPath (operation: string) =
+let internal eventPath (operation: string) =
   [| "Fakta"; "Event"; operation |]
 
-let writeFilters state =
+let internal writeFilters state =
   eventPath >> writeFilters state
 
-let queryFilters state =
+let internal queryFilters state =
   eventPath >> queryFilters state
 
 
