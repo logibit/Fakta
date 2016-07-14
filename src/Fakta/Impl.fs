@@ -1,7 +1,6 @@
 ﻿module internal Fakta.Impl
 
 open System
-open System.Net
 open System.Text
 open HttpFs.Client
 open HttpFs.Composition
@@ -32,29 +31,11 @@ type UriBuilder =
     { inner = UriBuilder(config.serverBaseUri, Path = keyFor ``module`` path)
       kvs   = Map.empty }
 
-  static member ofAcl (config : FaktaConfig) (op : string) =
-    UriBuilder.ofModuleAndPath config "acl" op
-
   static member ofKVKey (config : FaktaConfig) (k : Key) =
     UriBuilder.ofModuleAndPath config "kv" k
 
-  static member ofHealth (config : FaktaConfig) (s : string) =
-    UriBuilder.ofModuleAndPath config "health" s
-
-  static member ofEvent (config : FaktaConfig) (s : string) =
-    UriBuilder.ofModuleAndPath config "event" s
-
-  static member ofCatalog (config : FaktaConfig) (s : string) =
-    UriBuilder.ofModuleAndPath config "catalog" s
-
-  static member ofAgent (config : FaktaConfig) (a : string) =
-    UriBuilder.ofModuleAndPath config "agent" a
-
-  static member ofSession (config : FaktaConfig) (op : string) =
-    UriBuilder.ofModuleAndPath config "session" op
-
-  static member ofStatus (config : FaktaConfig) (s : string) =
-    UriBuilder.ofModuleAndPath config "status" s
+  static member ofEvent (config : FaktaConfig) (k : Key) =
+    UriBuilder.ofModuleAndPath config "event" k
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module UriBuilder =
@@ -77,10 +58,6 @@ module UriBuilder =
 
   let mappendRange kvs (ub : UriBuilder) =
     List.fold mappend ub kvs
-
-let withQueryOpts (config : FaktaConfig) (ro : QueryOptions) (req : Request) =
-  // TODO: complete query options
-  req
 
 let setConfigOpts (config : FaktaConfig) (req : Request) =
   config.credentials
@@ -150,13 +127,13 @@ let configOptKvs (config : FaktaConfig) : (string * string option) list =
   [ if Option.isSome config.datacenter then yield "dc", config.datacenter
     if Option.isSome config.token then yield "token", config.token ]
 
-exception ConflictingConsistencyOptions
+exception ConflictingConsistencyOptionsException
 
 let private validate opts =
   opts
   |> List.filter (function ReadConsistency _ -> true | _ -> false)
   |> List.length
-  |> fun n -> if n > 1 then raise ConflictingConsistencyOptions else opts
+  |> fun n -> if n > 1 then raise ConflictingConsistencyOptionsException else opts
 
 let queryOptsKvs : QueryOptions -> (string * string option) list =
   validate
@@ -331,19 +308,19 @@ let respQueryFilterNoMeta : JobFilter<Request, Choice<Response, Error>, Request,
         return Choice.createSnd error
     }
 
-let writeFilters state path =
+let internal writeFilters state path =
   timerFilter state path
   >> unknownsFilter
   >> exnsFilter
 
 
-let queryFilters state path =
+let internal queryFilters state path =
   timerFilter state path
   >> unknownsFilter
   >> exnsFilter
   >> respQueryFilter
 
-let queryFiltersNoMeta state path =
+let internal queryFiltersNoMeta state path =
   timerFilter state path
   >> unknownsFilter
   >> exnsFilter
@@ -391,7 +368,6 @@ let inline internal fstOfJsonPrismNoMeta jsonPrism (item1) : Choice<'a, Error> =
   Json.tryParse item1
   |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
   |> Choice.bind Json.tryDeserialize
-  |> Choice.map (fun x -> x)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message
@@ -408,7 +384,6 @@ let inline internal fstOfJson (item1, item2) : Choice< ^a * 'b, Error> =
 let inline internal fstOfJsonNoMeta (item1) : Choice<'a, Error> =
   Json.tryParse item1
   |> Choice.bind Json.tryDeserialize
-  |> Choice.map (fun x -> x)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
   |> Choice.mapSnd Error.Message

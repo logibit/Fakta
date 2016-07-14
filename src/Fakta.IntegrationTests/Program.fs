@@ -6,7 +6,7 @@ open Fuchu
 let main argv = 
   //Tests.defaultMainThisAssembly argv
   
-  // I don't know how else to make tests to run in the exact order
+  // I don't know how else to make tests to run in the exact order  
   Tests.run Agent.tests  |> ignore
   Tests.run ACL.tests |> ignore
   Tests.run Catalog.tests  |> ignore
@@ -24,6 +24,7 @@ let main argv =
   Tests.run Stepdown.tests |> ignore
   Tests.run Keys.tests |> ignore
   Tests.run Secrets.testsGeneric |> ignore
+  Tests.run Secrets.testsConsul  |> ignore
   Tests.run Audit.tests |> ignore
   Tests.run HealthVault.tests |> ignore
   Tests.run Auth.tests  |> ignore

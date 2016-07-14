@@ -1,29 +1,24 @@
 /// https://www.consul.io/docs/internals/sessions.html
 module Fakta.Session
 
-open System
-open System.Globalization
 open NodaTime
 open HttpFs.Client
-open Aether
-open Aether.Operators
 open Chiron
 open Chiron.Operators
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
 open Hopac
 
 let sessionDottedPath (funcName: string) =
   [| "Fakta"; "Session"; funcName |]
 
-let sessionPath (funcName: string) =
+let internal sessionPath (funcName: string) =
   [| "Fakta"; "Session"; funcName |]
 
-let writeFilters state =
+let internal writeFilters state =
   sessionPath >> writeFilters state
 
-let queryFilters state =
+let internal queryFilters state =
   sessionPath >> queryFilters state
 
 let getSessionEntries (action: string) (path: string) (state : FaktaState): QueryCall<SessionEntry list> =

@@ -1,26 +1,16 @@
 ﻿module Fakta.Vault.Leader
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
-open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let leaderPath (funcName: string) =
+let internal leaderPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; "leader"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   leaderPath >> queryFiltersNoMeta state
 
-let writeFilters state =
-  leaderPath >> writeFilters state
-
-let Leader state: QueryCallNoMeta<LeaderResponse> =
+let leader state: QueryCallNoMeta<LeaderResponse> =
   let createRequest =
     queryCall state.config "sys/leader"
     >> withVaultHeader state.config

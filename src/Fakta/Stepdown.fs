@@ -1,26 +1,20 @@
 ﻿module Fakta.Vault.Stepdown
 
 open Fakta
-open Fakta.Logging
 open Fakta.Impl
-open System
-open System.Collections
-open NodaTime
 open HttpFs.Client
-open Chiron
-open Hopac
 
 
-let stepdownPath (funcName: string) =
+let internal stepdownPath (funcName: string) =
   [| "Fakta"; "Vault"; "Sys"; "stepdown"; funcName |]
 
-let queryFilters state =
+let internal queryFilters state =
   stepdownPath >> queryFiltersNoMeta state
 
-let writeFilters state =
+let internal writeFilters state =
   stepdownPath >> writeFilters state
 
-let Stepdown state: WriteCallNoMeta<unit> =     
+let stepdown state: WriteCallNoMeta<unit> =     
   let createRequest =
     writeCallUri state.config "sys/step-down" 
     >> basicRequest state.config Put 

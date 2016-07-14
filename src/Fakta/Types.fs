@@ -2,11 +2,8 @@
 module Fakta.Types
 
 open System
-open System.Net
 open System.Text
 open NodaTime
-open Aether
-open Aether.Operators
 open Chiron
 open Chiron.Operators
 
@@ -24,7 +21,7 @@ let DefaultLockRetryTime = Duration.FromSeconds 5L
 let LockFlagValue = 0x2ddccbc058a50c18UL
 
 /// Tells the programmer this feature has not been implemented yet.
-exception TBD of reason:string
+exception TBDException of reason:string
 
 
 type HttpBasicAuth =
@@ -1199,7 +1196,7 @@ type FaktaConfig =
     token         : Token option
     keys          : Token list option }
 
-  static member ConsulEmpty =
+  static member consulEmpty =
     { serverBaseUri  = Uri "http://127.0.0.1:8500"
       datacenter     = None
       credentials    = None
@@ -1207,7 +1204,15 @@ type FaktaConfig =
       token          = None 
       keys           = None}
 
-  static member VaultEmpty (token: Token) (keys: Token list) =
+  static member vaultEmpty =
+    { serverBaseUri  = Uri "http://127.0.0.1:8200"
+      datacenter     = None
+      credentials    = None
+      waitTime       = DefaultLockWaitTime
+      token          = None 
+      keys           = None}
+
+  static member vaultConfig (token: Token) (keys: Token list) =
     { serverBaseUri  = Uri "http://127.0.0.1:8200"
       datacenter     = None
       credentials    = None
@@ -1236,14 +1241,25 @@ type FaktaState =
     clock  : IClock
     random : Random }
 
-  static member empty (api: APIType) (token: Token) (keys: Token list) (logger: Logger) =
+  static member emptyConsulConfig =
+    { config = FaktaConfig.consulEmpty
+      logger = NoopLogger 
+      clock  = SystemClock.Instance
+      random = random.Value }
+
+  static member emptyVaultConfig =
+    { config = FaktaConfig.vaultEmpty
+      logger = NoopLogger 
+      clock  = SystemClock.Instance
+      random = random.Value }
+
+  static member create (api: APIType) (token: Token) (keys: Token list) (logger: Logger) =
     { config = match api with 
-               | APIType.Consul -> FaktaConfig.ConsulEmpty
-               | APIType.Vault -> FaktaConfig.VaultEmpty token keys
+               | APIType.Consul -> FaktaConfig.consulEmpty
+               | APIType.Vault -> FaktaConfig.vaultConfig token keys
       logger = logger
       clock  = SystemClock.Instance
-      random = random.Value
-    }
+      random = random.Value }
 
 /// Vault types ///
 
@@ -1310,23 +1326,23 @@ type SealStatusResponse =
     *> Json.write "progress" se.progress
 
 type GenerateRootStatusResponse =
-  { Nonce   : string
-    Started : bool
-    Progress: int
-    Required: int
-    Complete: bool
-    EncodedRootToken : string
-    PGPFingerprint : string }
+  { nonce   : string
+    started : bool
+    progress: int
+    required: int
+    complete: bool
+    encodedRootToken : string
+    pgpFingerprint : string }
 
   static member FromJson (_ : GenerateRootStatusResponse) =
     (fun nc s p r c er pgp ->
-      { Nonce = nc
-        Started = s
-        Progress = p
-        Required = r
-        Complete = c
-        EncodedRootToken = er
-        PGPFingerprint = pgp
+      { nonce = nc
+        started = s
+        progress = p
+        required = r
+        complete = c
+        encodedRootToken = er
+        pgpFingerprint = pgp
         })
     <!> Json.read "nonce"
     <*> Json.read "started"
@@ -1337,146 +1353,146 @@ type GenerateRootStatusResponse =
     <*> Json.read "pgp_fingerprint"
 
   static member ToJson (se : GenerateRootStatusResponse) =
-    Json.write "nonce" se.Nonce
-    *> Json.write "started" se.Started
-    *> Json.write "progress" se.Progress
-    *> Json.write "required" se.Required
-    *> Json.write "complete" se.Complete
-    *> Json.write "encoded_root_token" se.EncodedRootToken
-    *> Json.write "pgp_fingerprint" se.PGPFingerprint
+    Json.write "nonce" se.nonce
+    *> Json.write "started" se.started
+    *> Json.write "progress" se.progress
+    *> Json.write "required" se.required
+    *> Json.write "complete" se.complete
+    *> Json.write "encoded_root_token" se.encodedRootToken
+    *> Json.write "pgp_fingerprint" se.pgpFingerprint
 
 type MountConfigInput =
-  { DefaultLeaseTTL : string
-    MaxLeaseTTL     : string}
+  { defaultLeaseTTL : string
+    maxLeaseTTL     : string}
 
   static member FromJson (_ : MountConfigInput) =
     (fun d m ->
-      { DefaultLeaseTTL = d
-        MaxLeaseTTL = m})
+      { defaultLeaseTTL = d
+        maxLeaseTTL = m})
     <!> Json.read "default_lease_ttl"
     <*> Json.read "max_lease_ttl"
     
 
   static member ToJson (se : MountConfigInput) =
-    Json.write "default_lease_ttl" se.DefaultLeaseTTL
-    *> Json.write "max_lease_ttl" se.MaxLeaseTTL
+    Json.write "default_lease_ttl" se.defaultLeaseTTL
+    *> Json.write "max_lease_ttl" se.maxLeaseTTL
 
 type MountConfigOutput =
-  { DefaultLeaseTTL : int
-    MaxLeaseTTL     : int}
+  { defaultLeaseTTL : int
+    maxLeaseTTL     : int}
 
   static member FromJson (_ : MountConfigOutput) =
     (fun d m ->
-      { DefaultLeaseTTL = d
-        MaxLeaseTTL = m})
+      { defaultLeaseTTL = d
+        maxLeaseTTL = m})
     <!> Json.read "default_lease_ttl"
     <*> Json.read "max_lease_ttl"
     
 
   static member ToJson (se : MountConfigOutput) =
-    Json.write "default_lease_ttl" se.DefaultLeaseTTL
-    *> Json.write "max_lease_ttl" se.MaxLeaseTTL
+    Json.write "default_lease_ttl" se.defaultLeaseTTL
+    *> Json.write "max_lease_ttl" se.maxLeaseTTL
 
 type MountOutput =
-  { ``Type``    : string
-    Description : string
-    Config      : MountConfigOutput option}
+  { ``type``    : string
+    description : string
+    mConfig      : MountConfigOutput option}
 
   static member FromJson (_ : MountOutput) =
     (fun t d c ->
-      { ``Type`` = t
-        Description = d
-        Config = c})
+      { ``type`` = t
+        description = d
+        mConfig = c})
     <!> Json.read "type"
     <*> Json.read "description"
     <*> Json.tryRead "config"
     
 
   static member ToJson (se : MountOutput) =
-    Json.write "type" se.Type
-    *> Json.write "description" se.Description
-    *> Json.maybeWrite "config" se.Config
+    Json.write "type" se.``type``
+    *> Json.write "description" se.description
+    *> Json.maybeWrite "config" se.mConfig
 
 type MountInput =
-  { ``Type``    : string
-    Description : string
-    Config      : MountConfigInput option}
+  { ``type``    : string
+    description : string
+    mountConfig      : MountConfigInput option}
 
   static member FromJson (_ : MountInput) =
     (fun t d c ->
-      { ``Type`` = t
-        Description = d
-        Config = c})
+      { ``type`` = t
+        description = d
+        mountConfig = c})
     <!> Json.read "type"
     <*> Json.read "description"
     <*> Json.tryRead "config"
     
 
   static member ToJson (se : MountInput) =
-    Json.write "type" se.Type
-    *> Json.write "description" se.Description
-    *> Json.maybeWrite "config" se.Config
+    Json.write "type" se.``type``
+    *> Json.write "description" se.description
+    *> Json.maybeWrite "config" se.mountConfig
 
 
 type LeaderResponse =
-  { HAEnabled     : bool
-    IsSelf        : bool
-    LeaderAddress : string }
+  { haEnabled     : bool
+    isSelf        : bool
+    leaderAddress : string }
 
   static member FromJson (_ : LeaderResponse) =
     (fun t d c ->
-      { HAEnabled = t
-        IsSelf = d
-        LeaderAddress = c})
+      { haEnabled = t
+        isSelf = d
+        leaderAddress = c})
     <!> Json.read "ha_enabled"
     <*> Json.read "is_self"
     <*> Json.read "leader_address"
     
 
   static member ToJson (se : LeaderResponse) =
-    Json.write "ha_enabled" se.HAEnabled
-    *> Json.write "is_self" se.IsSelf
-    *> Json.write "leader_address" se.LeaderAddress
+    Json.write "ha_enabled" se.haEnabled
+    *> Json.write "is_self" se.isSelf
+    *> Json.write "leader_address" se.leaderAddress
 
 type SecretWrapInfo = 
-  { Token         : Token
-    TTL           : int
-    CreationTime  : string
+  { token         : Token
+    ttl           : int
+    creationTime  : string
   }
 
   
   static member FromJson (_ : SecretWrapInfo) =
     (fun t d c ->
-      { Token = t
-        TTL = d
-        CreationTime = c})
+      { token = t
+        ttl = d
+        creationTime = c})
     <!> Json.read "token"
     <*> Json.read "ttl"
     <*> Json.read "creation_time"
     
 
   static member ToJson (se : SecretWrapInfo) =
-    Json.write "token" se.Token
-    *> Json.write "ttl" se.TTL
-    *> Json.write "creation_time" se.CreationTime
+    Json.write "token" se.token
+    *> Json.write "ttl" se.ttl
+    *> Json.write "creation_time" se.creationTime
 
 type SecretAuth = 
-  { ClientToken   : Token
-    Accessor      : string
-    Policies      : string list
-    Metadata      : Map<string, string>
-    LeaseDuration : int
-    Renewable     : bool
+  { clientToken   : Token
+    accessor      : string
+    policies      : string list
+    metadata      : Map<string, string>
+    leaseDuration : int
+    renewable     : bool
   }
 
   static member FromJson (_ : SecretAuth) =
     (fun ct a p m l r ->
-      { ClientToken = ct
-        Accessor = a
-        Policies = p
-        Metadata = m
-        LeaseDuration = l
-        Renewable = r})
+      { clientToken = ct
+        accessor = a
+        policies = p
+        metadata = m
+        leaseDuration = l
+        renewable = r})
     <!> Json.read "client_token"
     <*> Json.read "accessor"
     <*> Json.read "policies"
@@ -1486,31 +1502,31 @@ type SecretAuth =
     
 
   static member ToJson (se : SecretAuth) =
-    Json.write "client_token" se.ClientToken
-    *> Json.write "accessor" se.Accessor
-    *> Json.write "policies" se.Policies
-    *> Json.write "metadata" se.Metadata
-    *> Json.write "lease_duration" se.LeaseDuration
-    *> Json.write "renewable" se.Renewable
+    Json.write "client_token" se.clientToken
+    *> Json.write "accessor" se.accessor
+    *> Json.write "policies" se.policies
+    *> Json.write "metadata" se.metadata
+    *> Json.write "lease_duration" se.leaseDuration
+    *> Json.write "renewable" se.renewable
 
 type SecretDataList =
-  { LeaseId       : string
-    LeaseDuration : int
-    Renewable     : bool
-    Data          : Map<string, string list>
-    Warnings      : string list option
-    Auth          : SecretAuth option
-    WrapInfo      : SecretWrapInfo option}
+  { leaseId       : string
+    leaseDuration : int
+    renewable     : bool
+    data          : Map<string, string list>
+    warnings      : string list option
+    auth          : SecretAuth option
+    wrapInfo      : SecretWrapInfo option}
 
   static member FromJson (_ : SecretDataList) =
     (fun li ld r d w a wi ->
-      { LeaseId = li
-        LeaseDuration = ld
-        Renewable = r
-        Data = d
-        Warnings = w
-        Auth = a
-        WrapInfo = wi})
+      { leaseId = li
+        leaseDuration = ld
+        renewable = r
+        data = d
+        warnings = w
+        auth = a
+        wrapInfo = wi})
     <!> Json.read "lease_id"
     <*> Json.read "lease_duration"
     <*> Json.read "renewable"
@@ -1521,32 +1537,32 @@ type SecretDataList =
     
 
   static member ToJson (se : SecretDataList) =
-    Json.write "lease_id" se.LeaseId
-    *> Json.write "lease_duration" se.LeaseDuration
-    *> Json.write "renewable" se.Renewable
-    *> Json.write "data" se.Data
-    *> Json.maybeWrite "warnings" se.Warnings
-    *> Json.maybeWrite "auth" se.Auth
-    *> Json.maybeWrite "wrap_info" se.WrapInfo
+    Json.write "lease_id" se.leaseId
+    *> Json.write "lease_duration" se.leaseDuration
+    *> Json.write "renewable" se.renewable
+    *> Json.write "data" se.data
+    *> Json.maybeWrite "warnings" se.warnings
+    *> Json.maybeWrite "auth" se.auth
+    *> Json.maybeWrite "wrap_info" se.wrapInfo
 
 type SecretDataString =
-  { LeaseId       : string
-    LeaseDuration : int
-    Renewable     : bool
-    Data          : Map<string, string>
-    Warnings      : string list option
-    Auth          : SecretAuth option
-    WrapInfo      : SecretWrapInfo option}
+  { leaseId       : string
+    leaseDuration : int
+    renewable     : bool
+    data          : Map<string, string>
+    warnings      : string list option
+    auth          : SecretAuth option
+    wrapInfo      : SecretWrapInfo option}
 
   static member FromJson (_ : SecretDataString) =
     (fun li ld r d w a wi ->
-      { LeaseId = li
-        LeaseDuration = ld
-        Renewable = r
-        Data = d
-        Warnings = w
-        Auth = a
-        WrapInfo = wi})
+      { leaseId = li
+        leaseDuration = ld
+        renewable = r
+        data = d
+        warnings = w
+        auth = a
+        wrapInfo = wi})
     <!> Json.read "lease_id"
     <*> Json.read "lease_duration"
     <*> Json.read "renewable"
@@ -1557,44 +1573,44 @@ type SecretDataString =
     
 
   static member ToJson (se : SecretDataString) =
-    Json.write "lease_id" se.LeaseId
-    *> Json.write "lease_duration" se.LeaseDuration
-    *> Json.write "renewable" se.Renewable
-    *> Json.write "data" se.Data
-    *> Json.maybeWrite "warnings" se.Warnings
-    *> Json.maybeWrite "auth" se.Auth
-    *> Json.maybeWrite "wrap_info" se.WrapInfo
+    Json.write "lease_id" se.leaseId
+    *> Json.write "lease_duration" se.leaseDuration
+    *> Json.write "renewable" se.renewable
+    *> Json.write "data" se.data
+    *> Json.maybeWrite "warnings" se.warnings
+    *> Json.maybeWrite "auth" se.auth
+    *> Json.maybeWrite "wrap_info" se.wrapInfo
 
 
 type KeyStatus =
-  { Term        : int
-    InstallTime : string }
+  { term        : int
+    installTime : string }
 
   static member FromJson (_ : KeyStatus) =
     (fun t it ->
-      { Term = t
-        InstallTime = it})
+      { term = t
+        installTime = it})
     <!> Json.read "term"
     <*> Json.read "install_time"
     
 
   static member ToJson (se : KeyStatus) =
-    Json.write "term" se.Term
-    *> Json.write "install_time" se.InstallTime
+    Json.write "term" se.term
+    *> Json.write "install_time" se.installTime
 
 
 type RekeyInitRequest =
-  { SecretShares    : int
-    SecretTreshold  : int
-    PGPKeys         : string list option
-    Backup          : bool option}
+  { secretShares    : int
+    secretTreshold  : int
+    pgpKeys         : string list option
+    backup          : bool option}
 
   static member FromJson (_ : RekeyInitRequest) =
     (fun ss st pgp b ->
-      { SecretShares = ss
-        SecretTreshold = st
-        PGPKeys = pgp
-        Backup = b})
+      { secretShares = ss
+        secretTreshold = st
+        pgpKeys = pgp
+        backup = b})
     <!> Json.read "secret_shares"
     <*> Json.read "secret_threshold"
     <*> Json.tryRead "pgp_keys"
@@ -1602,32 +1618,32 @@ type RekeyInitRequest =
     
 
   static member ToJson (se : RekeyInitRequest) =
-    Json.write "secret_shares" se.SecretShares
-    *> Json.write "secret_threshold" se.SecretTreshold
-    *> Json.maybeWrite "pgp_keys" se.PGPKeys
-    *> Json.maybeWrite "backup" se.Backup
+    Json.write "secret_shares" se.secretShares
+    *> Json.write "secret_threshold" se.secretTreshold
+    *> Json.maybeWrite "pgp_keys" se.pgpKeys
+    *> Json.maybeWrite "backup" se.backup
 
 
 type RekeyStatusResponse =
-  { Nonce           : string
-    Started         : bool
-    T               : int 
-    N               : int
-    Progress        : int
-    Required        : int
-    PGPFIngerPrints : string list option
-    Backup          : bool }
+  { nonce           : string
+    started         : bool
+    t               : int 
+    n               : int
+    progress        : int
+    required        : int
+    pgpFIngerPrints : string list option
+    backup          : bool }
 
   static member FromJson (_ : RekeyStatusResponse) =
     (fun nc s t n p r pgp b ->
-      { Nonce = nc
-        Started = s
-        T = t
-        N = n
-        Progress = p
-        Required = r
-        PGPFIngerPrints = pgp
-        Backup = b})
+      { nonce = nc
+        started = s
+        t = t
+        n = n
+        progress = p
+        required = r
+        pgpFIngerPrints = pgp
+        backup = b})
     <!> Json.read "nonce"
     <*> Json.read "started"
     <*> Json.read "t"
@@ -1639,29 +1655,29 @@ type RekeyStatusResponse =
     
 
   static member ToJson (se : RekeyStatusResponse) =
-    Json.write "nonce" se.Nonce
-    *> Json.write "started" se.Started
-    *> Json.write "t" se.T
-    *> Json.write "n" se.N
-    *> Json.write "progress" se.Progress
-    *> Json.write "required" se.Required
-    *> Json.maybeWrite "pgp_fingerprints" se.PGPFIngerPrints
-    *> Json.write "backup" se.Backup
+    Json.write "nonce" se.nonce
+    *> Json.write "started" se.started
+    *> Json.write "t" se.t
+    *> Json.write "n" se.n
+    *> Json.write "progress" se.progress
+    *> Json.write "required" se.required
+    *> Json.maybeWrite "pgp_fingerprints" se.pgpFIngerPrints
+    *> Json.write "backup" se.backup
 
 type RekeyUpdateResponse =
-  { Nonce           : string
-    Complete        : bool
-    Keys            : string list
-    PGPFIngerPrints : string list option
-    Backup          : bool }
+  { nonce           : string
+    complete        : bool
+    keys            : string list
+    pgpFIngerPrints : string list option
+    backup          : bool }
 
   static member FromJson (_ : RekeyUpdateResponse) =
     (fun nc c k pgp b ->
-      { Nonce = nc
-        Complete = c
-        Keys = k
-        PGPFIngerPrints = pgp
-        Backup = b})
+      { nonce = nc
+        complete = c
+        keys = k
+        pgpFIngerPrints = pgp
+        backup = b})
     <!> Json.read "nonce"
     <*> Json.read "complete"
     <*> Json.read "keys"
@@ -1670,41 +1686,41 @@ type RekeyUpdateResponse =
     
 
   static member ToJson (se : RekeyUpdateResponse) =
-    Json.write "nonce" se.Nonce
-    *> Json.write "complete" se.Complete
-    *> Json.write "keys" se.Keys
-    *> Json.maybeWrite "pgp_fingerprints" se.PGPFIngerPrints
-    *> Json.write "backup" se.Backup
+    Json.write "nonce" se.nonce
+    *> Json.write "complete" se.complete
+    *> Json.write "keys" se.keys
+    *> Json.maybeWrite "pgp_fingerprints" se.pgpFIngerPrints
+    *> Json.write "backup" se.backup
 
 type RekeyRetrieveResponse =
-  { Nonce : string
-    Keys  : string list }
+  { nonce : string
+    keys  : string list }
 
   static member FromJson (_ : RekeyRetrieveResponse) =
     (fun t it ->
-      { Nonce = t
-        Keys = it})
+      { nonce = t
+        keys = it})
     <!> Json.read "nonce"
     <*> Json.read "keys"
     
 
   static member ToJson (se : RekeyRetrieveResponse) =
-    Json.write "nonce" se.Nonce
-    *> Json.write "keys" se.Keys
+    Json.write "nonce" se.nonce
+    *> Json.write "keys" se.keys
 
 
 type Audit =
-  { Path        : string option
-    Type        : string
-    Description : string
-    Options     : Map<string, string> option} 
+  { path        : string option
+    ``type``        : string
+    description : string
+    options     : Map<string, string> option} 
 
   static member FromJson (_ : Audit) =
     (fun p t d o ->
-      { Path = p
-        Type = t
-        Description = d
-        Options = o})
+      { path = p
+        ``type`` = t
+        description = d
+        options = o})
     <!> Json.tryRead "file_path"
     <*> Json.read "type"
     <*> Json.read "description"
@@ -1712,23 +1728,23 @@ type Audit =
     
 
   static member ToJson (se : Audit) =
-    Json.maybeWrite "path" se.Path
-    *> Json.write "type" se.Type
-    *> Json.write "description" se.Description
-    *> Json.maybeWrite "options" se.Options
+    Json.maybeWrite "path" se.path
+    *> Json.write "type" se.``type``
+    *> Json.write "description" se.description
+    *> Json.maybeWrite "options" se.options
 
 type HealthResponse =
-  { Initialized        : bool
-    ``Sealed``         : bool
-    Standby            : bool
-    ServerTimeUtc      : int option}
+  { initialized   : bool
+    ``sealed``    : bool
+    standby       : bool
+    serverTimeUtc : int option}
 
   static member FromJson (_ : HealthResponse) =
     (fun p t d o ->
-      { Initialized = p
-        ``Sealed`` = t
-        Standby = d
-        ServerTimeUtc = o})
+      { initialized = p
+        ``sealed`` = t
+        standby = d
+        serverTimeUtc = o})
     <!> Json.read "initialized"
     <*> Json.read "sealed"
     <*> Json.read "standby"
@@ -1736,46 +1752,44 @@ type HealthResponse =
     
 
   static member ToJson (se : HealthResponse) =
-    Json.write "initialized" se.Initialized
-    *> Json.write "sealed" se.Sealed
-    *> Json.write "standby" se.Standby
-    *> Json.maybeWrite "server_time_utc" se.ServerTimeUtc
+    Json.write "initialized" se.initialized
+    *> Json.write "sealed" se.``sealed``
+    *> Json.write "standby" se.standby
+    *> Json.maybeWrite "server_time_utc" se.serverTimeUtc
 
 type AuthConfig =
-  { DefaultLeaseTTL        : string  
-    MaxLeaseTTL            : string}
+  { defaultLeaseTTL        : string  
+    maxLeaseTTL            : string}
 
   static member FromJson (_ : AuthConfig) =
     (fun p o ->
-      { DefaultLeaseTTL = p
-        MaxLeaseTTL = o})
+      { defaultLeaseTTL = p
+        maxLeaseTTL = o})
     <!> Json.read "default_lease_ttl"
     <*> Json.read "max_lease_ttl"
 
   static member ToJson (se : AuthConfig) =
-    Json.write "default_lease_ttl" se.DefaultLeaseTTL
-    *> Json.write "max_lease_ttl" se.MaxLeaseTTL
+    Json.write "default_lease_ttl" se.defaultLeaseTTL
+    *> Json.write "max_lease_ttl" se.maxLeaseTTL
 
 type AuthMount =
-  { Type        : string  
-    Description : string
-    Config      : AuthConfig option}
+  { ``type``        : string  
+    description : string
+    authConfig      : AuthConfig option}
 
   static member FromJson (_ : AuthMount) =
     (fun p o c->
-      { Type = p
-        Description = o
-        Config = c})
+      { ``type`` = p
+        description = o
+        authConfig = c})
     <!> Json.read "type"
     <*> Json.read "description"
     <*> Json.tryRead "config"
-    
-    
 
   static member ToJson (se : AuthMount) =
-    Json.write "type" se.Type
-    *> Json.write "description" se.Description
-    *> Json.maybeWrite "config" se.Config
+    Json.write "type" se.``type``
+    *> Json.write "description" se.description
+    *> Json.maybeWrite "config" se.authConfig
 
 type AuthMethod =
   | AppID
@@ -1806,5 +1820,6 @@ type AuthMethod =
       | "token" -> Tokens
       | "userpass" -> UserPass
       | "aws-ec2" -> AWS
+      | _ -> Tokens
 
 

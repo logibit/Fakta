@@ -34,3 +34,5 @@ tools/consul.exe
 vault
 vault.zip
 vaultData/
+src/Settings.FSharpLint
+tools/vault.exe
