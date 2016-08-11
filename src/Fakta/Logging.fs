@@ -128,8 +128,8 @@ type Logger =
 
 let NoopLogger =
   { new Logger with
-      member x.logVerbose evaluate = Alt.always (Promise())
-      member x.log message = Alt.always (Promise())
+      member x.logVerbose evaluate = Alt.always (Promise(()))
+      member x.log message = Alt.always (Promise(()))
       member x.logSimple message = () }
 
 let private logger =
