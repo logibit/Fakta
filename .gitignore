@@ -17,6 +17,7 @@ paket.exe
 tools/consul
 tools/consul.zip
 tools/data/
+tools/c:\\audit.log
 AssemblyVersionInfo.fs
 build/
 src/Utils/AssemblyVersionInfo.cs
