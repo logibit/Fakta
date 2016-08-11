@@ -14,11 +14,11 @@ let logger =
   { new Logger with
       member x.log message =
         printfn "%A" message
-        Alt.always (Promise.Now.withValue ())
+        Alt.always (Promise())
 
       member x.logVerbose evaluate =
         printfn "%A" (evaluate ())
-        Alt.always (Promise.Now.withValue ())
+        Alt.always (Promise())
 
       member x.logSimple message =
         printfn "%A" message

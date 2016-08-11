@@ -95,6 +95,17 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
       <ItemGroup>
+        <Reference Include="Chiron">
+          <HintPath>..\..\packages\Chiron\lib\net40\Chiron.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
+      <ItemGroup>
         <Reference Include="FParsec">
           <HintPath>..\..\packages\FParsec\lib\net40-client\FParsec.dll</HintPath>
           <Private>True</Private>
@@ -132,30 +143,8 @@
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
       <ItemGroup>
-        <Reference Include="Hopac.Extras">
-          <HintPath>..\..\packages\Hopac.Extras\lib\net45\Hopac.Extras.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
-      <ItemGroup>
         <Reference Include="HttpFs">
-          <HintPath>..\..\packages\Http.fs-prerelease\lib\net40\HttpFs.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
-      <ItemGroup>
-        <Reference Include="Chiron">
-          <HintPath>..\..\packages\Chiron\lib\net40\Chiron.dll</HintPath>
+          <HintPath>..\..\packages\Http.fs\lib\net40\HttpFs.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>
