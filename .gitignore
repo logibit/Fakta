@@ -37,3 +37,4 @@ vault.zip
 vaultData/
 src/Settings.FSharpLint
 tools/vault.exe
+audit.log
