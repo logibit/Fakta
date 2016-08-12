@@ -14,7 +14,7 @@ let tests =
       ensureSuccess listing <| fun (map) ->
         let logger = state.logger
         for KeyValue (key, value) in map do
-          logger.logSimple (Message.sprintf [] "key: %s value: %A" key value)
+          logger.logSimple (Message.sprintf Debug "key: %s value: %A" key value)
 
     testCase "sys.init -> initialize application" <| fun _ ->
       let s = initVault
@@ -22,5 +22,5 @@ let tests =
       | None -> Tests.failtest "Vault init failed."
       | _ -> 
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "value: %s" s.config.token.Value)
+        logger.logSimple (Message.sprintf Debug "value: %s" s.config.token.Value)
 ]

@@ -41,8 +41,11 @@
       <Link>paket-files/YoLo.fs</Link>
     </Compile>
     <Compile Include="AssemblyVersionInfo.fs" />
+    <Compile Include="..\..\paket-files\logary\logary\src\Logary.Facade\Facade.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/Facade.fs</Link>
+    </Compile>
     <Compile Include="Prelude.fs" />
-    <Compile Include="Logging.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Impl.fs" />
     <Compile Include="ACL.fs" />

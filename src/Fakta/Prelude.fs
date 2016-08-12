@@ -10,7 +10,7 @@ module Duration =
   open System.Diagnostics
 
   let fromStopwatch (sw : Stopwatch) =
-    Duration.FromTimeSpan (sw.Elapsed)
+    Duration.FromTimeSpan sw.Elapsed
 
   let time f =
     let sw = Stopwatch.StartNew()
@@ -18,7 +18,7 @@ module Duration =
     sw.Stop()
     res, fromStopwatch sw
 
-  let timeAsync (f : unit -> Job<'a>) =
+  let timeJob (f : unit -> Job<'a>) =
     job {
       let sw = Stopwatch.StartNew()
       let! res = f ()
@@ -28,6 +28,20 @@ module Duration =
 
   let consulString (d : Duration) =
     sprintf "%d%s" (uint32 (d.ToTimeSpan().TotalSeconds)) "s"
+
+open Hopac
+open Fakta.Logging
+open NodaTime
+
+module Message =
+
+  let timeJob path (runnable : Job<_>) =
+    Duration.timeJob (fun () -> runnable) |> Job.map (function
+    | res, dur ->
+      let msg =
+        Message.gauge (int64 (float dur.Ticks / float NodaConstants.TicksPerMillisecond)) "ms"
+        |> Message.setName path
+      res, msg)
 
 open System
 

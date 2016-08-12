@@ -7,6 +7,7 @@ open HttpFs.Composition
 open NodaTime
 open Fakta
 open Fakta.Logging
+open Fakta.Logging.Message
 open Chiron
 open Hopac
 open Aether.Operators
@@ -94,16 +95,14 @@ let getResponse (state : FaktaState) path (req : Request) =
   job {
     let data = Map [ "uri", box req.url
                      "requestId", box (state.random.NextUInt64()) ]
-    do! Alt.afterFun ignore << state.logger.logVerbose <| fun _ ->
-      let data' = data |> Map.add "req" (box req)
-      Message.create state.clock path Verbose data' "-> request"
+    state.logger.verbose (eventX "Sending {request}" >> setField "request" req)
 
     try
       let! res = getResponse req
-      do! Alt.afterFun ignore << state.logger.logVerbose <| fun _ ->
-        let data' = data |> Map.add "statusCode" (box res.statusCode)
-                         |> Map.add "resp" (box res)
-        Message.create state.clock path Verbose data' "<- response"
+
+      state.logger.verbose (eventX "Received {response}"
+        >> setField "statusCode" res.statusCode
+        >> setField "response" res)
 
       return Choice1Of2 res
     with
@@ -215,7 +214,7 @@ let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuil
     |> addToReq
 
   job {
-    let! resp, dur = Duration.timeAsync (fun () -> getResponse req)
+    let! resp, dur = Duration.timeJob (fun () -> getResponse req)
     match resp with
     | Choice1Of2 resp ->
       use resp = resp
@@ -247,7 +246,7 @@ let timerFilter (state : FaktaState) path : JobFilter<_, _> =
   fun next value ->
     Message.timeJob path (next value)
     |> Job.map (fun (res, msg) ->
-      Logger.logSimple state.logger msg
+      state.logger.logSimple msg
       res)
 
 let unknownsFilter : JobFilter<Request, Response, Request, Choice<Response, Error>> =
@@ -283,7 +282,7 @@ let respBodyFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice
 let respQueryFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice<string * QueryMeta, Error>> =
   fun next req ->
     job {
-      let! resp, dur = Logging.timeJob (next req)
+      let! resp, dur = Duration.timeJob (fun () -> next req)
 
       match resp with
       | Choice1Of2 resp ->
@@ -297,7 +296,7 @@ let respQueryFilter : JobFilter<Request, Choice<Response, Error>, Request, Choic
 let respQueryFilterNoMeta : JobFilter<Request, Choice<Response, Error>, Request, Choice<string, Error>> =
   fun next req ->
     job {
-      let! resp, _ = Logging.timeJob (next req)
+      let! resp, _ = Duration.timeJob (fun () -> next req)
 
       match resp with
       | Choice1Of2 resp ->

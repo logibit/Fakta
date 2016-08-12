@@ -13,39 +13,39 @@ let tests =
       ensureSuccess listing <| fun (dcs, meta) ->
         let logger = state.logger
         for l in dcs do
-          logger.logSimple (Message.sprintf [] "value: %s" l)
+          logger.logSimple (Message.sprintf Debug "value: %s" l)
 
     testCase "catalog.nodes -> all the known nodes" <| fun _ ->
       let listing = Catalog.nodes state []
       ensureSuccess listing <| fun (nodes, meta) ->
         let logger = state.logger
         for node in nodes do
-          logger.logSimple (Message.sprintf [] "key: %s" node.node)
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
+          logger.logSimple (Message.sprintf Debug "key: %s" node.node)
+        logger.logSimple (Message.sprintf Debug "meta: %A" meta)
     
 
     testCase "catalog.node -> service information about a single node" <| fun _ ->
       let listing = Catalog.node state (System.Environment.MachineName, [])
       ensureSuccess listing <| fun (node, meta) ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "key: %s" node.node.node)
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
+        logger.logSimple (Message.sprintf Debug "key: %s" node.node.node)
+        logger.logSimple (Message.sprintf Debug "meta: %A" meta)
 
     testCase "catalog.service -> entries for a given service" <| fun _ ->
       let listing = Catalog.service state (("consul", ""), [])
       ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do
-          logger.logSimple (Message.sprintf [] "service node: %s" service.node)
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
+          logger.logSimple (Message.sprintf Debug "service node: %s" service.node)
+        logger.logSimple (Message.sprintf Debug "meta: %A" meta)
 
     testCase "catalog.services -> all known services " <| fun _ ->
       let listing = Catalog.services state []
       ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do
-          logger.logSimple (Message.sprintf [] "service key: %s  value length: %i" service.Key service.Value.Length)
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
+          logger.logSimple (Message.sprintf Debug "service key: %s  value length: %i" service.Key service.Value.Length)
+        logger.logSimple (Message.sprintf Debug "meta: %A" meta)
 
     testCase "catalog.register" <| fun _ ->
        
@@ -73,13 +73,13 @@ let tests =
       let listing = Catalog.register state (catalogReg, [])
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
+        logger.logSimple (Message.sprintf Debug "meta: %A" meta)
 
     testCase "catalog.deregister" <| fun _ ->
       let catalogDereg = (CatalogDeregistration.Instance "COMP05" "" "127.0.0.1" "consul" "")
       let listing = Catalog.deregister state (catalogDereg, [])
       ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
+        logger.logSimple (Message.sprintf Debug "meta: %A" meta)
   ]
 

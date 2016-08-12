@@ -12,17 +12,22 @@ let consulConfig = FaktaConfig.consulEmpty
 
 let logger =
   { new Logger with
-      member x.log message =
-        printfn "%A" message
-        Alt.always (Promise(()))
+      member x.logWithAck logLevel msgFactory =
+        printfn "%A" (msgFactory logLevel)
+        async.Return ()
 
-      member x.logVerbose evaluate =
-        printfn "%A" (evaluate ())
-        Alt.always (Promise(()))
+      member x.log level message =
+        printfn "%A" message
 
       member x.logSimple message =
         printfn "%A" message
     }
+
+module Message =
+  open Fakta.Logging.Message
+
+  let sprintf data =
+    Printf.kprintf (event data)
 
 let initVault =
   let reqJson : InitRequest =

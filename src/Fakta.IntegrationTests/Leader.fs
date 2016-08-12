@@ -13,5 +13,5 @@ let tests =
       let listing = Leader.leader vaultState []
       ensureSuccess listing <| fun resp ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Leader address: %s Ha_enabled: %A is_self: %A" resp.leaderAddress resp.haEnabled resp.isSelf)
+        logger.logSimple (Message.sprintf Debug "Leader address: %s Ha_enabled: %A is_self: %A" resp.leaderAddress resp.haEnabled resp.isSelf)
 ]

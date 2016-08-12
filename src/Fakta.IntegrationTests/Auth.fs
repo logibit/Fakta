@@ -14,17 +14,17 @@ let tests =
       let listing = Auth.authEnable initState ((map, AuthMethod.AppID.ToString()), [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "New auth backend enabled")
+        logger.logSimple (Message.sprintf Debug "New auth backend enabled")
 
     testCase "sys.authList -> lists all the enabled auth backends" <| fun _ ->
       let listing = Auth.authList initState []
       ensureSuccess listing <| fun h ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Auth list: %A" h)
+        logger.logSimple (Message.sprintf Debug "Auth list: %A" h)
 
     testCase "sys.disableAuth -> disable a new auth backend" <| fun _ ->
       let listing = Auth.authDisable initState (AuthMethod.AppID.ToString(), [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Auth backend disabled")
+        logger.logSimple (Message.sprintf Debug "Auth backend disabled")
         ]

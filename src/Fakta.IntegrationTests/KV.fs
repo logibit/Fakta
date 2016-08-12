@@ -32,8 +32,8 @@ let tests =
       ensureSuccess listing <| fun (kvpairs, meta) ->
         let logger = state.logger
         for kvp in kvpairs do
-          logger.logSimple (Message.sprintf [] "key: %s, value: %A" kvp.key kvp.value)
-        logger.logSimple (Message.sprintf [] "meta: %A" meta)
+          logger.logSimple (Message.sprintf Debug "key: %s, value: %A" kvp.key kvp.value)
+        logger.logSimple (Message.sprintf Debug "meta: %A" meta)
 
     testCase "can acquire -> release" <| fun _ ->
       let epInfo = { ep = IPEndPoint(IPAddress.IPv6Loopback, 8083) }

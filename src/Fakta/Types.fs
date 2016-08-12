@@ -6,7 +6,6 @@ open System.Text
 open NodaTime
 open Chiron
 open Chiron.Operators
-
 open Fakta.Logging
 
 /// ACLCLientType is the client type token
@@ -1235,6 +1234,9 @@ type APIType =
   | Consul
   | Vault
 
+let private defaultLogger =
+  Log.create "Fakta"
+
 type FaktaState =
   { config : FaktaConfig
     logger : Logger
@@ -1243,13 +1245,13 @@ type FaktaState =
 
   static member emptyConsulConfig =
     { config = FaktaConfig.consulEmpty
-      logger = NoopLogger 
+      logger = defaultLogger
       clock  = SystemClock.Instance
       random = random.Value }
 
   static member emptyVaultConfig =
     { config = FaktaConfig.vaultEmpty
-      logger = NoopLogger 
+      logger = defaultLogger 
       clock  = SystemClock.Instance
       random = random.Value }
 

@@ -65,7 +65,7 @@ let private mkDel = mkReq HttpMethod.Delete
 
 let private boolResponse getResponse req =
   job {
-    let! response, dur = Duration.timeAsync (fun () -> getResponse req)
+    let! response, dur = Duration.timeJob (fun () -> getResponse req)
     match response with
     | Choice1Of2 response ->
       use response = response

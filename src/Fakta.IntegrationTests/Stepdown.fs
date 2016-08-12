@@ -12,5 +12,5 @@ let tests =
       let listing = Stepdown.stepdown vaultState []
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Node stepped-down.")
+        logger.logSimple (Message.sprintf Debug "Node stepped-down.")
 ]

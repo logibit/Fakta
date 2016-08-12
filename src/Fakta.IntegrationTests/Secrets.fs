@@ -18,25 +18,25 @@ let testsGeneric =
       let listing = Secrets.write initState ((data, genericSecretPath+"/secretOne"), [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Secret created.")
+        logger.logSimple (Message.sprintf Debug "Secret created.")
 
     testCase "sys.secret.read-> read a secret" <| fun _ ->
       let listing = Secrets.read initState (genericSecretPath+"/secretOne", [])
       ensureSuccess listing <| fun sc ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Secret read: %A" sc)
+        logger.logSimple (Message.sprintf Debug "Secret read: %A" sc)
 
     testCase "sys.secret.list-> get a list of secret's names" <| fun _ ->
       let listing = Secrets.list initState (genericSecretPath, [])
       ensureSuccess listing <| fun sc ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Secret list: %A" sc)
+        logger.logSimple (Message.sprintf Debug "Secret list: %A" sc)
 
     testCase "sys.secret.delete-> delete a secret" <| fun _ ->
       let listing = Secrets.delete initState (genericSecretPath+"/secretOne", [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Secret deleted.")
+        logger.logSimple (Message.sprintf Debug "Secret deleted.")
 ]
 
 open System.Text
@@ -49,7 +49,7 @@ let testsConsul =
       let listing = Secrets.write initState ((config, consulSecretPath+"/config/access"), [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Consul config sent to vault.")
+        logger.logSimple (Message.sprintf Debug "Consul config sent to vault.")
 
     testCase "consul.roles -> create a new role" <| fun _ ->
       let policy64 =
@@ -60,14 +60,14 @@ let testsConsul =
       let listing = Secrets.write initState ((config, consulSecretPath+"/roles/management"), [])
       ensureSuccess listing <| fun _ ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Consul role sent to vault.")
+        logger.logSimple (Message.sprintf Debug "Consul role sent to vault.")
 
 
     testCase "consul.roles -> queries a consul role definiton" <| fun _ ->
       let listing = Secrets.read initState (consulSecretPath+"/roles/management", [])
       ensureSuccess listing <| fun sc ->
         let logger = state.logger
-        logger.logSimple (Message.sprintf [] "Consul role read: %A" sc)
+        logger.logSimple (Message.sprintf Debug "Consul role read: %A" sc)
 ]
 
 //[<Tests>]
@@ -78,6 +78,6 @@ let testsConsul =
 //      let listing = Secrets.WriteWithReturnValue initState ((config, pkiPath+"/root/generate/internal"), [])
 //      ensureSuccess listing <| fun sc ->
 //        let logger = state.logger
-//        logger.logSimple (Message.sprintf [] "Certigicate generated with return value: %A" sc)
+//        logger.logSimple (Message.sprintf Debug "Certigicate generated with return value: %A" sc)
 //
 //  ]
