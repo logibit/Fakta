@@ -26,7 +26,7 @@ GITHUB
   remote: haf/YoLo
     YoLo.fs (c8cab523cd9cc30d3a5a450249de561e5069dc6d)
   remote: logary/logary
-    src/Logary.Facade/Facade.fs (ca2b39fc7d480b2abcf1fb8d1099ce92b2c123a2)
+    src/Logary.Facade/Facade.fs (43d3bc02f20bd600e7c299ceff7e684275e5866a)
 GROUP Test
 REDIRECTS: ON
 NUGET
