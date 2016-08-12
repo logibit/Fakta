@@ -5,7 +5,7 @@ open Fakta
 open Fakta.Logging
 open Fakta.Vault
 
-let filePath = @"C:\audit.log"
+let filePath = @"./audit.log"
 let path = "vault-audit"
 
 [<Tests>]

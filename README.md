@@ -21,19 +21,19 @@ Those not implemented will throw a correspond TBD-exception.
 
 ### Justification
 
-The current implementation's use-case (for me) is [leader-election][docs-LE] and semi- to
-long-term storage of access keys that need be requested exactly-once or they
-get invalidated.
+The current implementation's use-case (for me) is [leader-election][docs-LE] and
+semi- to long-term storage of access keys that need be requested exactly-once or
+they get invalidated.
 
-Together with [Registrator][reg] and this library, F# code can participate in micro-
-service architectures easily.
+Together with [Registrator][reg] and this library, F# code can participate in
+micro- service architectures easily.
 
 ## Compiling and running initial tests
 
 First, run:
 
 ``` bash
-./tools/consul.sh agent -dev -bind 127.0.0.1 -config-file=server.json
+./tools/consul.sh agent -dev -bind 127.0.0.1 -config-file=tools/server.json
 ```
 
 Then in another terminal:
@@ -44,24 +44,6 @@ bundle exec rake
 
 Which will call xbuild/msbuild and compile the project, run unit tests and then
 finally run the integration tests.
-
-## Milestones
-
-[All Milestones](https://github.com/haf/Fakta/milestones)
-
-Prio 1 is what is needed to get a PoC up and running.
-Prio 2 is next, by being good to have.
-Prio 3 is next.
-
-The order of Consul vs Vault priorities is:
-
- - Vault Prio 1
- - Consul Prio 1
- - Vault Prio 2
- - Consul Prio 2
- - etc
-
-Note that Vault is on top, because all the Prio 0's of Consul are already done.
 
 ## References
 
@@ -183,7 +165,7 @@ write unit tests for your changes and it shall be fine.
  ```
 2. run consul agent with: 
  ```
- consul agent -dev -bind 127.0.0.1 -config-file=path to server.json
+ consul agent -dev -bind 127.0.0.1 -config-file=tools/server.json
  ```
 3. Open *http://localhost:consul_port/ui/#/ams1/acls (typically http://127.0.0.1:8500/ui/#/ams1/acls )* and create token called the same like the master token in config file
 
@@ -202,7 +184,7 @@ write unit tests for your changes and it shall be fine.
  disable_mlock = true
  ```
 2. run vault server with
-  ```vault server -config=config_file_name.conf```
+  ```vault server -config=tools/vault.conf```
 3. you have to restart your local vault server and delete vault directory contents everytime you want to re-run tests.
 
 ### Compiling

@@ -23,8 +23,12 @@ asmver_files :assembly_info do |a|
 end
 
 task :yolo do
-  system %{ruby -pi.bak -e "gsub(/module internal YoLo/, 'module internal Fakta.YoLo')" paket-files/haf/YoLo/YoLo.fs} \
-    unless Albacore.windows?
+  sh %{ruby -pi.bak -e \
+        "gsub(/namespace Logary.Facade/, 'namespace Fakta.Logging')" \
+         paket-files/logary/logary/src/Logary.Facade/Facade.fs}
+  sh %{ruby -pi.bak -e \
+         "gsub(/module internal YoLo/, 'module internal Fakta.YoLo')" \
+         paket-files/haf/YoLo/YoLo.fs}
 end
 
 desc 'Perform fast build (warn: doesn\'t d/l deps)'

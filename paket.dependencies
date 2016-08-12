@@ -13,9 +13,9 @@ nuget NuGet.CommandLine
 nuget Aether
 nuget FParsec
 github haf/YoLo YoLo.fs
+github logary/logary src/Logary.Facade/Facade.fs
 
 group Test
-redirects: on
-source https://nuget.org/api/v2
-nuget FSharp.Core
-
+    redirects: on
+    source https://nuget.org/api/v2
+    nuget FSharp.Core

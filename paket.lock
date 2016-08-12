@@ -6,7 +6,7 @@ NUGET
       Aether (>= 8.0.2 < 9.0)
       FParsec (>= 1.0 < 2.0)
     FParsec (1.0.2)
-    FsCheck (2.4)
+    FsCheck (2.6)
       FSharp.Core (>= 3.1.2.5)
     FSharp.Core (4.0.0.1)
     Fuchu (1.0.3)
@@ -25,6 +25,8 @@ NUGET
 GITHUB
   remote: haf/YoLo
     YoLo.fs (c8cab523cd9cc30d3a5a450249de561e5069dc6d)
+  remote: logary/logary
+    src/Logary.Facade/Facade.fs (ca2b39fc7d480b2abcf1fb8d1099ce92b2c123a2)
 GROUP Test
 REDIRECTS: ON
 NUGET
