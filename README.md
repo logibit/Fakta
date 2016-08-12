@@ -218,6 +218,9 @@ bundle exec foreman start
 bundle exec rake tests:integration
 ```
 
+Between vault tests, you have to remove `./vaultData`, or you'll get failing
+tests. This is due to the nature of some Vault operations not being re-doable.
+
  [go-client]: https://godoc.org/github.com/hashicorp/consul/api
  [docs-LE]: https://www.consul.io/docs/guides/leader-election.html
  [docs-KV]: https://www.consul.io/docs/agent/http/kv.html
