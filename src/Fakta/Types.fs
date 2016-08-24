@@ -1238,30 +1238,34 @@ let private defaultLogger =
   Log.create "Fakta"
 
 type FaktaState =
-  { config : FaktaConfig
-    logger : Logger
-    clock  : IClock
-    random : Random }
+  { config      : FaktaConfig
+    logger      : Logger
+    clock       : IClock
+    random      : Random
+    clientState : HttpFs.Client.HttpFsState }
 
   static member emptyConsulConfig =
-    { config = FaktaConfig.consulEmpty
-      logger = defaultLogger
-      clock  = SystemClock.Instance
-      random = random.Value }
+    { config      = FaktaConfig.consulEmpty
+      logger      = defaultLogger
+      clock       = SystemClock.Instance
+      random      = random.Value
+      clientState = HttpFs.Client.HttpFsState.empty }
 
   static member emptyVaultConfig =
-    { config = FaktaConfig.vaultEmpty
-      logger = defaultLogger 
-      clock  = SystemClock.Instance
-      random = random.Value }
+    { config      = FaktaConfig.vaultEmpty
+      logger      = defaultLogger 
+      clock       = SystemClock.Instance
+      random      = random.Value
+      clientState = HttpFs.Client.HttpFsState.empty }
 
-  static member create (api: APIType) (token: Token) (keys: Token list) (logger: Logger) =
+  static member create (api: APIType) (token: Token) (keys: Token list) (logger: Logger) (clientState : HttpFs.Client.HttpFsState) =
     { config = match api with 
                | APIType.Consul -> FaktaConfig.consulEmpty
                | APIType.Vault -> FaktaConfig.vaultConfig token keys
-      logger = logger
-      clock  = SystemClock.Instance
-      random = random.Value }
+      logger      = logger
+      clock       = SystemClock.Instance
+      random      = random.Value
+      clientState = clientState }
 
 /// Vault types ///
 

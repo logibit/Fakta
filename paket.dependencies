@@ -1,4 +1,5 @@
 source https://nuget.org/api/v2
+source https://www.myget.org/F/haf/api/v3/index.json
 framework: net45
 
 nuget Chiron

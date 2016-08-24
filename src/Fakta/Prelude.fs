@@ -6,6 +6,7 @@ module internal Fakta.Prelude
 
 module Duration =
   open Hopac
+  open Hopac.Infixes
   open NodaTime
   open System.Diagnostics
 
@@ -18,13 +19,12 @@ module Duration =
     sw.Stop()
     res, fromStopwatch sw
 
-  let timeJob (f : unit -> Job<'a>) =
-    job {
+  let timeJob (f : unit -> #Alt<'a>) =
+    Alt.prepareFun (fun () ->
       let sw = Stopwatch.StartNew()
-      let! res = f ()
+      f () ^-> fun res ->
       sw.Stop()
-      return res, fromStopwatch sw
-    }
+      res, fromStopwatch sw)
 
   let consulString (d : Duration) =
     sprintf "%d%s" (uint32 (d.ToTimeSpan().TotalSeconds)) "s"
@@ -35,12 +35,10 @@ open NodaTime
 
 module Message =
 
-  let timeJob path (runnable : Job<_>) =
+  let timeJob path (runnable : #Alt<_>) =
     Duration.timeJob (fun () -> runnable) |> Job.map (function
     | res, dur ->
-      let msg =
-        Message.gauge (int64 (float dur.Ticks / float NodaConstants.TicksPerMillisecond)) "ms"
-        |> Message.setName path
+      let msg = Message.gauge dur.Ticks "ticks" |> Message.setName path
       res, msg)
 
 open System

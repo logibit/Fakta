@@ -1,6 +1,7 @@
 ﻿module internal Fakta.Impl
 
 open System
+open System.Diagnostics
 open System.Text
 open HttpFs.Client
 open HttpFs.Composition
@@ -91,25 +92,6 @@ let withJsonBody jsonBody =
 let inline withJsonBodyT value =
   Json.serialize value |> withJsonBody
 
-let getResponse (state : FaktaState) path (req : Request) =
-  job {
-    let data = Map [ "uri", box req.url
-                     "requestId", box (state.random.NextUInt64()) ]
-    state.logger.verbose (eventX "Sending {request}" >> setField "request" req)
-
-    try
-      let! res = getResponse req
-
-      state.logger.verbose (eventX "Received {response}"
-        >> setField "statusCode" res.statusCode
-        >> setField "response" res)
-
-      return Choice1Of2 res
-    with
-    | :? System.Net.WebException as e ->
-      return Choice2Of2 e
-  }
-
 let queryMeta dur (resp : Response) =
   let headerFor key = resp.headers |> Map.tryFind (ResponseHeader.NonStandard key)
   { lastIndex   = headerFor "X-Consul-Index" |> Option.fold (fun s t -> uint64 t) UInt64.MinValue
@@ -117,8 +99,7 @@ let queryMeta dur (resp : Response) =
     knownLeader = headerFor "X-Consul-Knownleader" |> Option.fold (fun s t -> Boolean.Parse(string t)) false
     requestTime = dur }
 
-
-let writeMeta (dur: Duration) : (WriteMeta) =
+let writeMeta (dur: Duration) : WriteMeta =
   let res:WriteMeta = {requestTime = dur}
   res
 
@@ -204,35 +185,7 @@ let queryCallEntity config moduleAndOp (entity, opts) =
   queryCallEntityUri config moduleAndOp opts
   |> basicRequest config Get
 
-
-let call (state : FaktaState) (dottedPath : string[]) (addToReq) (uriB : UriBuilder) (httpMethod : HttpMethod) =
-  let getResponse = getResponse state dottedPath
-  let req =
-    uriB
-    |> UriBuilder.toUri
-    |> basicRequest state.config httpMethod
-    |> addToReq
-
-  job {
-    let! resp, dur = Duration.timeJob (fun () -> getResponse req)
-    match resp with
-    | Choice1Of2 resp ->
-      use resp = resp
-      if not (resp.statusCode = 200 || resp.statusCode = 404) then
-        return Choice2Of2 (Message (sprintf "unknown response code %d" resp.statusCode))
-      else
-        match resp.statusCode with
-        | 200 ->
-          let! body = Response.readBodyAsString resp
-          return Choice1Of2 (body, (dur, resp))
-        | _ ->
-          let msg = sprintf "%s error %d" (String.Join(".", dottedPath)) resp.statusCode
-          return Choice.createSnd (Message msg)
-    | Choice2Of2 exx ->
-      return Choice2Of2 (Error.ConnectionFailed exx)
-  }
-
-type WriteCall<'i, 'o> = JobFunc<'i * WriteOptions, Choice<'o, Error>>
+type WriteCall<'i, 'o> = JobFunc<'i * WriteOptions, Choice<'o * WriteMeta, Error>>
 type WriteCall<'o> = JobFunc<WriteOptions, Choice<'o * WriteMeta, Error>>
 type WriteCallNoMeta<'i, 'o> = JobFunc<'i * WriteOptions, Choice<'o, Error>>
 type WriteCallNoMeta<'o> = JobFunc<WriteOptions, Choice<'o, Error>>
@@ -242,16 +195,9 @@ type QueryCall<'o> = JobFunc<QueryOptions, Choice<'o * QueryMeta, Error>>
 type QueryCallNoMeta<'i, 'o> = JobFunc<'i * QueryOptions, Choice<'o, Error>>
 type QueryCallNoMeta<'o> = JobFunc<QueryOptions, Choice<'o, Error>>
 
-let timerFilter (state : FaktaState) path : JobFilter<_, _> =
-  fun next value ->
-    Message.timeJob path (next value)
-    |> Job.map (fun (res, msg) ->
-      state.logger.logSimple msg
-      res)
-
 let unknownsFilter : JobFilter<Request, Response, Request, Choice<Response, Error>> =
   fun next ->
-    next >> Job.map (fun resp ->
+    next >> Alt.afterFun (fun resp ->
       if not (resp.statusCode = 200 || resp.statusCode = 204 || resp.statusCode = 404) then
         Choice.createSnd (Message (sprintf "unknown response code %d" resp.statusCode))
       elif resp.statusCode = 404 then
@@ -262,17 +208,24 @@ let unknownsFilter : JobFilter<Request, Response, Request, Choice<Response, Erro
 
 let exnsFilter : JobFilter<Request, Choice<Response, Error>> =
   fun next req ->
-    job {
-      try
-        return! next req
-      with :? System.Net.WebException as e ->
-        return Choice.createSnd (Error.ConnectionFailed e)
-    }
+    Alt.tryIn (next req) Job.result (function
+      | :? System.Net.WebException as e ->
+        Job.result (Choice.createSnd (Error.ConnectionFailed e))
+      | e ->
+        raise e)
+
+let writeMetaFilter : JobFilter<'i, Choice<'o, _>, 'i, Choice<'o * WriteMeta, _>> =
+  fun next req ->
+    Alt.prepareFun (fun () ->
+      let sw = Stopwatch.StartNew()
+      next req |> Alt.afterFun (Choice.map (fun resp ->
+      sw.Stop()
+      resp, { requestTime = Duration.FromTicks sw.ElapsedTicks }))
+    )
 
 let respBodyFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice<string, Error>> =
   fun next req ->
-    next req
-    |> Job.bind (function
+    next req |> Alt.afterJob (function
       | Choice1Of2 resp ->
         resp |> Response.readBodyAsString |> Job.map Choice.create
 
@@ -281,46 +234,31 @@ let respBodyFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice
 
 let respQueryFilter : JobFilter<Request, Choice<Response, Error>, Request, Choice<string * QueryMeta, Error>> =
   fun next req ->
-    job {
-      let! resp, dur = Duration.timeJob (fun () -> next req)
+    Duration.timeJob (fun () -> next req) |> Alt.afterJob (function
+      | Choice1Of2 resp, dur ->
+        Response.readBodyAsString resp |> Job.map (fun body ->
+        Choice.create (body, queryMeta dur resp))
 
-      match resp with
-      | Choice1Of2 resp ->
-        let! body = Response.readBodyAsString resp
-        return Choice.create (body, queryMeta dur resp)
-
-      | Choice2Of2 error ->
-        return Choice.createSnd error
-    }
+      | Choice2Of2 error, dur ->
+        Job.result (Choice.createSnd error))
 
 let respQueryFilterNoMeta : JobFilter<Request, Choice<Response, Error>, Request, Choice<string, Error>> =
-  fun next req ->
-    job {
-      let! resp, _ = Duration.timeJob (fun () -> next req)
-
-      match resp with
-      | Choice1Of2 resp ->
-        let! body = Response.readBodyAsString resp
-        return Choice.create body
-
-      | Choice2Of2 error ->
-        return Choice.createSnd error
-    }
+  respQueryFilter
+  >> JobFunc.map (Choice.map fst)
 
 let internal writeFilters state path =
-  timerFilter state path
+  HttpFs.Composition.timerFilterNamed state.clientState path
   >> unknownsFilter
   >> exnsFilter
 
-
 let internal queryFilters state path =
-  timerFilter state path
+  HttpFs.Composition.timerFilterNamed state.clientState path
   >> unknownsFilter
   >> exnsFilter
   >> respQueryFilter
 
-let internal queryFiltersNoMeta state path =
-  timerFilter state path
+let internal queryFiltersNoMeta (state : FaktaState) path =
+  HttpFs.Composition.timerFilterNamed state.clientState path
   >> unknownsFilter
   >> exnsFilter
   >> respQueryFilterNoMeta
@@ -354,35 +292,35 @@ let inline ofJsonPrism jsonPrism : string -> Choice<'a, Error> =
   >> Choice.mapSnd Error.Message
 
 /// Convert the first value in the tuple in the choice to some type 'a.
-let inline internal fstOfJsonPrism jsonPrism (item1, item2) : Choice< ^a * 'b, Error> =
-  Json.tryParse item1
+let inline internal fstOfJsonPrism jsonPrism (body, item2) : Choice< ^a * 'b, Error> =
+  Json.tryParse body
   |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
   |> Choice.bind Json.tryDeserialize
   |> Choice.map (fun x -> x, item2)
   |> Choice.mapSnd (fun msg ->
-    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
   |> Choice.mapSnd Error.Message
 
-let inline internal fstOfJsonPrismNoMeta jsonPrism (item1) : Choice<'a, Error> =
-  Json.tryParse item1
+let inline internal fstOfJsonPrismNoMeta jsonPrism body : Choice<'a, Error> =
+  Json.tryParse body
   |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
   |> Choice.bind Json.tryDeserialize
   |> Choice.mapSnd (fun msg ->
-    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
   |> Choice.mapSnd Error.Message
 
 /// Convert the first value in the tuple in the choice to some type 'a.
-let inline internal fstOfJson (item1, item2) : Choice< ^a * 'b, Error> =
-  Json.tryParse item1
+let inline internal fstOfJson (body, item2) : Choice< ^a * 'b, Error> =
+  Json.tryParse body
   |> Choice.bind Json.tryDeserialize
   |> Choice.map (fun x -> x, item2)
   |> Choice.mapSnd (fun msg ->
-    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
   |> Choice.mapSnd Error.Message
 
-let inline internal fstOfJsonNoMeta (item1) : Choice<'a, Error> =
-  Json.tryParse item1
+let inline internal fstOfJsonNoMeta body : Choice<'a, Error> =
+  Json.tryParse body
   |> Choice.bind Json.tryDeserialize
   |> Choice.mapSnd (fun msg ->
-    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg item1)
+    sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
   |> Choice.mapSnd Error.Message

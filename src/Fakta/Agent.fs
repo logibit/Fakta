@@ -22,7 +22,7 @@ let internal writeFilters state =
 let internal queryFilters state =
   agentPath >> queryFilters state
 
-let checkDeregister state : WriteCall<Id, unit> =
+let checkDeregister state : WriteCallNoMeta<Id, unit> =
   let createRequest =
     writeCallEntity state.config "agent/check/deregister"
 
@@ -41,7 +41,7 @@ let checkDeregister state : WriteCall<Id, unit> =
 /// ?token=<token-id>, the registration will use the provided token to authorize
 /// the request. The token is also persisted in the agent's local configuration
 /// to enable periodic anti-entropy syncs and seamless agent restarts.
-let checkRegister state : WriteCall<AgentCheckRegistration, unit> =
+let checkRegister state : WriteCallNoMeta<AgentCheckRegistration, unit> =
   let createRequest (registration, opts) =
     writeCallUri state.config "agent/check/register" opts
     |> basicRequest state.config Put
@@ -70,7 +70,7 @@ let checks state : QueryCall<Map<string, AgentCheck>> =
 
   HttpFs.Client.getResponse |> filters
 
-let private setNodeMaintenance state enable : WriteCall<string, unit> =
+let private setNodeMaintenance state enable : WriteCallNoMeta<string, unit> =
   let createRequest (reason, opts) =
     writeCall state.config "agent/maintenance" opts
     |> Request.queryStringItem "enable" (string enable |> String.toLowerInvariant)
@@ -90,7 +90,7 @@ let enableNodeMaintenance state =
 let disableNodeMaintenance state =
   setNodeMaintenance state false
 
-let private setServiceMaintenance state enable : WriteCall<Id * (*reason*) string, unit> =
+let private setServiceMaintenance state enable : WriteCallNoMeta<Id * (*reason*) string, unit> =
   let createRequest ((serviceId, reason), opts) =
     writeCallEntity state.config "agent/service/maintenance" (serviceId, opts)
     |> Request.queryStringItem "enable" (string enable |> String.toLowerInvariant)
@@ -115,7 +115,7 @@ let private setServiceMaintenance state enable : WriteCall<Id * (*reason*) strin
 /// explaining the reason for placing the service into maintenance mode. This is
 /// simply to aid human operators. If no reason is provided, a default value
 /// will be used instead.
-let disableServiceMaintenance (state : FaktaState) : WriteCall<Id * (*reason*) string, unit> =
+let disableServiceMaintenance (state : FaktaState) : WriteCallNoMeta<Id * (*reason*) string, unit> =
   setServiceMaintenance state false 
 
 /// The service maintenance endpoint allows placing a given service into
@@ -131,14 +131,14 @@ let disableServiceMaintenance (state : FaktaState) : WriteCall<Id * (*reason*) s
 /// explaining the reason for placing the service into maintenance mode. This is
 /// simply to aid human operators. If no reason is provided, a default value
 /// will be used instead.
-let enableServiceMaintenance (state : FaktaState) : WriteCall<Id * (*reason*) string, unit> =
+let enableServiceMaintenance (state : FaktaState) : WriteCallNoMeta<Id * (*reason*) string, unit> =
   setServiceMaintenance state true
 
 /// This endpoint is hit with a GET and is used to instruct the agent to attempt
 /// to connect to a given address. For agents running in server mode, providing
 /// a "?wan=1" query parameter causes the agent to attempt to join using the WAN
 /// pool.
-let join state : WriteCall<(* address *) string * (* wan *) bool, unit> =
+let join state : WriteCallNoMeta<(* address *) string * (* wan *) bool, unit> =
   let createRequest ((address, isWan), opts) =
     writeCallEntity state.config "agent/join" (address, opts)
     |> Request.queryStringItem "wan" (if isWan then "1" else "0")
@@ -194,7 +194,7 @@ let nodeName state : QueryCall<string> =
   HttpFs.Client.getResponse |> filters
 
 /// ServiceDeregister is used to deregister a service with the local agent
-let serviceDeregister (state: FaktaState) : WriteCall<Id, unit> =
+let serviceDeregister (state: FaktaState) : WriteCallNoMeta<Id, unit> =
   let createRequest =
     writeCallEntity state.config "agent/service/deregister"
 
@@ -206,7 +206,7 @@ let serviceDeregister (state: FaktaState) : WriteCall<Id, unit> =
 
 
 /// ServiceRegister is used to register a new service with the local agent
-let serviceRegister (state: FaktaState) : WriteCall<AgentServiceRegistration, unit> =
+let serviceRegister (state: FaktaState) : WriteCallNoMeta<AgentServiceRegistration, unit> =
   let createRequest (registration, opts) =
     writeCallUri state.config "agent/service/register" opts
     |> basicRequest state.config Put
@@ -217,7 +217,6 @@ let serviceRegister (state: FaktaState) : WriteCall<AgentServiceRegistration, un
     >> codec createRequest hasNoRespBody
 
   HttpFs.Client.getResponse |> filters
-
 
 /// Services returns the locally registered services
 let services state : QueryCall<Map<string, AgentService>> =
@@ -230,10 +229,9 @@ let services state : QueryCall<Map<string, AgentService>> =
 
   HttpFs.Client.getResponse |> filters
 
-
 /// UpdateTTL is used to update the TTL of a check
-let updateTTL state (action:string): WriteCall<Id * (*note*) string, unit> =  
-  let createRequest ((checkId, note), opts) =    
+let updateTTL state (action:string): WriteCallNoMeta<Id * (*note*) string, unit> =
+  let createRequest ((checkId, note), opts) =
     writeCallEntity state.config ("agent/check/"+action) (checkId, opts)
     |> Request.queryStringItem "note" note
     |> withJsonBodyT (CheckUpdate.GetUpdateJson action note)
@@ -244,27 +242,26 @@ let updateTTL state (action:string): WriteCall<Id * (*note*) string, unit> =
 
   HttpFs.Client.getResponse |> filters
 
-
 /// PassTTL is used to set a TTL check to the passing state
-let passTTL (state : FaktaState) : WriteCall<Id * (*note*) string, unit> =
+let passTTL (state : FaktaState) : WriteCallNoMeta<Id * (*note*) string, unit> =
   let pass((checkId,note), wo) =
     updateTTL state "pass" ((checkId,note), wo)
   pass
 
 /// WarnTTL is used to set a TTL check to the warning state
-let warnTTL (state : FaktaState)  : WriteCall<Id * (*note*) string, unit> =
+let warnTTL (state : FaktaState)  : WriteCallNoMeta<Id * (*note*) string, unit> =
   let warn((checkId,note), wo) =
     updateTTL state "warn" ((checkId,note), wo)
   warn
 
 /// FailTTL is used to set a TTL check to the failing state
-let failTTL (state : FaktaState) : WriteCall<Id * (*note*) string, unit> =
+let failTTL (state : FaktaState) : WriteCallNoMeta<Id * (*note*) string, unit> =
   let fail((checkId,note), wo) =
     updateTTL state "fail" ((checkId,note), wo)
   fail
 
 /// ForceLeave is used to have the agent eject a failed node
-let forceLeave state : WriteCall<string, unit> =
+let forceLeave state : WriteCallNoMeta<string, unit> =
   let createRequest =
     writeCallEntity state.config "agent/force-leave"
 

@@ -9,8 +9,7 @@ open System
 let tests =
   testList "Event tests" [
     testCase "can event fire" <| fun _ ->
-      let listing = Event.fire state (UserEvent.Instance "b54fe110-7af5-cafc-d1fb-afc8ba432b1c" "test event") []
-      listing |> ignore      
+      let listing = Event.fire state ((UserEvent.Instance "b54fe110-7af5-cafc-d1fb-afc8ba432b1c" "test event"), [])
       ensureSuccess listing <| fun (listing, meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "value: %s" listing)

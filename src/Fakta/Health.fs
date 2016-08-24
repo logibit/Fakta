@@ -19,9 +19,9 @@ let internal queryFilters state =
 
 let getValuesByName state (path : string) (action:string): QueryCall<string, HealthCheck list> =  
   let createRequest =
-      fun (name, opts) -> string name, opts
-      >> queryCallEntityUri state.config path
-      >> basicRequest state.config Get
+    fun (name, opts) ->string name, opts
+    >> queryCallEntityUri state.config path
+    >> basicRequest state.config Get
 
   let filters =
     queryFilters state action
@@ -31,7 +31,7 @@ let getValuesByName state (path : string) (action:string): QueryCall<string, Hea
 
 /// Checks is used to return the checks associated with a service
 let checks (state : FaktaState) : QueryCall<string, HealthCheck list> =
-  let checks = 
+  let checks =
     fun (n, wo) ->
       getValuesByName state ("health/checks/")  "checks" (n, wo)
   checks
@@ -39,7 +39,7 @@ let checks (state : FaktaState) : QueryCall<string, HealthCheck list> =
 
 /// Node is used to query for checks belonging to a given node
 let node (state : FaktaState) : QueryCall<string, HealthCheck list> =
-  let node = 
+  let node =
     fun (n, wo) ->
       getValuesByName state ("health/node/")  "node" (n, wo)
   node
@@ -64,4 +64,4 @@ let service state: QueryCall<string * (*tag*) string * (*passingOnly*) bool, Ser
     queryFilters state "service"
     >> codec createRequest fstOfJson
 
-  HttpFs.Client.getResponse |> filters
+  getResponse |> filters

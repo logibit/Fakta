@@ -3,6 +3,7 @@ module Fakta.IntegrationTests.TestFactory
 
 open System
 open NodaTime
+open HttpFs.Client
 open Fakta
 open Fakta.Logging
 open Fuchu
@@ -34,11 +35,19 @@ let initVault =
     { secretShares = 1
       secretThreshold =1
       pgpKeys = []}
-  let state = FaktaState.create APIType.Vault "" [] logger
-  let req = run (Fakta.Vault.Init.init state (reqJson, []))
+
+  let state =
+    FaktaState.create APIType.Vault "" [] logger HttpFsState.empty
+
+  let req =
+    run (Fakta.Vault.Init.init state (reqJson, []))
+
   match req with 
-  | Choice1Of2 r -> FaktaState.create APIType.Vault r.rootToken r.keys logger
-  | Choice2Of2 _ -> state
+  | Choice1Of2 r ->
+    FaktaState.create APIType.Vault r.rootToken r.keys logger HttpFsState.empty
+
+  | Choice2Of2 _ ->
+    state
 
 let initState = initVault
 let vaultState = FaktaState.create APIType.Vault "" [] logger
@@ -47,7 +56,8 @@ let state =
   { config = consulConfig
     logger = logger// NoopLogger
     clock  = SystemClock.Instance 
-    random = Random () }
+    random = Random ()
+    clientState = HttpFsState.empty }
 
 let ensureSuccess computation kontinue =
   match run computation with
