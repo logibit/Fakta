@@ -59,7 +59,7 @@ let nodes state : QueryCall<Node list> =
 
 /// endpoint for directly removing entries from the Catalog. Note: it is usually preferrable 
 /// instead to use the agent endpoints for deregistration as they are simpler and perform anti-entropy.
-let deregister state : WriteCall<CatalogDeregistration, unit> =
+let deregister state : WriteCallNoMeta<CatalogDeregistration, unit> =
   let createRequest (dereg, opts) =
     writeCallUri state.config "catalog/deregister" opts
     |> basicRequest state.config Put
@@ -73,7 +73,7 @@ let deregister state : WriteCall<CatalogDeregistration, unit> =
 
 ///mechanism for registering or updating entries in the catalog. Note: it is usually preferrable 
 ///instead to use the agent endpoints for registration as they are simpler and perform anti-entropy.
-let register state : WriteCall<CatalogRegistration, unit> =
+let register state : WriteCallNoMeta<CatalogRegistration, unit> =
   let createRequest (reg, opts) =
     writeCallUri state.config "catalog/register" opts
     |> basicRequest state.config Put

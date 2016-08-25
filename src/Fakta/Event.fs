@@ -18,30 +18,35 @@ let eventDottedPath (funcName: string) =
 let internal eventPath (operation: string) =
   [| "Fakta"; "Event"; operation |]
 
-let internal writeFilters state =
-  eventPath >> writeFilters state
+let internal writeFilters state singlePath =
+  writeFilters state (eventPath singlePath)
+  >> respBodyFilter
+  >> writeMetaFilter
 
 let internal queryFilters state =
   eventPath >> queryFilters state
 
+/// Fire is used to fire a new user event. Only the Name, Payload and Filters are respected. This returns the Id or an associated error. Cross DC requests are supported.
+/// Returns the id of the event back.
+let fire state : WriteCall<UserEvent, string> =
 
-/// Fire is used to fire a new user event. Only the Name, Payload and Filters are respected. This returns the ID or an associated error. Cross DC requests are supported.
-let fire (state : FaktaState) (event : UserEvent) (opts : WriteOptions) : Job<Choice<string * WriteMeta, Error>> = job {
-  let nodeVal, nodeKey = if event.nodeFilter.Equals("") then "","" else "node", event.nodeFilter
-  let serviceVal, serviceKey = if event.nodeFilter.Equals("") then "","" else "service", event.serviceFilter
-  let tagVal, tagKey = if event.nodeFilter.Equals("") then "","" else "tag", event.tagFilter
-  let urlPath = (sprintf "fire/%s" event.name)
-  let uriBuilder = UriBuilder.ofEvent state.config urlPath
-                    |> UriBuilder.mappendRange [ yield nodeVal, Some(nodeKey)
-                                                 yield serviceVal, Some(serviceKey)
-                                                 yield tagVal, Some(tagKey)]
-  let! result = call state (eventDottedPath "fire") id uriBuilder HttpMethod.Put
-  match result with
-  | Choice1Of2 (body, (dur, resp)) ->
-      let  item = if body = "" then UserEvent.empty else Json.deserialize (Json.parse body)
-      return Choice1Of2 (item.id, writeMeta dur)
-  | Choice2Of2 err -> return Choice2Of2(err)
-}
+  let createRequest (event, opts) =
+    let nodeVal, nodeKey = if event.nodeFilter.Equals("") then "","" else "node", event.nodeFilter
+    let serviceVal, serviceKey = if event.nodeFilter.Equals("") then "","" else "service", event.serviceFilter
+    let tagVal, tagKey = if event.nodeFilter.Equals("") then "","" else "tag", event.tagFilter
+
+    UriBuilder.ofEvent state.config (sprintf "fire/%s" event.name)
+    |> UriBuilder.mappendRange [ yield nodeVal, Some nodeKey
+                                 yield serviceVal, Some serviceKey
+                                 yield tagVal, Some tagKey ]
+    |> UriBuilder.toUri
+    |> basicRequest state.config Put
+
+  let filters =
+    writeFilters state "fire"
+    >> codec createRequest (fstOfJsonPrism ConsulResult.objectId)
+
+  HttpFs.Client.getResponse |> filters
 
 /// IDToIndex is a bit of a hack. This simulates the index generation to convert an event ID into a WaitIndex.
 let idToIndex (state : FaktaState) (uuid : Guid) : uint64 =
@@ -63,5 +68,3 @@ let list state: QueryCall<(*name*) string, UserEvent list> =
     >> codec createRequest fstOfJson
 
   HttpFs.Client.getResponse |> filters
-
-

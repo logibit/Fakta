@@ -20,7 +20,7 @@ let tests =
       let s = initVault
       match s.config.token with
       | None -> Tests.failtest "Vault init failed."
-      | _ -> 
+      | _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "value: %s" s.config.token.Value)
 ]

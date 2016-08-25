@@ -33,7 +33,7 @@ let getSessionEntries (action: string) (path: string) (state : FaktaState): Quer
 
 /// Create makes a new session. Providing a session entry can customize the
 /// session. It is recommended you give a Name as the options.
-let create state: WriteCall<SessionOptions, string> =
+let create state: WriteCallNoMeta<SessionOptions, string> =
   let writeJsonBody : SessionOptions -> Json<unit> =
       List.fold (fun acc -> function
                 | LockDelay dur -> acc *> Json.write "LockDelay" (Duration.consulString dur)
@@ -60,7 +60,7 @@ let create state: WriteCall<SessionOptions, string> =
 
 
 /// CreateNoChecks is like Create but is used specifically to create a session with no associated health checks.
-let createNoChecks state: WriteCall<SessionOptions, string> =  
+let createNoChecks state: WriteCallNoMeta<SessionOptions, string> =  
   let cr (so, opts) =
     let newSessionOpts =
       so
@@ -70,7 +70,7 @@ let createNoChecks state: WriteCall<SessionOptions, string> =
   cr
 
 /// Destroy invalides a given session
-let destroy state: WriteCall<string, unit> =
+let destroy state: WriteCallNoMeta<string, unit> =
   let createRequest =
     writeCallEntityUri state.config "session/destroy"
     >> basicRequest state.config Put
@@ -108,7 +108,7 @@ let node (state : FaktaState) : QueryCall<string, SessionEntry list> =
   node
 
 /// Renew renews the TTL on a given session
-let renew state: WriteCall<string, SessionEntry> =
+let renew state: WriteCallNoMeta<string, SessionEntry> =
   let createRequest =
     fun (entity, opts) -> string entity, opts
     >> writeCallEntityUri state.config "session/renew"

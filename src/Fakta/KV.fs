@@ -1,6 +1,7 @@
 ﻿module Fakta.KV
 
 open HttpFs.Client
+open HttpFs.Composition
 open Fakta
 open Fakta.Impl
 open Hopac
@@ -26,15 +27,7 @@ let get state: QueryCall<string, KVPair> =
     queryFilters state "get"
     >> codec createRequest (fstOfJsonPrism ConsulResult.firstObjectOfArray)
 
-  HttpFs.Client.getResponse |> filters
-
-
-let getRaw (state : FaktaState) (key : Key) (opts : QueryOptions) : Job<Choice<byte [] * QueryMeta, Error>> =
-  raise (TBDException "TODO")
-
-/// Keys is used to list all the keys under a prefix. Optionally, a separator can be used to limit the responses.
-let keys (s : FaktaState) (key : Key) (sep : string option) (opts : QueryOptions) : Job<Choice<Keys * QueryMeta, Error>> =
-  raise (TBDException "TODO")
+  getResponse |> filters
 
 /// List is used to lookup all keys (and their values) under a prefix
 let list state : QueryCall<string, KVPairs> =
@@ -46,7 +39,7 @@ let list state : QueryCall<string, KVPairs> =
     queryFilters state "list"
     >> codec createRequest fstOfJson
 
-  HttpFs.Client.getResponse |> filters
+  getResponse |> filters
 
 
 ////////////////////// WRITING /////////////////////
@@ -63,32 +56,24 @@ let private mkReq methd (state : FaktaState) (kvp : KVPair) fUri (opts : WriteOp
 let private mkPut = mkReq HttpMethod.Put
 let private mkDel = mkReq HttpMethod.Delete
 
-let private boolResponse getResponse req =
-  job {
-    let! response, dur = Duration.timeJob (fun () -> getResponse req)
-    match response with
-    | Choice1Of2 response ->
-      use response = response
-      match response.statusCode with
-      | 200 ->
-        let! body = Response.readBodyAsString response
-        match body with
-        | "true" ->
-          return Choice1Of2 (true, { requestTime = dur })
+let private only200s : JobFilter<_, _, _, _> =
+  fun next ->
+    next >> Alt.afterFun (fun resp ->
+      if not (resp.statusCode = 200) then
+        Choice.createSnd (Message (sprintf "Unknown response code %d" resp.statusCode))
+      else
+        Choice.create resp)
 
-        | "false" ->
-          return Choice1Of2 (false, { requestTime = dur })
+let internal eventPath (operation: string) =
+  [| "Fakta"; "KV"; operation |]
 
-        | x ->
-          return Choice2Of2 (Message x)
-
-      | x ->
-        return Choice2Of2 (Message (sprintf "unkown status code %d for response %A" x response))
-
-
-    | Choice2Of2 exx ->
-      return Choice2Of2 (Error.ConnectionFailed exx)
-  }
+let private boolFilter state createRequest path  =
+  timerFilterNamed state.clientState (eventPath path)
+  >> only200s
+  >> exnsFilter
+  >> respBodyFilter
+  >> writeMetaFilter
+  >> codec createRequest fstOfJson
 
 /// Acquire is used for a lock acquisiton operation. The Key, Flags, Value and
 /// Session are respected. Returns true on success or false on failures.
@@ -98,49 +83,61 @@ let private boolResponse getResponse req =
 /// whatever information clients require to communicate with your application
 /// (e.g., it could be a JSON object that contains the node's name and the
 /// application's port).
-let acquire (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Job<Choice<bool * WriteMeta, Error>> =
-  if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
-  mkPut state kvp (flip UriBuilder.mappend ("acquire", kvp.session))
-        opts (BodyRaw kvp.value)
-  |> boolResponse (getResponse state [| "Fakta"; "KV"; "acquire" |])
+let acquire (state : FaktaState) : WriteCall<KVPair, bool> =
+  let createRequest (kvp : KVPair, opts) =
+    if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
+    mkPut state kvp (flip UriBuilder.mappend ("acquire", kvp.session))
+          opts (BodyRaw kvp.value)
+
+  getResponse |> boolFilter state createRequest "acquire"
 
 /// Delete is used to delete a single key
-let delete (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Job<Choice<bool * WriteMeta, Error>> =
-  mkDel state kvp (mCas |> Option.fold (fun s t ->
-                                         flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
-                                       id)
-           opts (BodyRaw [||])
-  |> boolResponse (getResponse state [| "Fakta"; "KV"; "delete" |])
+let delete (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
+  let createRequest ((kvp : KVPair, mCas : Index option), opts : WriteOptions) =
+    mkDel state kvp (mCas |> Option.fold (fun s t ->
+                      flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
+                      id)
+            opts (BodyRaw [||])
 
-/// DeleteCAS is used for a Delete Check-And-Set operation. The Key and ModifyIndex are respected. Returns true on success or false on failures.
-let deleteCAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Job<Choice<bool * WriteMeta, Error>> =
-  delete state kvp (Some kvp.modifyIndex) opts
+  getResponse |> boolFilter state createRequest "delete"
+
+/// DeleteCAS is used for a Delete Check-And-Set operation. The Key and
+/// ModifyIndex are respected. Returns true on success or false on failures.
+let deleteCAS (state : FaktaState) : WriteCall<KVPair, bool>=
+  delete state
+  |> JobFunc.mapLeft (fun (kvpair, opts) -> (kvpair, Some kvpair.modifyIndex), opts)
 
 /// DeleteTree is used to delete all keys under a prefix
-let deleteTree (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Job<Choice<bool * WriteMeta, Error>> =
-  mkDel state kvp (mCas |> Option.fold (fun s t ->
-                                         flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
-                                       id
-                   >> flip UriBuilder.mappend ("recurse", None))
-           opts (BodyRaw [||])
-  |> boolResponse (getResponse state [|"Fakta"; "KV"; "deleteTree"|])
+let deleteTree (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
+  let createRequest ((kvp : KVPair, mCas : Index option), opts : WriteOptions) =
+    mkDel state kvp (mCas |> Option.fold (fun s t ->
+                                          flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
+                                        id
+                    >> flip UriBuilder.mappend ("recurse", None))
+            opts (BodyRaw [||])
+
+  getResponse |> boolFilter state createRequest "deleteTree"
 
 /// Put is used to write a new value. Only the Key, Flags and Value is respected.
-let put (state : FaktaState) (kvp : KVPair) (mCas : Index option) (opts : WriteOptions) : Job<Choice<bool * WriteMeta, Error>> =
-  mkPut state kvp
-        (mCas |> Option.fold (fun s t ->
-                               flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
-                             id)
-        opts (BodyRaw kvp.value)
-  |> boolResponse (getResponse state [|"Fakta"; "KV"; "put"|])
+let put (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
+  let createRequest ((kvp : KVPair, mCas : Index option), opts : WriteOptions) =
+    mkPut state kvp
+          (mCas |> Option.fold (fun s t ->
+                                flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
+                              id)
+          opts (BodyRaw kvp.value)
+
+  getResponse |> boolFilter state createRequest "put"
 
 /// CAS is used for a Check-And-Set operation. The Key, ModifyIndex, Flags and Value are respected. Returns true on success or false on failures.
-let CAS (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Job<Choice<bool * WriteMeta, Error>> =
-  put state kvp (Some kvp.modifyIndex) opts
+let CAS (state : FaktaState) =
+  put state
+  |> JobFunc.mapLeft (fun (kvp, opts) -> (kvp, Some kvp.modifyIndex), opts)
 
 /// Release is used for a lock release operation. The Key, Flags, Value and
 /// Session are respected. Returns true on success or false on failures.
-let release (state : FaktaState) (kvp : KVPair) (opts : WriteOptions) : Job<Choice<bool * WriteMeta, Error>> =
-  if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
-  mkPut state kvp (flip UriBuilder.mappend ("release", kvp.session)) opts (BodyRaw [||])
-  |> boolResponse (getResponse state [|"Fakta"; "KV"; "release"|])
+let release (state : FaktaState) : WriteCall<KVPair, bool> =
+  let createRequest (kvp : KVPair, opts) =
+    if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
+    mkPut state kvp (flip UriBuilder.mappend ("release", kvp.session)) opts (BodyRaw [||])
+  getResponse |> boolFilter state createRequest "release"

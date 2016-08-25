@@ -21,7 +21,7 @@ let internal queryFilters state =
 ///The clone endpoint must be hit with a PUT. It clones the ACL identified by the id portion of the path and returns a new token ID. This allows a token to serve as a template for others, making it simple to generate new tokens without complex rule management.
 ///
 /// The request is automatically routed to the authoritative ACL datacenter. Requests to this endpoint must be made with a management token.
-let clone (state : FaktaState) : WriteCall<Id, Id> =
+let clone (state : FaktaState) : WriteCallNoMeta<Id, Id> =
   let createRequest =
     fun (entity, opts) -> string entity, opts
     >> writeCallEntityUri state.config "acl/clone"
@@ -43,7 +43,7 @@ let clone (state : FaktaState) : WriteCall<Id, Id> =
 /// By constrast, a client token can only perform actions as permitted by the rules associated. Client tokens can never manage ACLs. Given this limitation, only a management token can be used to make requests to the /v1/acl/create endpoint.
 ///
 /// In any Consul cluster, only a single datacenter is authoritative for ACLs, so all requests are automatically routed to that datacenter regardless of the agent to which the request is made.
-let create state : WriteCall<ACLEntry, Id> =
+let create state : WriteCallNoMeta<ACLEntry, Id> =
   let createRequest (entry, opts) =
     writeCallUri state.config "acl/create" opts
     |> basicRequest state.config Put
@@ -59,7 +59,7 @@ let create state : WriteCall<ACLEntry, Id> =
 ///The destroy endpoint must be hit with a PUT. This endpoint destroys the ACL token identified by the id portion of the path.
 ///
 /// The request is automatically routed to the authoritative ACL datacenter. Requests to this endpoint must be made with a management token.
-let destroy state : WriteCall<Id, unit> =
+let destroy state : WriteCallNoMeta<Id, unit> =
   let createRequest =
     writeCallEntityUri state.config "acl/destroy"
     >> basicRequest state.config Put
@@ -101,7 +101,7 @@ let list state : QueryCall<ACLEntry list> =
 /// Only the ID field is mandatory. The other fields provide defaults: the Name and Rules fields default to being blank, and Type defaults to "client". The format of Rules is documented here:
 ///
 /// https://www.consul.io/docs/internals/acl.html
-let update state : WriteCall<ACLEntry, unit> =
+let update state : WriteCallNoMeta<ACLEntry, unit> =
   let createRequest (entry, opts) =
     writeCallUri state.config "acl/update" opts
     |> basicRequest state.config Put
