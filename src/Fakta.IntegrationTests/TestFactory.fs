@@ -33,7 +33,7 @@ module Message =
 let initVault =
   let reqJson : InitRequest =
     { secretShares = 1
-      secretThreshold =1
+      secretThreshold = 1
       pgpKeys = []}
 
   let state =
@@ -42,7 +42,7 @@ let initVault =
   let req =
     run (Fakta.Vault.Init.init state (reqJson, []))
 
-  match req with 
+  match req with
   | Choice1Of2 r ->
     FaktaState.create APIType.Vault r.rootToken r.keys logger HttpFsState.empty
 
@@ -50,7 +50,7 @@ let initVault =
     state
 
 let initState = initVault
-let vaultState = FaktaState.create APIType.Vault "" [] logger
+let vaultState = FaktaState.create APIType.Vault "" [] logger HttpFsState.empty
 
 let state =
   { config = consulConfig

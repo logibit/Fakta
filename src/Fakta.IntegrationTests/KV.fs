@@ -19,11 +19,11 @@ let tests =
   testList "KV interactions" [
     testCase "can put" <| fun _ ->
       let pair = KVPair.Create("world", "goodbye")
-      let put = KV.put state pair None []
+      let put = KV.put state ((pair, None), [])
       ensureSuccess put ignore
 
     testCase "can put -> get" <| fun _ ->
-      given (KV.put state (KVPair.Create("monkey", "business")) None [])
+      given (KV.put state ((KVPair.Create("monkey", "business"), None), []))
       ensureSuccess (KV.get state ("monkey", [])) <| fun (kvp, _) ->
         Assert.Equal("monkeys do monkey business", "business", kvp.utf8String)
 
@@ -41,10 +41,10 @@ let tests =
       let kvp = KVPair.CreateForAcquire(session, "service/foo-router/mutex/send-email", epInfo, 1337UL)
       try
         try
-          let res, _ = ensureSuccess (KV.acquire state kvp []) id
+          let res, _ = ensureSuccess (KV.acquire state (kvp, [])) id
           if not res then Tests.failtest "failed to acquire lock"
         finally
-          let res, _ = ensureSuccess (KV.release state kvp []) id
+          let res, _ = ensureSuccess (KV.release state (kvp, [])) id
           if not res then Tests.failtest "failed to release lock"
       finally
         given (Session.destroy state (session, []))
