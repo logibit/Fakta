@@ -1,3 +1,4 @@
+FSharp.Core
 Expecto
 Expecto.FsCheck
 Chiron
@@ -5,4 +6,3 @@ NodaTime
 Http.fs
 Aether
 FParsec
-FSharp.Core
