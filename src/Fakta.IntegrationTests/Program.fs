@@ -1,6 +1,6 @@
 ﻿module Fakta.IntegrationTests.Program
 
-open Fuchu
+open Expecto
 
 [<EntryPoint>]
 let main argv = 

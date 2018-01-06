@@ -1,4 +1,4 @@
-﻿open Fuchu
+﻿open Expecto
 
 [<EntryPoint>]
 let main argv = 

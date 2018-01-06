@@ -1,6 +1,6 @@
 ﻿module Fakta.IntegrationTests.Session
 
-open Fuchu
+open Expecto
 open NodaTime
 
 open Fakta

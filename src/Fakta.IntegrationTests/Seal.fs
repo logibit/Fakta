@@ -1,6 +1,6 @@
 ﻿module Fakta.IntegrationTests.Seal
 
-open Fuchu
+open Expecto
 open Fakta
 open Fakta.Logging
 open Fakta.Vault

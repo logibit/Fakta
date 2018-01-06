@@ -1,6 +1,6 @@
 ﻿module Fakta.IntegrationTests.Health
 
-open Fuchu
+open Expecto
 open Fakta
 open Fakta.Logging
 

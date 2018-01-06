@@ -1,6 +1,6 @@
 ﻿module Fakta.IntegrationTests.GenerateRoot
 
-open Fuchu
+open Expecto
 open Fakta
 open Fakta.Logging
 open Fakta.Vault

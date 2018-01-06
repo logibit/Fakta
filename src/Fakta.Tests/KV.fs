@@ -1,6 +1,6 @@
 ﻿module Fakta.Tests.KV
 
-open Fuchu
+open Expecto
 
 open Fakta
 

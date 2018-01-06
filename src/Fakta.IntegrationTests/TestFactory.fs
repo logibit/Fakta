@@ -6,7 +6,7 @@ open NodaTime
 open HttpFs.Client
 open Fakta
 open Fakta.Logging
-open Fuchu
+open Expecto
 open Hopac
 
 let consulConfig = FaktaConfig.consulEmpty

@@ -1,7 +1,7 @@
 ﻿module Fakta.IntegrationTests.Secrets
 
 open System
-open Fuchu
+open Expecto
 open Fakta
 open Fakta.Logging
 open Fakta.Vault

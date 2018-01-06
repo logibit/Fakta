@@ -2,7 +2,7 @@
 
 open System.Net
 open Chiron
-open Fuchu
+open Expecto
 open Fakta
 open Fakta.Logging
 

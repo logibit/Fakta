@@ -1,6 +1,6 @@
 ﻿module Fakta.IntegrationTests.Leader
 
-open Fuchu
+open Expecto
 open Fakta
 open Fakta.Logging
 open Fakta.Vault
