@@ -7,49 +7,52 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   testList "Catalog tests" [
-    testCase "catalog.datacenters -> all the known datacenters" <| fun _ ->
+    testCaseAsync "catalog.datacenters -> all the known datacenters" <| async {
       let listing = Catalog.datacenters state []
-      listing |> ignore      
-      ensureSuccess listing <| fun (dcs, meta) ->
+      do ignore listing
+      do! ensureSuccess listing <| fun (dcs, meta) ->
         let logger = state.logger
         for l in dcs do
           logger.logSimple (Message.sprintf Debug "value: %s" l)
+    }
 
-    testCase "catalog.nodes -> all the known nodes" <| fun _ ->
+    testCaseAsync "catalog.nodes -> all the known nodes" <| async {
       let listing = Catalog.nodes state []
-      ensureSuccess listing <| fun (nodes, meta) ->
+      do! ensureSuccess listing <| fun (nodes, meta) ->
         let logger = state.logger
         for node in nodes do
           logger.logSimple (Message.sprintf Debug "key: %s" node.node)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
-    
+    }
 
-    testCase "catalog.node -> service information about a single node" <| fun _ ->
+    testCaseAsync "catalog.node -> service information about a single node" <| async {
       let listing = Catalog.node state (System.Environment.MachineName, [])
-      ensureSuccess listing <| fun (node, meta) ->
+      do! ensureSuccess listing <| fun (node, meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "key: %s" node.node.node)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
 
-    testCase "catalog.service -> entries for a given service" <| fun _ ->
+    testCaseAsync "catalog.service -> entries for a given service" <| async {
       let listing = Catalog.service state (("consul", ""), [])
-      ensureSuccess listing <| fun (services, meta) ->
+      do! ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do
           logger.logSimple (Message.sprintf Debug "service node: %s" service.node)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
 
-    testCase "catalog.services -> all known services " <| fun _ ->
+    testCaseAsync "catalog.services -> all known services " <| async {
       let listing = Catalog.services state []
-      ensureSuccess listing <| fun (services, meta) ->
+      do! ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do
           logger.logSimple (Message.sprintf Debug "service key: %s  value length: %i" service.Key service.Value.Length)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
 
-    testCase "catalog.register" <| fun _ ->
-       
-      let agentCheck:AgentCheck = 
+    testCaseAsync "catalog.register" <| async {
+      let agentCheck:AgentCheck =
         { node = "COMP05"
           checkID = "service:consulcheck"
           name = "consul test health check"
@@ -71,15 +74,17 @@ let tests =
 
       let catalogReg = (CatalogRegistration.Instance "COMP05" "127.0.0.1" "" agentCheck agentService)
       let listing = Catalog.register state (catalogReg, [])
-      ensureSuccess listing <| fun (meta) ->
+      do! ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
 
-    testCase "catalog.deregister" <| fun _ ->
+    testCaseAsync "catalog.deregister" <| async {
       let catalogDereg = (CatalogDeregistration.Instance "COMP05" "" "127.0.0.1" "consul" "")
       let listing = Catalog.deregister state (catalogDereg, [])
-      ensureSuccess listing <| fun (meta) ->
+      do! ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
   ]
 

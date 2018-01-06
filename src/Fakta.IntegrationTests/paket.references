@@ -5,6 +5,4 @@ NodaTime
 Http.fs
 Aether
 FParsec
-
-group Test
 FSharp.Core

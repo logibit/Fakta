@@ -8,18 +8,21 @@ open Fakta.Vault
 [<Tests>]
 let tests =
   testList "Vault capabilities tests" [
-    testCase "sys.capabilities -> capabilities of the token on the given path." <| fun _ ->
+    testCaseAsync "sys.capabilities -> capabilities of the token on the given path." <| async {
+      let! initState = initState
       let map = Map.empty.Add("token", initState.config.token.Value).Add("path", "secret")
       let listing = Capabilities.capabilities initState (map, [])
-      ensureSuccess listing <| fun p ->
+      do! ensureSuccess listing <| fun p ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Capabilities: %A" p)
+    }
 
-    testCase "sys.capabilities-self -> capabilities of client token on the given path." <| fun _ ->
+    testCaseAsync "sys.capabilities-self -> capabilities of client token on the given path." <| async {
+      let! initState = initState
       let map = Map.empty.Add("path", "secret")
       let listing = Capabilities.capabilitiesSelf initState (map, [])
-      ensureSuccess listing <| fun p ->
+      do! ensureSuccess listing <| fun p ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Capabilities-self: %A" p)
-        
-        ]
+    }
+  ]

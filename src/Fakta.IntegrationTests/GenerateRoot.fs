@@ -1,5 +1,6 @@
 ﻿module Fakta.IntegrationTests.GenerateRoot
 
+open Hopac
 open Expecto
 open Fakta
 open Fakta.Logging
@@ -17,25 +18,27 @@ let generateRootInitTest =
     logger.logSimple (Message.sprintf Debug "New root generation result: %A" resp)
     resp.nonce
 
-let nonce = generateRootInitTest
+let nonce = memo generateRootInitTest
 
 [<Tests>]
 let tests =
   testList "Vault root generation tests" [
-    testCase "sys.generate-root.status -> get root generation status" <| fun _ ->
+    testCaseAsync "sys.generate-root.status -> get root generation status" <| async {
       let listing = GenerateRoot.status vaultState []
-      ensureSuccess listing <| fun status ->
+      do! ensureSuccess listing <| fun status ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Root generation status: %A" status)
-    
-    testCase "sys.generate-root.init -> initializes a new root generation attempt" <| fun _ ->
-      nonce |> ignore
+    }
 
-    testCase "sys.generate-root.cancel -> cancels any in-progress root generation attempt." <| fun _ ->
+    testCase "sys.generate-root.init -> initializes a new root generation attempt" <| fun _ ->
+      do ignore nonce
+
+    testCaseAsync "sys.generate-root.cancel -> cancels any in-progress root generation attempt." <| async {
       let listing = GenerateRoot.cancel vaultState []
-      ensureSuccess listing <| fun _ ->
+      do! ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Root generations cancelled.")
+    }
 
 //    testCase "sys.generate-root.update -> Update a master key" <| fun _ ->
 //      let listing = GenerateRoot.Update initState ((initState.config.keys.Value.[0],nonce), [])

@@ -1,6 +1,7 @@
 ﻿module Fakta.IntegrationTests.Keys
 
 open System
+open Hopac
 open Expecto
 open Fakta
 open Fakta.Logging
@@ -28,7 +29,6 @@ let base64pgp (pgp: string) =
   pgp
   |> Encoding.UTF8.GetBytes
   |> Convert.ToBase64String
-    
 
 let initRequest: RekeyInitRequest =
   { secretShares = 1
@@ -37,50 +37,69 @@ let initRequest: RekeyInitRequest =
     backup = None//Some true
   }
 
-
-
 [<Tests>]
 let tests =
   let nonce =
-    let listing = Keys.rekeyInit initState (initRequest, [])
-    ensureSuccess listing <| fun (resp) ->
-      let logger = state.logger
-      logger.logSimple (Message.sprintf Debug "Nonce: %s PGPFIngerPrints: %A" resp.nonce resp.pgpFIngerPrints)
-      resp.nonce
+    memo <| job {
+      let! initState = initState
+      let listing = Keys.rekeyInit initState (initRequest, [])
+      return! ensureSuccess listing <| fun (resp) ->
+        let logger = state.logger
+        logger.logSimple (Message.sprintf Debug "Nonce: %s PGPFIngerPrints: %A" resp.nonce resp.pgpFIngerPrints)
+        resp.nonce
+    }
 
   testList "Vault Keys tests" [
-    testCase "sys.keysStatus ->  information about the current encryption key " <| fun _ ->
+    testCaseAsync "sys.keysStatus ->  information about the current encryption key " <| async {
+      let! initState = initState
       let listing = Keys.keyStatus initState []
-      ensureSuccess listing <| fun (status) ->
+      do! ensureSuccess listing <| fun (status) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Time: %s Term: %i" status.installTime status.term)
+    }
 
-    testCase "sys.rotate ->  rotation of the backend encryption key " <| fun _ ->
-        let listing = Keys.rotate initState []
-        ensureSuccess listing <| fun (status) ->
-          let logger = state.logger
-          logger.logSimple (Message.sprintf Debug "Encryption key rotated.")
+    testCaseAsync "sys.rotate ->  rotation of the backend encryption key " <| async {
+      let! initState = initState
+      let listing = Keys.rotate initState []
+      do! ensureSuccess listing <| fun (status) ->
+        let logger = state.logger
+        logger.logSimple (Message.sprintf Debug "Encryption key rotated.")
+    }
 
-    testCase "sys.rekeyStatus ->  progress of the current rekey attempt" <| fun _ ->
+    testCaseAsync "sys.rekeyStatus ->  progress of the current rekey attempt" <| async {
+      let! initState = initState
       let listing = Keys.rekeyStatus initState []
-      ensureSuccess listing <| fun (resp) ->
+      do! ensureSuccess listing <| fun (resp) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Nonce: %s PGPFIngerPrints: %A" resp.nonce resp.pgpFIngerPrints)
+    }
 
-    testCase "sys.rekeyInit ->  new rekey attempt" <| fun _ ->
-      nonce |> ignore
+    testCaseAsync "sys.rekeyInit ->  new rekey attempt" <| async {
+      let! n = nonce
+      do ignore n
+    }
 
-    testCase "sys.rekeyUpdate ->  new rekey attempt" <| fun _ ->
-      let listing = Keys.rekeyUpdate initState ((Map.empty.Add("nonce", nonce).Add("key", initState.config.keys.Value.[0])), [])
-      ensureSuccess listing <| fun (resp) ->
+    testCaseAsync "sys.rekeyUpdate ->  new rekey attempt" <| async {
+      let! initState = initState
+      let! nonce = nonce
+      let m =
+        Map [
+          "nonce", nonce
+          "key", initState.config.keys.Value.[0]
+        ]
+      let listing = Keys.rekeyUpdate initState (m, [])
+      do! ensureSuccess listing <| fun (resp) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Nonce: %s PGPFIngerPrints: %A" resp.nonce resp.pgpFIngerPrints)
+    }
 
-    testCase "sys.rekeyCancel ->  cancel rekey attempts" <| fun _ ->
+    testCaseAsync "sys.rekeyCancel ->  cancel rekey attempts" <| async {
+      let! initState = initState
       let listing = Keys.rekeyCancel initState []
-      ensureSuccess listing <| fun _ ->
+      do! ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Rekey operation cancelled")
+    }
 
 //    testCase "sys.rekeyBackupRetrieve ->  return the backup copy of PGP-encrypted unseal keys" <| fun _ ->
 //      let listing = Keys.RekeyRetrieveBackup initState []
@@ -88,11 +107,13 @@ let tests =
 //        let logger = state.logger
 //        logger.logSimple (Message.sprintf Debug "Backup retrieved: %s, %A" backup.Nonce backup.Keys)
 
-    testCase "sys.rekeyBackupRetrieve ->  delete the backup copy of PGP-encrypted unseal keys" <| fun _ ->
+    testCaseAsync "sys.rekeyBackupRetrieve ->  delete the backup copy of PGP-encrypted unseal keys" <| async {
+      let! initState = initState
       let listing = Keys.rekeyDeleteBackup initState []
-      ensureSuccess listing <| fun _ ->
+      do! ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Backup deleted")
+    }
 
 /// 500 - unsupported path
 //    testCase "sys.rekeyRecoveryStatus ->  progress of the current rekey attempt" <| fun _ ->

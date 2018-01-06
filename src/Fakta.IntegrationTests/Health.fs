@@ -8,36 +8,39 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   testList "Health tests" [
-    testCase "health.node -> checks of given node" <| fun _ ->
+    testCaseAsync "health.node -> checks of given node" <| async {
       let listing = Health.node state ("comp05", [])
-      ensureSuccess listing <| fun (checks, meta) ->
+      do! ensureSuccess listing <| fun (checks, meta) ->
         let logger = state.logger
         for check in checks do
           logger.logSimple (Message.sprintf Debug "key: %s, value: %s" check.name check.node)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
 
-    testCase "health.checks -> checks associated with a service" <| fun _ ->
+    testCaseAsync "health.checks -> checks associated with a service" <| async {
       let listing = Health.checks state ("serviceReg", [])
-      ensureSuccess listing <| fun (checks, meta) ->
+      do! ensureSuccess listing <| fun (checks, meta) ->
         let logger = state.logger
         for check in checks do
           logger.logSimple (Message.sprintf Debug "key: %s, value: %s" check.name check.node)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
 
-    testCase "health.service -> health and service information" <| fun _ ->
+    testCaseAsync "health.service -> health and service information" <| async {
       let listing = Health.service state (("consul", "", true), [])
-      ensureSuccess listing <| fun (services, meta) ->
+      do! ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do
           logger.logSimple (Message.sprintf Debug "key: %s, value: %s" service.service.service service.node.node)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
+    }
 
-    testCase "health.state -> checks in a given state" <| fun _ ->
+    testCaseAsync "health.state -> checks in a given state" <| async {
       let listing = Health.state state ("any", [])
-      ensureSuccess listing <| fun (services, meta) ->
+      do! ensureSuccess listing <| fun (services, meta) ->
         let logger = state.logger
         for service in services do
           logger.logSimple (Message.sprintf Debug "key: %s, value: %s" service.name service.node)
         logger.logSimple (Message.sprintf Debug "meta: %A" meta)
-    ]
-
+    }
+  ]

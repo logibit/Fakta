@@ -1,5 +1,6 @@
 ﻿module Fakta.IntegrationTests.ACL
 
+open Hopac
 open Expecto
 open Fakta
 open Fakta.Logging
@@ -7,48 +8,59 @@ open Fakta.Logging
 let tokenId =
   let aclInstance = ACLEntry.ClientTokenInstance "" "test management token" "management"
   let listing = ACL.create state (aclInstance , [])
-  ensureSuccess listing <| fun createdId ->
-    let logger = state.logger
-    logger.logSimple (Message.sprintf Debug "created acl id: %O" createdId)
-    createdId
+  memo (
+    ensureSuccess listing <| fun createdId ->
+      let logger = state.logger
+      logger.logSimple (Message.sprintf Debug "created acl id: %O" createdId)
+      createdId
+  )
 
 [<Tests>]
 let tests =
   testList "ACL tests" [
-    testCase "ACL.list -> all the ACL tokens " <| fun _ ->
+    testCaseAsync "ACL.list -> all the ACL tokens " <| async {
       let listing = ACL.list state []
-      ensureSuccess listing <| fun (aclNodes, meta) ->
+      do! ensureSuccess listing <| fun (aclNodes, meta) ->
         let logger = state.logger
         for acl in aclNodes do
           logger.logSimple (Message.sprintf Debug "acl id: %O" acl.id)
         logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
     testCase "ACL create" <| fun _ ->
       ignore "tested for each test during the setup"
 
-    testCase "ACL clone" <| fun _ ->
+    testCaseAsync "ACL clone" <| async {
+      let! tokenId = tokenId
       let listing = ACL.clone state (tokenId, [])
-      ensureSuccess listing <| fun clonedId ->
+      do! ensureSuccess listing <| fun clonedId ->
         state.logger.logSimple (Message.sprintf Debug "acl id: %O" clonedId)
+    }
 
-    testCase "ACL info" <| fun _ ->
+    testCaseAsync "ACL info" <| async {
+      let! tokenId = tokenId
       let listing = ACL.info state (tokenId, [])
-      ensureSuccess listing <| fun (info, meta) ->
+      do! ensureSuccess listing <| fun (info, meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "info.id: %O" info.id)
         logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
-    testCase "ACL rules update" <| fun _ ->
+    testCaseAsync "ACL rules update" <| async {
+      let! tokenId = tokenId
       let aclInstance = ACLEntry.ClientTokenInstance tokenId "client token" "client"
       let listing = ACL.update state (aclInstance, [])
-      ensureSuccess listing <| fun (meta) ->
+      do! ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
-    testCase "ACL destroy" <| fun _ ->
+    testCaseAsync "ACL destroy" <| async {
+      let! tokenId = tokenId
       let listing = ACL.destroy state (tokenId, [])
-      ensureSuccess listing <| fun (meta) ->
+      do! ensureSuccess listing <| fun (meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 ]
 

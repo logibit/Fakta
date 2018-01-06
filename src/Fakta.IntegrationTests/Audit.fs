@@ -11,36 +11,42 @@ let path = "vault-audit"
 [<Tests>]
 let tests =
   testList "Vault audit tests" [
-    testCase "sys.enableAudit -> enable file audit" <| fun _ ->
-      let audit: Audit = 
-        { path = Some(path)
+    testCaseAsync "sys.enableAudit -> enable file audit" <| async {
+      let audit: Audit =
+        { path = Some path
           ``type`` = "file"
           description = "audit file"
-          options = Some(Map.empty.Add("path", filePath))}
+          options = Some (Map [ "path", filePath ]) }
 
+      let! initState = initState
       let listing = Audit.enableAudit initState (audit, [])
-      ensureSuccess listing <| fun _ ->
+      do! ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Audit enabled")
+    }
 
-    testCase "sys.listAudit -> list of audits" <| fun _ ->
+    testCaseAsync "sys.listAudit -> list of audits" <| async {
+      let! initState = initState
       let listing = Audit.auditList initState []
-      ensureSuccess listing <| fun audit ->
+      do! ensureSuccess listing <| fun audit ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Audit list: %A" audit)
+    }
 
-    testCase "sys.hashAudit -> hash audit" <| fun _ ->
+    testCaseAsync "sys.hashAudit -> hash audit" <| async {
+      let! initState = initState
       let input = Map.empty.Add("input", "testInputAbc")
       let listing = Audit.hashAudit initState ((path, input), [])
-      ensureSuccess listing <| fun hash ->
+      do! ensureSuccess listing <| fun hash ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Audit list: %A" hash)
-    
-    testCase "sys.disableAudit -> disable audit" <| fun _ ->
+    }
+
+    testCaseAsync "sys.disableAudit -> disable audit" <| async {
+      let! initState = initState
       let listing = Audit.disableAudit initState (path, [])
-      ensureSuccess listing <| fun audit ->
+      do! ensureSuccess listing <| fun audit ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Audit list: %A" audit)
-
-
+    }
  ]

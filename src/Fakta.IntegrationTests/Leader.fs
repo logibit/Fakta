@@ -9,9 +9,10 @@ open Fakta.Vault
 [<Tests>]
 let tests =
   testList "Vault leader tests" [
-    testCase "sys.leader -> returns the high availability status and current leader instance of Vault" <| fun _ ->
+    testCaseAsync "sys.leader -> returns the high availability status and current leader instance of Vault" <| async {
       let listing = Leader.leader vaultState []
-      ensureSuccess listing <| fun resp ->
+      do! ensureSuccess listing <| fun resp ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Leader address: %s Ha_enabled: %A is_self: %A" resp.leaderAddress resp.haEnabled resp.isSelf)
+    }
 ]
