@@ -44,7 +44,7 @@ let list state : QueryCall<string, KVPairs> =
 
 ////////////////////// WRITING /////////////////////
 
-let private mkReq methd (state : FaktaState) (kvp : KVPair) fUri (opts : WriteOptions) (body : RequestBody) =
+let private mkReq methd (state: FaktaState) (kvp: KVPair) fUri (opts: WriteOptions) (body: RequestBody) =
   UriBuilder.ofKVKey state.config kvp.key
   |> UriBuilder.mappendRange (configOptKvs state.config)
   |> UriBuilder.mappendRange (writeOptsKvs opts)
@@ -83,7 +83,7 @@ let private boolFilter state createRequest path  =
 /// whatever information clients require to communicate with your application
 /// (e.g., it could be a JSON object that contains the node's name and the
 /// application's port).
-let acquire (state : FaktaState) : WriteCall<KVPair, bool> =
+let acquire (state: FaktaState) : WriteCall<KVPair, bool> =
   let createRequest (kvp : KVPair, opts) =
     if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
     mkPut state kvp (flip UriBuilder.mappend ("acquire", kvp.session))
@@ -92,7 +92,7 @@ let acquire (state : FaktaState) : WriteCall<KVPair, bool> =
   getResponse |> boolFilter state createRequest "acquire"
 
 /// Delete is used to delete a single key
-let delete (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
+let delete (state: FaktaState) : WriteCall<KVPair * Index option, bool> =
   let createRequest ((kvp : KVPair, mCas : Index option), opts : WriteOptions) =
     mkDel state kvp (mCas |> Option.fold (fun s t ->
                       flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
@@ -103,12 +103,12 @@ let delete (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
 
 /// DeleteCAS is used for a Delete Check-And-Set operation. The Key and
 /// ModifyIndex are respected. Returns true on success or false on failures.
-let deleteCAS (state : FaktaState) : WriteCall<KVPair, bool>=
+let deleteCAS (state: FaktaState) : WriteCall<KVPair, bool>=
   delete state
   |> JobFunc.mapLeft (fun (kvpair, opts) -> (kvpair, Some kvpair.modifyIndex), opts)
 
 /// DeleteTree is used to delete all keys under a prefix
-let deleteTree (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
+let deleteTree (state: FaktaState) : WriteCall<KVPair * Index option, bool> =
   let createRequest ((kvp : KVPair, mCas : Index option), opts : WriteOptions) =
     mkDel state kvp (mCas |> Option.fold (fun s t ->
                                           flip UriBuilder.mappend ("cas", (Some (t.ToString()))))
@@ -119,7 +119,7 @@ let deleteTree (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
   getResponse |> boolFilter state createRequest "deleteTree"
 
 /// Put is used to write a new value. Only the Key, Flags and Value is respected.
-let put (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
+let put (state: FaktaState) : WriteCall<KVPair * Index option, bool> =
   let createRequest ((kvp : KVPair, mCas : Index option), opts : WriteOptions) =
     mkPut state kvp
           (mCas |> Option.fold (fun s t ->
@@ -130,13 +130,13 @@ let put (state : FaktaState) : WriteCall<KVPair * Index option, bool> =
   getResponse |> boolFilter state createRequest "put"
 
 /// CAS is used for a Check-And-Set operation. The Key, ModifyIndex, Flags and Value are respected. Returns true on success or false on failures.
-let CAS (state : FaktaState) =
+let CAS (state: FaktaState) =
   put state
   |> JobFunc.mapLeft (fun (kvp, opts) -> (kvp, Some kvp.modifyIndex), opts)
 
 /// Release is used for a lock release operation. The Key, Flags, Value and
 /// Session are respected. Returns true on success or false on failures.
-let release (state : FaktaState) : WriteCall<KVPair, bool> =
+let release (state: FaktaState) : WriteCall<KVPair, bool> =
   let createRequest (kvp : KVPair, opts) =
     if Option.isNone kvp.session then invalidArg "kvp.session" "kvp.session needs to be a value"
     mkPut state kvp (flip UriBuilder.mappend ("release", kvp.session)) opts (BodyRaw [||])

@@ -8,7 +8,7 @@ open Fakta.Logging
 
 type EPInfo =
   { ep : IPEndPoint }
-  static member ToJson (epi : EPInfo) =
+  static member ToJson (epi: EPInfo) =
     Json.write "endpoint" (epi.ep.ToString())
 
 [<Tests>]

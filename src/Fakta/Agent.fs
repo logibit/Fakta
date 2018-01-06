@@ -115,7 +115,7 @@ let private setServiceMaintenance state enable : WriteCallNoMeta<Id * (*reason*)
 /// explaining the reason for placing the service into maintenance mode. This is
 /// simply to aid human operators. If no reason is provided, a default value
 /// will be used instead.
-let disableServiceMaintenance (state : FaktaState) : WriteCallNoMeta<Id * (*reason*) string, unit> =
+let disableServiceMaintenance (state: FaktaState) : WriteCallNoMeta<Id * (*reason*) string, unit> =
   setServiceMaintenance state false 
 
 /// The service maintenance endpoint allows placing a given service into
@@ -131,7 +131,7 @@ let disableServiceMaintenance (state : FaktaState) : WriteCallNoMeta<Id * (*reas
 /// explaining the reason for placing the service into maintenance mode. This is
 /// simply to aid human operators. If no reason is provided, a default value
 /// will be used instead.
-let enableServiceMaintenance (state : FaktaState) : WriteCallNoMeta<Id * (*reason*) string, unit> =
+let enableServiceMaintenance (state: FaktaState) : WriteCallNoMeta<Id * (*reason*) string, unit> =
   setServiceMaintenance state true
 
 /// This endpoint is hit with a GET and is used to instruct the agent to attempt
@@ -243,19 +243,19 @@ let updateTTL state (action:string): WriteCallNoMeta<Id * (*note*) string, unit>
   HttpFs.Client.getResponse |> filters
 
 /// PassTTL is used to set a TTL check to the passing state
-let passTTL (state : FaktaState) : WriteCallNoMeta<Id * (*note*) string, unit> =
+let passTTL (state: FaktaState) : WriteCallNoMeta<Id * (*note*) string, unit> =
   let pass((checkId,note), wo) =
     updateTTL state "pass" ((checkId,note), wo)
   pass
 
 /// WarnTTL is used to set a TTL check to the warning state
-let warnTTL (state : FaktaState)  : WriteCallNoMeta<Id * (*note*) string, unit> =
+let warnTTL (state: FaktaState)  : WriteCallNoMeta<Id * (*note*) string, unit> =
   let warn((checkId,note), wo) =
     updateTTL state "warn" ((checkId,note), wo)
   warn
 
 /// FailTTL is used to set a TTL check to the failing state
-let failTTL (state : FaktaState) : WriteCallNoMeta<Id * (*note*) string, unit> =
+let failTTL (state: FaktaState) : WriteCallNoMeta<Id * (*note*) string, unit> =
   let fail((checkId,note), wo) =
     updateTTL state "fail" ((checkId,note), wo)
   fail

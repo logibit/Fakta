@@ -18,7 +18,7 @@ open Aether.Operators
 [<Literal>]
 let APIVersion = "v1"
 
-let keyFor (m : string) (k : Key) =
+let keyFor (m: string) (k: Key) =
   let m', k' = m.Trim('/'), k.TrimStart('/') // valid to end with /
   if k = "/" then
     sprintf "/%s/%s/" APIVersion m'
@@ -29,14 +29,14 @@ type UriBuilder =
   { inner : System.UriBuilder
     kvs   : Map<string, string option> }
 
-  static member ofModuleAndPath (config : FaktaConfig) (``module`` : string) (path : string) =
+  static member ofModuleAndPath (config: FaktaConfig) (``module`` : string) (path: string) =
     { inner = UriBuilder(config.serverBaseUri, Path = keyFor ``module`` path)
       kvs   = Map.empty }
 
-  static member ofKVKey (config : FaktaConfig) (k : Key) =
+  static member ofKVKey (config: FaktaConfig) (k: Key) =
     UriBuilder.ofModuleAndPath config "kv" k
 
-  static member ofEvent (config : FaktaConfig) (k : Key) =
+  static member ofEvent (config: FaktaConfig) (k: Key) =
     UriBuilder.ofModuleAndPath config "event" k
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -50,18 +50,18 @@ module UriBuilder =
                 | n, Some ev -> String.Concat [ n; "="; ev ])
     >> String.concat "&"
 
-  let toUri (ub : UriBuilder) =
+  let toUri (ub: UriBuilder) =
     ub.inner.Query <- buildQuery ub.kvs
     ub.inner.Uri
 
   // mappend  :: Monoid a => a -> a -> a
-  let mappend (ub : UriBuilder) (k, v) =
+  let mappend (ub: UriBuilder) (k, v) =
     { ub with kvs = ub.kvs |> Map.put k v }
 
-  let mappendRange kvs (ub : UriBuilder) =
+  let mappendRange kvs (ub: UriBuilder) =
     List.fold mappend ub kvs
 
-let setConfigOpts (config : FaktaConfig) (req : Request) =
+let setConfigOpts (config: FaktaConfig) (req: Request) =
   config.credentials
   |> Option.fold (fun s creds -> Request.basicAuthentication creds.username creds.password req) req
 
@@ -69,7 +69,7 @@ let acceptJson =
   //withHeader (Accept "application/json")
   Request.setHeader (Accept "*/*")
 
-let withVaultHeader (config : FaktaConfig) =
+let withVaultHeader (config: FaktaConfig) =
   let token = match config.token with 
               | None -> String.Empty
               | _ -> config.token.Value.ToString()
@@ -92,7 +92,7 @@ let withJsonBody jsonBody =
 let inline withJsonBodyT value =
   Json.serialize value |> withJsonBody
 
-let queryMeta dur (resp : Response) =
+let queryMeta dur (resp: Response) =
   let headerFor key = resp.headers |> Map.tryFind (ResponseHeader.NonStandard key)
   { lastIndex   = headerFor "X-Consul-Index" |> Option.fold (fun s t -> uint64 t) UInt64.MinValue
     lastContact = headerFor "X-Consul-Lastcontact" |> Option.fold (fun s t -> Duration.FromSeconds (int64 t)) Duration.Epsilon
@@ -103,7 +103,7 @@ let writeMeta (dur: Duration) : WriteMeta =
   let res:WriteMeta = {requestTime = dur}
   res
 
-let configOptKvs (config : FaktaConfig) : (string * string option) list =
+let configOptKvs (config: FaktaConfig) : (string * string option) list =
   [ if Option.isSome config.datacenter then yield "dc", config.datacenter
     if Option.isSome config.token then yield "token", config.token ]
 
@@ -257,7 +257,7 @@ let internal queryFilters state path =
   >> exnsFilter
   >> respQueryFilter
 
-let internal queryFiltersNoMeta (state : FaktaState) path =
+let internal queryFiltersNoMeta (state: FaktaState) path =
   HttpFs.Composition.timerFilterNamed state.clientState path
   >> unknownsFilter
   >> exnsFilter

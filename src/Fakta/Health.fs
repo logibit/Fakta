@@ -17,7 +17,7 @@ let internal writeFilters state =
 let internal queryFilters state =
   healthPath >> queryFilters state
 
-let getValuesByName state (path : string) (action:string): QueryCall<string, HealthCheck list> =  
+let getValuesByName state (path: string) (action:string): QueryCall<string, HealthCheck list> =  
   let createRequest =
     fun (name, opts) ->string name, opts
     >> queryCallEntityUri state.config path
@@ -30,7 +30,7 @@ let getValuesByName state (path : string) (action:string): QueryCall<string, Hea
   HttpFs.Client.getResponse |> filters
 
 /// Checks is used to return the checks associated with a service
-let checks (state : FaktaState) : QueryCall<string, HealthCheck list> =
+let checks (state: FaktaState) : QueryCall<string, HealthCheck list> =
   let checks =
     fun (n, wo) ->
       getValuesByName state ("health/checks/")  "checks" (n, wo)
@@ -38,7 +38,7 @@ let checks (state : FaktaState) : QueryCall<string, HealthCheck list> =
 
 
 /// Node is used to query for checks belonging to a given node
-let node (state : FaktaState) : QueryCall<string, HealthCheck list> =
+let node (state: FaktaState) : QueryCall<string, HealthCheck list> =
   let node =
     fun (n, wo) ->
       getValuesByName state ("health/node/")  "node" (n, wo)
@@ -46,7 +46,7 @@ let node (state : FaktaState) : QueryCall<string, HealthCheck list> =
 
 /// State is used to retrieve all the checks in a given state.
 /// The wildcard "any" state can also be used for all checks.
-let state (state : FaktaState): QueryCall<string, HealthCheck list> =
+let state (state: FaktaState): QueryCall<string, HealthCheck list> =
   let state = 
     fun (n, wo) ->
       getValuesByName state ("health/state/")  "state" (n, wo)

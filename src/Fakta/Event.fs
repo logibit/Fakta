@@ -49,7 +49,7 @@ let fire state : WriteCall<UserEvent, string> =
   HttpFs.Client.getResponse |> filters
 
 /// IDToIndex is a bit of a hack. This simulates the index generation to convert an event ID into a WaitIndex.
-let idToIndex (state : FaktaState) (uuid : Guid) : uint64 =
+let idToIndex (state: FaktaState) (uuid: Guid) : uint64 =
   let lower = uuid.ToString().Substring(0, 18).Replace("-","")
   let upper = uuid.ToString().Substring(19, 17).Replace("-","")
   let lowVal  = UInt64.Parse(lower, System.Globalization.NumberStyles.HexNumber)

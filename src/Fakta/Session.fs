@@ -21,7 +21,7 @@ let internal writeFilters state =
 let internal queryFilters state =
   sessionPath >> queryFilters state
 
-let getSessionEntries (action: string) (path: string) (state : FaktaState): QueryCall<SessionEntry list> =
+let getSessionEntries (action: string) (path: string) (state: FaktaState): QueryCall<SessionEntry list> =
   let createRequest =
     queryCall state.config path
 
@@ -95,14 +95,14 @@ let info state: QueryCall<string, SessionEntry> =
   HttpFs.Client.getResponse |> filters
 
 /// List gets all active sessions
-let list (state : FaktaState) : QueryCall<SessionEntry list> =
+let list (state: FaktaState) : QueryCall<SessionEntry list> =
   let list (qo) = 
     getSessionEntries "list" "session/list" state qo
   list
   
 
 /// gets sessions for a node
-let node (state : FaktaState) : QueryCall<string, SessionEntry list> =
+let node (state: FaktaState) : QueryCall<string, SessionEntry list> =
   let node (n, qo) = 
     getSessionEntries "node" ("session/node/"+n) state qo
   node
@@ -124,7 +124,7 @@ let renew state: WriteCallNoMeta<string, SessionEntry> =
 /// RenewPeriodic is used to periodically invoke Session.Renew on a session until
 /// a doneCh is closed. This is meant to be used in a long running goroutine
 /// to ensure a session stays valid.
-let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) = job {
+let rec renewPeriodic (state: FaktaState) (ttl: Duration) (id: string) (wo: WriteOptions) (doneCh: Duration) = job {
   let! result = renew state (id, wo)
   let waitDur = ttl / int64 2
   let ms = (int)waitDur.BclCompatibleTicks/10000

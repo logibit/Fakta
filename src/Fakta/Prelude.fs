@@ -10,7 +10,7 @@ module Duration =
   open NodaTime
   open System.Diagnostics
 
-  let fromStopwatch (sw : Stopwatch) =
+  let fromStopwatch (sw: Stopwatch) =
     Duration.FromTimeSpan sw.Elapsed
 
   let time f =
@@ -26,7 +26,7 @@ module Duration =
       sw.Stop()
       res, fromStopwatch sw)
 
-  let consulString (d : Duration) =
+  let consulString (d: Duration) =
     sprintf "%d%s" (uint32 (d.ToTimeSpan().TotalSeconds)) "s"
 
 open Hopac
@@ -73,5 +73,5 @@ type Duration with
       |> sprintf "Expected a string containing a valid duration: %s"
       |> Error)
 
-  static member ToJson (dur : Duration) =
+  static member ToJson (dur: Duration) =
     Json.Optic.set Json.String_ (Duration.consulString dur)

@@ -49,11 +49,11 @@ type CheckUpdate =
   { status : string
     output : string}
 
-  static member GetUpdateJson (st : string) (out : string) =
+  static member GetUpdateJson (st: string) (out: string) =
     { status = st
       output = out }
 
-  static member ToJson (chu : CheckUpdate) =
+  static member ToJson (chu: CheckUpdate) =
     Json.write "Status" chu.status
     *> Json.write "Output" chu.output
 
@@ -61,14 +61,14 @@ type Node =
   { node    : string
     address : string }
 
-  static member FromJson (_ : Node) =
+  static member FromJson (_: Node) =
     (fun n a ->
       { node = n
         address = a })
     <!> Json.read "Node"
     <*> Json.read "Address"
 
-  static member ToJson (n : Node) =
+  static member ToJson (n: Node) =
     Json.write "Node" n.node
     *> Json.write "Address" n.address
 
@@ -80,7 +80,7 @@ type ACLEntry =
     ``type``    : string
     rules       : string }
 
-  static member ClientTokenInstance (tokenID : Id) (tokenName: string) (tokenType: string) =
+  static member ClientTokenInstance (tokenID: Id) (tokenName: string) (tokenType: string) =
     { createIndex = Index.MinValue
       modifyIndex = Index.MinValue
       id = tokenID
@@ -96,7 +96,7 @@ type ACLEntry =
       ``type`` = ""
       rules = "" }
 
-  static member FromJson (_ : ACLEntry) =
+  static member FromJson (_: ACLEntry) =
     (fun ci mi i n t rs ->
       { createIndex = ci
         modifyIndex = mi
@@ -111,7 +111,7 @@ type ACLEntry =
     <*> Json.read "Type"
     <*> Json.read "Rules"
 
-  static member ToJson (ac : ACLEntry) =
+  static member ToJson (ac: ACLEntry) =
     Json.write "CreateIndex" ac.createIndex
     *> Json.write "ModifyIndex" ac.modifyIndex
     *> Json.write "ID" ac.id
@@ -131,7 +131,7 @@ type AgentCheck =
 
 
 
-  static member FromJson (_ : AgentCheck) =
+  static member FromJson (_: AgentCheck) =
     (fun nd chId n st ns out sId sName ->
       { node = nd
         checkID = chId
@@ -151,7 +151,7 @@ type AgentCheck =
     <*> Json.read "ServiceID"
     <*> Json.read "ServiceName"
 
-  static member ToJson (ac : AgentCheck) =
+  static member ToJson (ac: AgentCheck) =
     Json.write "Node" ac.node
     *> Json.write "CheckID" ac.checkID
     *> Json.write "Name" ac.name
@@ -174,7 +174,7 @@ type AgentMember =
     delegateMax : int
     delegateCur : int }
 
-  static member FromJson (_ : AgentMember) =
+  static member FromJson (_: AgentMember) =
     (fun n addr p ts st pMin pMax pCur dMin dMax dCur ->
       { name = n
         addr = addr
@@ -199,7 +199,7 @@ type AgentMember =
     <*> Json.read "DelegateMax"
     <*> Json.read "DelegateCur"
 
-  static member ToJson (am : AgentMember) =
+  static member ToJson (am: AgentMember) =
     Json.write "Name" am.name
     *> Json.write "Addr" am.addr
     *> Json.write "Tags" am.tags
@@ -223,7 +223,7 @@ type AgentService =
     modifyIndex       : int}
 
 
-  static member FromJson (_ : AgentService) =
+  static member FromJson (_: AgentService) =
     (fun id s t p a eto ci mi ->
       { id = id
         service = s
@@ -244,7 +244,7 @@ type AgentService =
     <*> Json.read "CreateIndex"
     <*> Json.read "ModifyIndex"
 
-  static member ToJson (ags : AgentService) =
+  static member ToJson (ags: AgentService) =
     //let tags = if ags.tags = null then [] else args.tags
     Json.write "ID" ags.id
     *> Json.write "Service" ags.service
@@ -277,7 +277,7 @@ type AgentServiceCheck =
       shell = ""
       status = Some("") }
 
-  static member FromJson (_ : AgentServiceCheck) =
+  static member FromJson (_: AgentServiceCheck) =
     (fun sc i t ttl http tcp dci sh st ->
       { script = sc
         interval = i
@@ -298,7 +298,7 @@ type AgentServiceCheck =
     <*> Json.read "Shell"
     <*> Json.read "Status"
 
-  static member ToJson (ags : AgentServiceCheck) =
+  static member ToJson (ags: AgentServiceCheck) =
     Json.write "Script" ags.script
     *> Json.maybeWrite "Interval" ags.interval
     *> Json.maybeWrite "Timeout" ags.timeout
@@ -332,7 +332,7 @@ type AgentServiceRegistration =
         check = None
         checks = None }
 
-    static member FromJson (_ : AgentServiceRegistration) =
+    static member FromJson (_: AgentServiceRegistration) =
       (fun id n ts p a eto ch chs ->
         { id = id
           name = n
@@ -351,7 +351,7 @@ type AgentServiceRegistration =
       <*> Json.read "Check"
       <*> Json.read "Checks"
 
-  static member ToJson (ags : AgentServiceRegistration) =
+  static member ToJson (ags: AgentServiceRegistration) =
     Json.write "ID" ags.id
     *> Json.maybeWrite "Name" ags.name
     *> Json.maybeWrite "Tags" ags.tags
@@ -403,7 +403,7 @@ type AgentCheckRegistration =
     /// health check.
     status   : string option }
 
-  static member ttlCheck (id : string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =    
+  static member ttlCheck (id: string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =    
       { id = Some(id); 
         name = name; 
         notes = None;
@@ -418,7 +418,7 @@ type AgentCheckRegistration =
         shell = None
         status = None }
 
-  static member FromJson (_ : AgentCheckRegistration) =
+  static member FromJson (_: AgentCheckRegistration) =
     (fun id n nt si sc i t ttl http tcp dci sh st ->
       { id = id
         name = n
@@ -447,7 +447,7 @@ type AgentCheckRegistration =
     <*> Json.read "Shell"
     <*> Json.read "Status"
 
-  static member ToJson (ags : AgentCheckRegistration) =
+  static member ToJson (ags: AgentCheckRegistration) =
     Json.maybeWrite "ID" ags.id
     *> Json.write "Name" ags.name
     *> Json.maybeWrite "Notes" ags.notes //Json.write "Notes" ags.notes
@@ -477,7 +477,7 @@ type CatalogDeregistration =
           serviceId = serviceId
           checkId = checkID }
 
-  static member FromJson (_ : CatalogDeregistration) =
+  static member FromJson (_: CatalogDeregistration) =
     (fun n a dc si chi ->
       { node = n
         address = a
@@ -491,7 +491,7 @@ type CatalogDeregistration =
     <*> Json.read "ServiceID"
     <*> Json.read "CheckID"
 
-  static member ToJson (cdr : CatalogDeregistration) =
+  static member ToJson (cdr: CatalogDeregistration) =
     Json.write "Node" cdr.node
     *> Json.write "Address" cdr.address
     *> Json.write "Datacenter" cdr.datacenter
@@ -503,14 +503,14 @@ type CatalogNode =
   { node     : Node
     services : Map<string, AgentService> }
 
-  static member FromJson (_ : CatalogNode) =
+  static member FromJson (_: CatalogNode) =
     (fun n s ->
       { node = n
         services = s })
     <!> Json.read "Node"
     <*> Json.read "Services"
 
-  static member ToJson (n : CatalogNode) =
+  static member ToJson (n: CatalogNode) =
     Json.write "Node" n.node
     *> Json.write "Services" n.services
 
@@ -528,7 +528,7 @@ type CatalogRegistration =
         datacenter = dc
         check = agentCheck }
 
-  static member FromJson (_ : CatalogRegistration) =
+  static member FromJson (_: CatalogRegistration) =
     (fun n a dc s ch ->
       { node = n
         address = a
@@ -541,7 +541,7 @@ type CatalogRegistration =
     <*> Json.read "Service"
     <*> Json.read "Check"
 
-  static member ToJson (n : CatalogRegistration) =
+  static member ToJson (n: CatalogRegistration) =
     Json.write "Node" n.node
     *> Json.write "Address" n.address
     *> Json.write "Datacenter" n.datacenter
@@ -557,7 +557,7 @@ type CatalogService =
     serviceTags    : string list
     servicePort    : int }
 
-  static member FromJson (_ : CatalogService) =
+  static member FromJson (_: CatalogService) =
     (fun n a sid sn sa sts sp ->
       { node = n
         address = a
@@ -574,7 +574,7 @@ type CatalogService =
     <*> Json.read "ServiceTags"
     <*> Json.read "ServicePort"
 
-  static member ToJson (s : CatalogService) =
+  static member ToJson (s: CatalogService) =
     Json.write "Node" s.node
     *> Json.write "Address" s.address
     *> Json.write "ServiceID" s.serviceID
@@ -591,7 +591,7 @@ type PortMapping =
     serfWan : Port
     server : Port }
 
-  static member FromJson (_ : PortMapping) =
+  static member FromJson (_: PortMapping) =
     (fun d h r slan swan s ->
       { dns = d
         http = h
@@ -606,7 +606,7 @@ type PortMapping =
     <*> Json.read "SerfWan"
     <*> Json.read "Server"
 
-  static member ToJson (pm : PortMapping) =
+  static member ToJson (pm: PortMapping) =
     Json.write "DNS" pm.dns
     *> Json.write "HTTP" pm.http
     *> Json.write "RPC" pm.rpc
@@ -644,7 +644,7 @@ type ConfigData =
     enableSyslog : bool
     rejoinAfterLeave : bool }
 
-  static member FromJson (_ : ConfigData) =
+  static member FromJson (_: ConfigData) =
     (fun boot srv dc ddir dnsrec dnsrecs d llvl node ca binda adva ps lot slot pr edeb vi vo caf certf kf stj udir pf esl ral ->
       { boostrap = boot
         server = srv
@@ -703,7 +703,7 @@ type ConfigData =
     <*> Json.read "EnableSyslog"
     <*> Json.read "RejoinAfterLeave"
 
-  static member ToJson (cd : ConfigData) =
+  static member ToJson (cd: ConfigData) =
     Json.write "Bootstrap" cd.boostrap
     *> Json.write "Server" cd.server
     *> Json.write "Datacenter" cd.datacenter
@@ -738,7 +738,7 @@ type CoordData =
     error : float
     vec : int list }
 
-  static member FromJson (_ : CoordData) =
+  static member FromJson (_: CoordData) =
     (fun a e v ->
       { adjustment = a
         error = e
@@ -748,7 +748,7 @@ type CoordData =
     <*> Json.read "Vec"
    
 
-  static member ToJson (cd : CoordData) =
+  static member ToJson (cd: CoordData) =
     Json.write "Adjustment" cd.adjustment
     *> Json.write "Error" cd.error
     *> Json.write "Vec" cd.vec
@@ -766,7 +766,7 @@ type MemberData =
     delegateMax : uint16
     delegateCur : uint16 }
 
-    static member FromJson (_ : MemberData) =
+    static member FromJson (_: MemberData) =
       (fun n add p ts st pmin pmax pcur dmin dmax dcur ->
         { name = n
           addr = add
@@ -791,7 +791,7 @@ type MemberData =
       <*> Json.read "DelegateMax"
       <*> Json.read "DelegateCur"
 
-  static member ToJson (md : MemberData) =
+  static member ToJson (md: MemberData) =
     Json.write "Name" md.name
     *> Json.write "Addr" md.addr
     *> Json.write "Port" md.port
@@ -809,7 +809,7 @@ type SelfData =
     coord  : CoordData
     ``member`` : MemberData }
 
-  static member FromJson (_ : SelfData) =
+  static member FromJson (_: SelfData) =
     (fun conf coord mem ->
       { config = conf
         coord = coord
@@ -818,7 +818,7 @@ type SelfData =
     <*> Json.read "Coord"
     <*> Json.read "Member"
 
-  static member ToJson (s : SelfData) =
+  static member ToJson (s: SelfData) =
     Json.write "Config" s.config
     *> Json.write "Coord" s.coord
     *> Json.write "Member" s.``member``
@@ -872,7 +872,7 @@ type KVPair =
     { KVPair.create(key, json, defaultArg flags 0UL) with
         session = Some session }
 
-  static member FromJson (_ : KVPair) =
+  static member FromJson (_: KVPair) =
     (fun ci mi li k fl v s ->
       { createIndex = ci
         modifyIndex = mi
@@ -891,7 +891,7 @@ type KVPair =
     <*> Json.read "Value"
     <*> Json.tryRead "Session"
 
-  static member ToJson (kv : KVPair) =
+  static member ToJson (kv: KVPair) =
     Json.write "CreateIndex" kv.createIndex
     *> Json.write "ModifyIndex" kv.modifyIndex
     *> Json.write "LockIndex" kv.lockIndex
@@ -914,7 +914,7 @@ type HealthCheck =
     serviceId   : Id
     serviceName : string }
 
-  static member FromJson (_ : HealthCheck) =
+  static member FromJson (_: HealthCheck) =
     (fun node id name status notes out serviceId serviceName ->
       { node        = node
         checkId     = id
@@ -933,7 +933,7 @@ type HealthCheck =
     <*> Json.read "ServiceID"
     <*> Json.read "ServiceName"
 
-  static member ToJson (hc : HealthCheck) =
+  static member ToJson (hc: HealthCheck) =
     Json.write "Node" hc.node
     *> Json.write "CheckID" hc.checkId
     *> Json.write "Name" hc.name
@@ -961,7 +961,7 @@ type ServiceEntry =
     service : AgentService
     checks  : HealthCheck list}
 
-  static member FromJson (_ : ServiceEntry) =
+  static member FromJson (_: ServiceEntry) =
     (fun n s chs ->
       { node    = n
         service = s
@@ -970,7 +970,7 @@ type ServiceEntry =
     <*> Json.read "Service"
     <*> Json.read "Checks"
 
-  static member ToJson (se : ServiceEntry) =
+  static member ToJson (se: ServiceEntry) =
     Json.write "Node" se.node
     *> Json.write "Service" se.service
     *> Json.write "Checks" se.checks
@@ -981,14 +981,14 @@ type SessionBehaviour =
   /// Delete is useful for creating ephemeral key/value entries.
   | Delete
 
-  static member FromJson (_ : SessionBehaviour) =
+  static member FromJson (_: SessionBehaviour) =
     (function
     | "release" -> Json.init Release
     | "delete " -> Json.init Delete
     | other     -> Json.error (sprintf "'%s' is not a valid session behaviour" other))
     =<< Json.Optic.get Json.String_
 
-  static member ToJson (sb : SessionBehaviour) =
+  static member ToJson (sb: SessionBehaviour) =
     Json.Optic.set Json.String_
                     (match sb with
                     | Release -> "release"
@@ -1039,7 +1039,7 @@ type SessionEntry =
       behavior = ""
       ttl = Duration.Epsilon }
 
-  static member FromJson (_ : SessionEntry) =
+  static member FromJson (_: SessionEntry) =
     (fun ci id n nd chs ld b ttl ->
       { createIndex = ci
         id = id
@@ -1058,7 +1058,7 @@ type SessionEntry =
     <*> Json.read "Behavior"
     <*> Json.readWith Duration.FromJson "TTL"
 
-  static member ToJson (se : SessionEntry) =
+  static member ToJson (se: SessionEntry) =
     Json.write "CreateIndex" se.createIndex
     *> Json.write "ID" se.id
     *> Json.write "Name" se.name
@@ -1098,7 +1098,7 @@ type UserEvent =
       version = -1
       lTime = -1 }
 
-  static member FromJson (_ : UserEvent) =
+  static member FromJson (_: UserEvent) =
     (fun id n pl nf sf tf v lt ->
       { id = id
         name = n
@@ -1119,7 +1119,7 @@ type UserEvent =
     <*> Json.read "Version"
     <*> Json.read "LTime"
 
-  static member ToJson (ue : UserEvent) =
+  static member ToJson (ue: UserEvent) =
     Json.write "ID" ue.id
     *> Json.write "Name" ue.name
     *> Json.write "Payload" (Convert.ToBase64String ue.payload)
@@ -1274,7 +1274,7 @@ type InitRequest =
     secretThreshold: int
     pgpKeys : string list }
 
-  static member FromJson (_ : InitRequest) =
+  static member FromJson (_: InitRequest) =
     (fun shs tr pgp ->
       { secretShares = shs
         secretThreshold = tr
@@ -1283,7 +1283,7 @@ type InitRequest =
     <*> Json.read "secret_threshold"
     <*> Json.read "pgp_keys"
 
-  static member ToJson (se : InitRequest) =
+  static member ToJson (se: InitRequest) =
     Json.write "secret_shares" se.secretShares
     *> Json.write "secret_threshold" se.secretThreshold
     *> Json.write "pgp_keys" se.pgpKeys
@@ -1293,7 +1293,7 @@ type InitResponse =
     recoveryKeys: string list option
     rootToken : string }
 
-  static member FromJson (_ : InitResponse) =
+  static member FromJson (_: InitResponse) =
     (fun ks rcs rt ->
       { keys =ks
         recoveryKeys = rcs
@@ -1302,7 +1302,7 @@ type InitResponse =
     <*> Json.tryRead "recovery_keys"
     <*> Json.read "root_token"
 
-  static member ToJson (se : InitResponse) =
+  static member ToJson (se: InitResponse) =
     Json.write "keys" se.keys
     *> Json.maybeWrite "recovery_keys" se.recoveryKeys
     *> Json.write "root_token" se.rootToken
@@ -1314,7 +1314,7 @@ type SealStatusResponse =
     n : int
     progress : int}
 
-  static member FromJson (_ : SealStatusResponse) =
+  static member FromJson (_: SealStatusResponse) =
     (fun s t n p ->
       { ``sealed`` = s
         t = t
@@ -1325,7 +1325,7 @@ type SealStatusResponse =
     <*> Json.read "n"
     <*> Json.read "progress"
 
-  static member ToJson (se : SealStatusResponse) =
+  static member ToJson (se: SealStatusResponse) =
     Json.write "sealed" se.``sealed``
     *> Json.write "t" se.t
     *> Json.write "n" se.n
@@ -1340,7 +1340,7 @@ type GenerateRootStatusResponse =
     encodedRootToken : string
     pgpFingerprint : string }
 
-  static member FromJson (_ : GenerateRootStatusResponse) =
+  static member FromJson (_: GenerateRootStatusResponse) =
     (fun nc s p r c er pgp ->
       { nonce = nc
         started = s
@@ -1358,7 +1358,7 @@ type GenerateRootStatusResponse =
     <*> Json.read "encoded_root_token"
     <*> Json.read "pgp_fingerprint"
 
-  static member ToJson (se : GenerateRootStatusResponse) =
+  static member ToJson (se: GenerateRootStatusResponse) =
     Json.write "nonce" se.nonce
     *> Json.write "started" se.started
     *> Json.write "progress" se.progress
@@ -1371,7 +1371,7 @@ type MountConfigInput =
   { defaultLeaseTTL : string
     maxLeaseTTL     : string}
 
-  static member FromJson (_ : MountConfigInput) =
+  static member FromJson (_: MountConfigInput) =
     (fun d m ->
       { defaultLeaseTTL = d
         maxLeaseTTL = m})
@@ -1379,7 +1379,7 @@ type MountConfigInput =
     <*> Json.read "max_lease_ttl"
     
 
-  static member ToJson (se : MountConfigInput) =
+  static member ToJson (se: MountConfigInput) =
     Json.write "default_lease_ttl" se.defaultLeaseTTL
     *> Json.write "max_lease_ttl" se.maxLeaseTTL
 
@@ -1387,7 +1387,7 @@ type MountConfigOutput =
   { defaultLeaseTTL : int
     maxLeaseTTL     : int}
 
-  static member FromJson (_ : MountConfigOutput) =
+  static member FromJson (_: MountConfigOutput) =
     (fun d m ->
       { defaultLeaseTTL = d
         maxLeaseTTL = m})
@@ -1395,7 +1395,7 @@ type MountConfigOutput =
     <*> Json.read "max_lease_ttl"
     
 
-  static member ToJson (se : MountConfigOutput) =
+  static member ToJson (se: MountConfigOutput) =
     Json.write "default_lease_ttl" se.defaultLeaseTTL
     *> Json.write "max_lease_ttl" se.maxLeaseTTL
 
@@ -1404,7 +1404,7 @@ type MountOutput =
     description : string
     mConfig      : MountConfigOutput option}
 
-  static member FromJson (_ : MountOutput) =
+  static member FromJson (_: MountOutput) =
     (fun t d c ->
       { ``type`` = t
         description = d
@@ -1414,7 +1414,7 @@ type MountOutput =
     <*> Json.tryRead "config"
     
 
-  static member ToJson (se : MountOutput) =
+  static member ToJson (se: MountOutput) =
     Json.write "type" se.``type``
     *> Json.write "description" se.description
     *> Json.maybeWrite "config" se.mConfig
@@ -1424,7 +1424,7 @@ type MountInput =
     description : string
     mountConfig      : MountConfigInput option}
 
-  static member FromJson (_ : MountInput) =
+  static member FromJson (_: MountInput) =
     (fun t d c ->
       { ``type`` = t
         description = d
@@ -1434,7 +1434,7 @@ type MountInput =
     <*> Json.tryRead "config"
     
 
-  static member ToJson (se : MountInput) =
+  static member ToJson (se: MountInput) =
     Json.write "type" se.``type``
     *> Json.write "description" se.description
     *> Json.maybeWrite "config" se.mountConfig
@@ -1445,7 +1445,7 @@ type LeaderResponse =
     isSelf        : bool
     leaderAddress : string }
 
-  static member FromJson (_ : LeaderResponse) =
+  static member FromJson (_: LeaderResponse) =
     (fun t d c ->
       { haEnabled = t
         isSelf = d
@@ -1455,7 +1455,7 @@ type LeaderResponse =
     <*> Json.read "leader_address"
     
 
-  static member ToJson (se : LeaderResponse) =
+  static member ToJson (se: LeaderResponse) =
     Json.write "ha_enabled" se.haEnabled
     *> Json.write "is_self" se.isSelf
     *> Json.write "leader_address" se.leaderAddress
@@ -1467,7 +1467,7 @@ type SecretWrapInfo =
   }
 
   
-  static member FromJson (_ : SecretWrapInfo) =
+  static member FromJson (_: SecretWrapInfo) =
     (fun t d c ->
       { token = t
         ttl = d
@@ -1477,7 +1477,7 @@ type SecretWrapInfo =
     <*> Json.read "creation_time"
     
 
-  static member ToJson (se : SecretWrapInfo) =
+  static member ToJson (se: SecretWrapInfo) =
     Json.write "token" se.token
     *> Json.write "ttl" se.ttl
     *> Json.write "creation_time" se.creationTime
@@ -1491,7 +1491,7 @@ type SecretAuth =
     renewable     : bool
   }
 
-  static member FromJson (_ : SecretAuth) =
+  static member FromJson (_: SecretAuth) =
     (fun ct a p m l r ->
       { clientToken = ct
         accessor = a
@@ -1507,7 +1507,7 @@ type SecretAuth =
     <*> Json.read "renewable"
     
 
-  static member ToJson (se : SecretAuth) =
+  static member ToJson (se: SecretAuth) =
     Json.write "client_token" se.clientToken
     *> Json.write "accessor" se.accessor
     *> Json.write "policies" se.policies
@@ -1524,7 +1524,7 @@ type SecretDataList =
     auth          : SecretAuth option
     wrapInfo      : SecretWrapInfo option}
 
-  static member FromJson (_ : SecretDataList) =
+  static member FromJson (_: SecretDataList) =
     (fun li ld r d w a wi ->
       { leaseId = li
         leaseDuration = ld
@@ -1542,7 +1542,7 @@ type SecretDataList =
     <*> Json.tryRead "wrap_info"
     
 
-  static member ToJson (se : SecretDataList) =
+  static member ToJson (se: SecretDataList) =
     Json.write "lease_id" se.leaseId
     *> Json.write "lease_duration" se.leaseDuration
     *> Json.write "renewable" se.renewable
@@ -1560,7 +1560,7 @@ type SecretDataString =
     auth          : SecretAuth option
     wrapInfo      : SecretWrapInfo option}
 
-  static member FromJson (_ : SecretDataString) =
+  static member FromJson (_: SecretDataString) =
     (fun li ld r d w a wi ->
       { leaseId = li
         leaseDuration = ld
@@ -1578,7 +1578,7 @@ type SecretDataString =
     <*> Json.tryRead "wrap_info"
     
 
-  static member ToJson (se : SecretDataString) =
+  static member ToJson (se: SecretDataString) =
     Json.write "lease_id" se.leaseId
     *> Json.write "lease_duration" se.leaseDuration
     *> Json.write "renewable" se.renewable
@@ -1592,7 +1592,7 @@ type KeyStatus =
   { term        : int
     installTime : string }
 
-  static member FromJson (_ : KeyStatus) =
+  static member FromJson (_: KeyStatus) =
     (fun t it ->
       { term = t
         installTime = it})
@@ -1600,7 +1600,7 @@ type KeyStatus =
     <*> Json.read "install_time"
     
 
-  static member ToJson (se : KeyStatus) =
+  static member ToJson (se: KeyStatus) =
     Json.write "term" se.term
     *> Json.write "install_time" se.installTime
 
@@ -1611,7 +1611,7 @@ type RekeyInitRequest =
     pgpKeys         : string list option
     backup          : bool option}
 
-  static member FromJson (_ : RekeyInitRequest) =
+  static member FromJson (_: RekeyInitRequest) =
     (fun ss st pgp b ->
       { secretShares = ss
         secretTreshold = st
@@ -1623,7 +1623,7 @@ type RekeyInitRequest =
     <*> Json.tryRead "backup"
     
 
-  static member ToJson (se : RekeyInitRequest) =
+  static member ToJson (se: RekeyInitRequest) =
     Json.write "secret_shares" se.secretShares
     *> Json.write "secret_threshold" se.secretTreshold
     *> Json.maybeWrite "pgp_keys" se.pgpKeys
@@ -1640,7 +1640,7 @@ type RekeyStatusResponse =
     pgpFIngerPrints : string list option
     backup          : bool }
 
-  static member FromJson (_ : RekeyStatusResponse) =
+  static member FromJson (_: RekeyStatusResponse) =
     (fun nc s t n p r pgp b ->
       { nonce = nc
         started = s
@@ -1660,7 +1660,7 @@ type RekeyStatusResponse =
     <*> Json.read "backup"
     
 
-  static member ToJson (se : RekeyStatusResponse) =
+  static member ToJson (se: RekeyStatusResponse) =
     Json.write "nonce" se.nonce
     *> Json.write "started" se.started
     *> Json.write "t" se.t
@@ -1677,7 +1677,7 @@ type RekeyUpdateResponse =
     pgpFIngerPrints : string list option
     backup          : bool }
 
-  static member FromJson (_ : RekeyUpdateResponse) =
+  static member FromJson (_: RekeyUpdateResponse) =
     (fun nc c k pgp b ->
       { nonce = nc
         complete = c
@@ -1691,7 +1691,7 @@ type RekeyUpdateResponse =
     <*> Json.read "backup"
     
 
-  static member ToJson (se : RekeyUpdateResponse) =
+  static member ToJson (se: RekeyUpdateResponse) =
     Json.write "nonce" se.nonce
     *> Json.write "complete" se.complete
     *> Json.write "keys" se.keys
@@ -1702,7 +1702,7 @@ type RekeyRetrieveResponse =
   { nonce : string
     keys  : string list }
 
-  static member FromJson (_ : RekeyRetrieveResponse) =
+  static member FromJson (_: RekeyRetrieveResponse) =
     (fun t it ->
       { nonce = t
         keys = it})
@@ -1710,7 +1710,7 @@ type RekeyRetrieveResponse =
     <*> Json.read "keys"
     
 
-  static member ToJson (se : RekeyRetrieveResponse) =
+  static member ToJson (se: RekeyRetrieveResponse) =
     Json.write "nonce" se.nonce
     *> Json.write "keys" se.keys
 
@@ -1721,7 +1721,7 @@ type Audit =
     description : string
     options     : Map<string, string> option} 
 
-  static member FromJson (_ : Audit) =
+  static member FromJson (_: Audit) =
     (fun p t d o ->
       { path = p
         ``type`` = t
@@ -1733,7 +1733,7 @@ type Audit =
     <*> Json.tryRead "options"
     
 
-  static member ToJson (se : Audit) =
+  static member ToJson (se: Audit) =
     Json.maybeWrite "path" se.path
     *> Json.write "type" se.``type``
     *> Json.write "description" se.description
@@ -1745,7 +1745,7 @@ type HealthResponse =
     standby       : bool
     serverTimeUtc : int option}
 
-  static member FromJson (_ : HealthResponse) =
+  static member FromJson (_: HealthResponse) =
     (fun p t d o ->
       { initialized = p
         ``sealed`` = t
@@ -1757,7 +1757,7 @@ type HealthResponse =
     <*> Json.tryRead "server_time_utc"
     
 
-  static member ToJson (se : HealthResponse) =
+  static member ToJson (se: HealthResponse) =
     Json.write "initialized" se.initialized
     *> Json.write "sealed" se.``sealed``
     *> Json.write "standby" se.standby
@@ -1767,14 +1767,14 @@ type AuthConfig =
   { defaultLeaseTTL        : string  
     maxLeaseTTL            : string}
 
-  static member FromJson (_ : AuthConfig) =
+  static member FromJson (_: AuthConfig) =
     (fun p o ->
       { defaultLeaseTTL = p
         maxLeaseTTL = o})
     <!> Json.read "default_lease_ttl"
     <*> Json.read "max_lease_ttl"
 
-  static member ToJson (se : AuthConfig) =
+  static member ToJson (se: AuthConfig) =
     Json.write "default_lease_ttl" se.defaultLeaseTTL
     *> Json.write "max_lease_ttl" se.maxLeaseTTL
 
@@ -1783,7 +1783,7 @@ type AuthMount =
     description : string
     authConfig      : AuthConfig option}
 
-  static member FromJson (_ : AuthMount) =
+  static member FromJson (_: AuthMount) =
     (fun p o c->
       { ``type`` = p
         description = o
@@ -1792,7 +1792,7 @@ type AuthMount =
     <*> Json.read "description"
     <*> Json.tryRead "config"
 
-  static member ToJson (se : AuthMount) =
+  static member ToJson (se: AuthMount) =
     Json.write "type" se.``type``
     *> Json.write "description" se.description
     *> Json.maybeWrite "config" se.authConfig

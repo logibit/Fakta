@@ -24,7 +24,7 @@ Ml806J728vVeyeOJygHrcThQGAQGLbwyY9bg7Oc5CF/L
 =nyy+
 -----END PGP PUBLIC KEY BLOCK-----"
 
-let base64pgp (pgp : string) =
+let base64pgp (pgp: string) =
   pgp
   |> Encoding.UTF8.GetBytes
   |> Convert.ToBase64String

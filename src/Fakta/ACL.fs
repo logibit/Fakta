@@ -21,7 +21,7 @@ let internal queryFilters state =
 ///The clone endpoint must be hit with a PUT. It clones the ACL identified by the id portion of the path and returns a new token ID. This allows a token to serve as a template for others, making it simple to generate new tokens without complex rule management.
 ///
 /// The request is automatically routed to the authoritative ACL datacenter. Requests to this endpoint must be made with a management token.
-let clone (state : FaktaState) : WriteCallNoMeta<Id, Id> =
+let clone (state: FaktaState) : WriteCallNoMeta<Id, Id> =
   let createRequest =
     fun (entity, opts) -> string entity, opts
     >> writeCallEntityUri state.config "acl/clone"

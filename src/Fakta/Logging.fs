@@ -44,12 +44,12 @@ let NoopLogger =
       member x.logSimple message = () }
 
 let private logger =
-  ref ((fun () -> SystemClock.Instance.Now), fun (name : string) -> NoopLogger)
+  ref ((fun () -> SystemClock.Instance.Now), fun (name: string) -> NoopLogger)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Message =
 
-  let create (clock : IClock) path level fields message =
+  let create (clock: IClock) path level fields message =
     { value     = Event message
       level     = level
       path      = path
@@ -95,11 +95,11 @@ let getLoggerByName name =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Logger =
 
-  let log (logger : Logger) message =
+  let log (logger: Logger) message =
     logger.log message
 
-  let logVerbose (logger : Logger) evaluate =
+  let logVerbose (logger: Logger) evaluate =
     logger.logVerbose evaluate
 
-  let logSimple (logger : Logger) message =
+  let logSimple (logger: Logger) message =
     logger.logSimple message
