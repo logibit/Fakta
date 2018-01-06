@@ -1,6 +1,6 @@
 FsCheck
-Fuchu
-Fuchu.FsCheck
+Expecto
+Expecto.FsCheck
 
 group Test
 FSharp.Core

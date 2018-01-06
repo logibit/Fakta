@@ -1,22 +1,24 @@
-source https://nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 source https://www.myget.org/F/haf/api/v3/index.json
-framework: net45
+framework net461
+redirects force
 
 nuget Chiron
 nuget FSharp.Core
 nuget FsCheck
-nuget Fuchu
-nuget Fuchu.FsCheck
+nuget Expecto
+nuget Expecto.FsCheck
 nuget Hopac
 nuget Http.fs
 nuget NodaTime
-nuget NuGet.CommandLine
 nuget Aether
 nuget FParsec
+
 github haf/YoLo YoLo.fs
 github logary/logary src/Logary.Facade/Facade.fs
 
 group Test
-    redirects: on
-    source https://nuget.org/api/v2
+    framework net461
+    redirects force
+    source https://api.nuget.org/v3/index.json
     nuget FSharp.Core

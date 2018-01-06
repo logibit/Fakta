@@ -1,6 +1,5 @@
-FsCheck
-Fuchu
-Fuchu.FsCheck
+Expecto
+Expecto.FsCheck
 Chiron
 NodaTime
 Http.fs
