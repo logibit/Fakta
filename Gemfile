@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-gem 'albacore', '~> 2'
+gem 'albacore'
 
 group :dev do
   gem 'foreman'
