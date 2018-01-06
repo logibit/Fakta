@@ -127,7 +127,7 @@ let renew state: WriteCallNoMeta<string, SessionEntry> =
 let rec renewPeriodic (state : FaktaState) (ttl : Duration) (id : string) (wo : WriteOptions) (doneCh : Duration) = job {
   let! result = renew state (id, wo)
   let waitDur = ttl / int64 2
-  let ms = (int)waitDur.Ticks/10000
+  let ms = (int)waitDur.BclCompatibleTicks/10000
   do! Async.Sleep(ms)
   match result with
   | Choice1Of2 entry ->

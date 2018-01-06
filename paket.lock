@@ -30,7 +30,7 @@ NUGET
       FSharp.Core (>= 3.1.2.5)
       Hopac (>= 0.3.21)
     Mono.Cecil (0.10.0-beta7)
-    NodaTime (2.2.3)
+    NodaTime (1.4.2)
     System.ValueTuple (4.4)
 GITHUB
   remote: haf/YoLo

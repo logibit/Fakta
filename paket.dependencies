@@ -10,7 +10,7 @@ nuget Expecto
 nuget Expecto.FsCheck
 nuget Hopac
 nuget Http.fs
-nuget NodaTime
+nuget NodaTime < 2
 nuget Aether
 nuget FParsec
 

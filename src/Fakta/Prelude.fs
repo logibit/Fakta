@@ -38,7 +38,7 @@ module Message =
   let timeJob path (runnable : #Alt<_>) =
     Duration.timeJob (fun () -> runnable) |> Job.map (function
     | res, dur ->
-      let msg = Message.gauge dur.Ticks "ticks" |> Message.setName path
+      let msg = Message.gauge dur.BclCompatibleTicks "ticks" |> Message.setName path
       res, msg)
 
 open System

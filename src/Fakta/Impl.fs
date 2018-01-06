@@ -287,14 +287,14 @@ module VaultResult =
 
 let inline ofJsonPrism jsonPrism : string -> Choice<'a, Error> =
   Json.tryParse
-  >> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
+  >> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption (fun () -> "Expected property missing"))
   >> Choice.bind Json.tryDeserialize
   >> Choice.mapSnd Error.Message
 
 /// Convert the first value in the tuple in the choice to some type 'a.
 let inline internal fstOfJsonPrism jsonPrism (body, item2) : Choice< ^a * 'b, Error> =
   Json.tryParse body
-  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
+  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption (fun () -> "Expected property missing"))
   |> Choice.bind Json.tryDeserialize
   |> Choice.map (fun x -> x, item2)
   |> Choice.mapSnd (fun msg ->
@@ -303,7 +303,7 @@ let inline internal fstOfJsonPrism jsonPrism (body, item2) : Choice< ^a * 'b, Er
 
 let inline internal fstOfJsonPrismNoMeta jsonPrism body : Choice<'a, Error> =
   Json.tryParse body
-  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption "expected property missing")
+  |> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption (fun () -> "Expected property missing"))
   |> Choice.bind Json.tryDeserialize
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
