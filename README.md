@@ -32,15 +32,15 @@ micro- service architectures easily.
 
 First, run:
 
-``` bash
-./tools/consul.sh agent -dev -bind 127.0.0.1 -config-file=tools/server.json
-```
+    ./tools/consul.sh agent -dev -bind 127.0.0.1 -config-file=tools/server.json
 
-Then in another terminal:
+In another terminal:
 
-``` bash
-bundle exec rake
-```
+    ./tools/vault.sh server -dev
+
+Finally:
+
+    bundle exec rake
 
 Which will call xbuild/msbuild and compile the project, run unit tests and then
 finally run the integration tests.
