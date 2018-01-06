@@ -20,49 +20,58 @@ let tests =
     testCase "create session" <| fun _ ->
       sessionId |> ignore 
 
-    testCase "get session info" <| fun _ ->
+    testCaseAsync "get session info" <| async {
+      let! initState = initState
+      let! sessionId = sessionId
       let listing = Session.info state (sessionId, [])
-      ensureSuccess listing <| fun (entry, meta) ->
+      do! ensureSuccess listing <| fun (entry, meta) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "session id: %O name: %s" entry.id entry.name)
         logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
-    testCase "renew session" <| fun _ ->
+    testCaseAsync "renew session" <| async {
+      let! sessionId = sessionId
       let listing = Session.renew state (sessionId, [])
-      ensureSuccess listing <| fun (entry) ->
+      do! ensureSuccess listing <| fun (entry) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "session id: %O name: %s" entry.id entry.name)
-        //logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
 //    testCase "renew session periodically" <| fun _ ->
 //      Async.RunSynchronously (Session.renewPeriodic state (Duration.FromSeconds 10L) sessionId [] (Duration.FromSeconds 30L))
 
-    testCase "get list of sessions" <| fun _ ->
+    testCaseAsync "get list of sessions" <| async {
       let listing = Session.list state []
-      ensureSuccess listing <| fun (list, meta) ->
+      do! ensureSuccess listing <| fun (list, meta) ->
         let logger = state.logger
         for entry in list do
           logger.logSimple (Message.sprintf Debug "session id: %O name: %s" entry.id entry.name)
         logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
-    testCase "get list of sessions for a node" <| fun _ ->
+    testCaseAsync "get list of sessions for a node" <| async {
       let listing = Session.node state ("COMP05", [])
-      ensureSuccess listing <| fun (node, meta) ->
+      do! ensureSuccess listing <| fun (node, meta) ->
         let logger = state.logger
         for entry in node do
           logger.logSimple (Message.sprintf Debug "session id: %O name: %s" entry.id entry.name)
         logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
-    testCase "create sessions with no heathchecks" <| fun _ ->
+    testCaseAsync "create sessions with no heathchecks" <| async {
       let listing = Session.createNoChecks state ([ttl], [])
-      ensureSuccess listing <| fun (entry) ->
+      do! ensureSuccess listing <| fun (entry) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "session id: %s" entry)
         //logger.logSimple (Message.sprintf Debug "value: %A" meta)
+    }
 
-    testCase "destroy session" <| fun _ ->
+    testCaseAsync "destroy session" <| async {
+      let! sessionId = sessionId
       let listing = Session.destroy state (sessionId, [])
-      ensureSuccess listing <| fun (entry) ->
+      do! ensureSuccess listing <| fun (entry) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "destroyed: %O" entry)
+    }
   ]

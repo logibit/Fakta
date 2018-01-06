@@ -8,9 +8,10 @@ open Fakta.Vault
 [<Tests>]
 let tests =
   testList "Vault stepdown tests" [
-    testCase "sys.stepdown -> Forces the node to give up active status" <| fun _ ->
+    testCaseAsync "sys.stepdown -> Forces the node to give up active status" <| async {
       let listing = Stepdown.stepdown vaultState []
-      ensureSuccess listing <| fun _ ->
+      do! ensureSuccess listing <| fun _ ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "Node stepped-down.")
+    }
 ]

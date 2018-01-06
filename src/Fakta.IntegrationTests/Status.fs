@@ -7,16 +7,18 @@ open Fakta.Logging
 [<Tests>]
 let tests =
   testList "Status tests" [
-    testCase "status.leader -> query for a known leader" <| fun _ ->
+    testCaseAsync "status.leader -> query for a known leader" <| async {
       let listing = Status.leader state []
-      ensureSuccess listing <| fun (leader) ->
+      do! ensureSuccess listing <| fun (leader) ->
         let logger = state.logger
         logger.logSimple (Message.sprintf Debug "value: %s" leader)
+    }
 
-    testCase "status.peers -> query for a known raft peers " <| fun _ ->
+    testCaseAsync "status.peers -> query for a known raft peers " <| async {
       let listing = Status.peers state []
-      ensureSuccess listing <| fun peers ->
+      do! ensureSuccess listing <| fun peers ->
         let logger = state.logger
         for peer in peers do
           logger.logSimple (Message.sprintf Debug "value: %s" peer)
-]
+    }
+  ]
