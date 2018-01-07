@@ -28,8 +28,8 @@ let logger =
 module Message =
   open Fakta.Logging.Message
 
-  let sprintf data =
-    Printf.kprintf (event data)
+  let sprintf level =
+    Printf.kprintf (event level)
 
 let initVault =
   let reqJson: InitRequest =
