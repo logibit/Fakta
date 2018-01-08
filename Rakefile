@@ -58,19 +58,18 @@ nugets_pack :create_nugets_quick do |p|
   p.configuration = Configuration
   p.files   = FileList['src/**/*.{csproj,fsproj,nuspec}'].
     exclude(/Tests/)
-  p.out     = 'build/pkg'
-  p.exe     = 'packages/NuGet.CommandLine/tools/NuGet.exe'
-  p.with_metadata do |m|
-    m.title       = 'Fakta - Consul API'
-    m.description = 'Fakta is a Consul HTTP API in F#'
-    m.authors     = 'Henrik Feldt, Logibit AB'
-    m.project_url = 'http://github.com/logibit/Fakta'
-    m.tags        = 'consul http api fsharp environment env 12factor'
-    m.version     = ENV['NUGET_VERSION']
-  end
+  p.output = 'build/pkg'
+  p.exe = 'tools/paket.exe'
+  m = p.metadata
+  m.title       = 'Fakta - Consul API'
+  m.description = 'Fakta is a Consul HTTP API in F#'
+  m.authors     = 'Henrik Feldt, Logibit AB'
+  m.project_url = 'http://github.com/logibit/Fakta'
+  m.tags        = 'consul http api fsharp environment env 12factor'
+  m.version     = ENV['NUGET_VERSION']
 end
 
-task :create_nugets => ['build/pkg', :versioning, :compile]
+task :create_nugets => ['build/pkg', :versioning, :compile, :create_nugets_quick]
 
 namespace :tests do
   task :unit do
