@@ -94,7 +94,7 @@ end
 Albacore::Tasks::Release.new :release_quick,
                              pkg_dir: 'build/pkg',
                              depend_on: [:ensure_nuget_key],
-                             nuget_exe: 'packages/NuGet.CommandLine/tools/NuGet.exe',
+                             nuget_exe: 'tools/paket.exe',
                              api_key: ENV['NUGET_KEY']
 
 task :release => [ :tests, :create_nugets, :release_quick ]
