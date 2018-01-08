@@ -1,8 +1,13 @@
-﻿///The Agent endpoints are used to interact with the local Consul agent.
-/// Usually, services and checks are registered with an agent which then takes
-/// on the burden of keeping that data synchronized with the cluster. For
-/// example, the agent registers services and checks with the Catalog and
-/// performs anti-entropy to recover from outages.
+﻿/// The /agent endpoints are used to interact with the local Consul agent.
+/// Usually, services and checks are registered with an agent which then
+/// takes on the burden of keeping that data synchronized with the cluster.
+/// For example, the agent registers services and checks with the Catalog
+/// and performs anti-entropy to recover from outages.
+///
+/// In addition to these endpoints, additional endpoints are grouped in the
+/// navigation for Checks and Services.
+///
+/// https://www.consul.io/api/agent.html
 module Fakta.Agent
 
 

@@ -195,18 +195,27 @@ type QueryCall<'o> = JobFunc<QueryOptions, Choice<'o * QueryMeta, Error>>
 type QueryCallNoMeta<'i, 'o> = JobFunc<'i * QueryOptions, Choice<'o, Error>>
 type QueryCallNoMeta<'o> = JobFunc<QueryOptions, Choice<'o, Error>>
 
-let unknownsFilter : JobFilter<Request, Response, Request, Choice<Response, Error>> =
+let unknownsFilter: JobFilter<Request, Response, Request, Choice<Response, Error>> =
   fun next ->
-    next >> Alt.afterFun (fun resp ->
-      if not (resp.statusCode = 200 || resp.statusCode = 204 || resp.statusCode = 404) then
-        Choice.createSnd (Message (sprintf "unknown response code %d" resp.statusCode))
-      elif resp.statusCode = 404 then
-        Choice.createSnd (Error.ResourceNotFound)
-      else
-        Choice.create resp
+    next >> Alt.afterJob (fun resp ->
+      match resp.statusCode with
+      | 200 | 204 ->
+        Job.result (Choice.create resp)
+      | 404 ->
+        Job.result (Choice.createSnd Error.ResourceNotFound)
+      | 500 ->
+        job {
+          let! message = Response.readBodyAsString resp
+          return Choice.createSnd (Error.InternalServerError message)
+        }
+      | code ->
+        job {
+          let! message = Response.readBodyAsString resp
+          return Choice.createSnd (Message (uint16 code, message))
+        }
     )
 
-let exnsFilter : JobFilter<Request, Choice<Response, Error>> =
+let exnsFilter: JobFilter<Request, Choice<Response, Error>> =
   fun next req ->
     Alt.tryIn (next req) Job.result (function
       | :? System.Net.WebException as e ->
@@ -214,7 +223,7 @@ let exnsFilter : JobFilter<Request, Choice<Response, Error>> =
       | e ->
         raise e)
 
-let writeMetaFilter : JobFilter<'i, Choice<'o, _>, 'i, Choice<'o * WriteMeta, _>> =
+let writeMetaFilter: JobFilter<'i, Choice<'o, _>, 'i, Choice<'o * WriteMeta, _>> =
   fun next req ->
     Alt.prepareFun (fun () ->
       let sw = Stopwatch.StartNew()
@@ -289,7 +298,7 @@ let inline ofJsonPrism jsonPrism : string -> Choice<'a, Error> =
   Json.tryParse
   >> Choice.bind (Aether.Optic.get jsonPrism >> Choice.ofOption (fun () -> "Expected property missing"))
   >> Choice.bind Json.tryDeserialize
-  >> Choice.mapSnd Error.Message
+  >> Choice.mapSnd Error.SchemaError
 
 /// Convert the first value in the tuple in the choice to some type 'a.
 let inline internal fstOfJsonPrism jsonPrism (body, item2) : Choice< ^a * 'b, Error> =
@@ -299,7 +308,7 @@ let inline internal fstOfJsonPrism jsonPrism (body, item2) : Choice< ^a * 'b, Er
   |> Choice.map (fun x -> x, item2)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
-  |> Choice.mapSnd Error.Message
+  |> Choice.mapSnd Error.SchemaError
 
 let inline internal fstOfJsonPrismNoMeta jsonPrism body : Choice<'a, Error> =
   Json.tryParse body
@@ -307,7 +316,7 @@ let inline internal fstOfJsonPrismNoMeta jsonPrism body : Choice<'a, Error> =
   |> Choice.bind Json.tryDeserialize
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
-  |> Choice.mapSnd Error.Message
+  |> Choice.mapSnd Error.SchemaError
 
 /// Convert the first value in the tuple in the choice to some type 'a.
 let inline internal fstOfJson (body, item2) : Choice< ^a * 'b, Error> =
@@ -316,11 +325,11 @@ let inline internal fstOfJson (body, item2) : Choice< ^a * 'b, Error> =
   |> Choice.map (fun x -> x, item2)
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
-  |> Choice.mapSnd Error.Message
+  |> Choice.mapSnd Error.SchemaError
 
 let inline internal fstOfJsonNoMeta body : Choice<'a, Error> =
   Json.tryParse body
   |> Choice.bind Json.tryDeserialize
   |> Choice.mapSnd (fun msg ->
     sprintf "Json deserialisation tells us this error: '%s'. Couldn't deserialise input:\n%s" msg body)
-  |> Choice.mapSnd Error.Message
+  |> Choice.mapSnd Error.SchemaError

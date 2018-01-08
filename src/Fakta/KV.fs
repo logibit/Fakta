@@ -58,11 +58,14 @@ let private mkDel = mkReq HttpMethod.Delete
 
 let private only200s : JobFilter<_, _, _, _> =
   fun next ->
-    next >> Alt.afterFun (fun resp ->
-      if not (resp.statusCode = 200) then
-        Choice.createSnd (Message (sprintf "Unknown response code %d" resp.statusCode))
+    next >> Alt.afterJob (fun resp ->
+      if resp.statusCode <> 200 then
+        job {
+          let! message = Response.readBodyAsString resp
+          return Choice.createSnd (Message (uint16 resp.statusCode, message))
+        }
       else
-        Choice.create resp)
+        Job.result (Choice.create resp))
 
 let internal eventPath (operation: string) =
   [| "Fakta"; "KV"; operation |]

@@ -313,20 +313,20 @@ type AgentServiceCheck =
 type AgentServiceChecks = AgentServiceCheck list
 
 type AgentServiceRegistration =
-  { id      : string option //   `json:",omitempty"`
-    name    : string option //  `json:",omitempty"`
-    tags    : string list option // `json:",omitempty"`
-    port    : int option //     `json:",omitempty"`
-    address : string option //  `json:",omitempty"`
-    enableTagOverride : bool
-    check   : AgentServiceCheck option
-    checks  : AgentServiceChecks option }
+  { id: string option //   `json:",omitempty"`
+    name: string option //  `json:",omitempty"`
+    tags: string list option // `json:",omitempty"`
+    port: int option //     `json:",omitempty"`
+    address: string option //  `json:",omitempty"`
+    enableTagOverride: bool
+    check: AgentServiceCheck option
+    checks: AgentServiceChecks option }
 
-    static member serviceRegistration (id: string) : (AgentServiceRegistration) =
-      { id = Some(id)
-        name= Some("serviceReg")
+    static member serviceRegistration id name: AgentServiceRegistration =
+      { id = Some id
+        name = Some name
         tags = None
-        address = Some("127.0.0.1")
+        address = Some "127.0.0.1"
         port = Some 8500
         enableTagOverride = false
         check = None
@@ -403,20 +403,20 @@ type AgentCheckRegistration =
     /// health check.
     status   : string option }
 
-  static member ttlCheck (id: string) (name: string) (serviceId: string) (intr: string) (ttl: string) : (AgentCheckRegistration) =    
-      { id = Some(id); 
-        name = name; 
-        notes = None;
-        serviceId =Some(serviceId);
-        script = None
-        interval = Some(intr)
-        timeout = None
-        ttl = Some(ttl)
-        http = None
-        tcp = None
-        dockerContainerId = None
-        shell = None
-        status = None }
+  static member ttlCheck (id: string) (name: string) (serviceId: string) (ttl: string): AgentCheckRegistration =
+    { id = Some id
+      name = name 
+      notes = None
+      serviceId = Some serviceId
+      script = None
+      interval = None
+      timeout = None
+      ttl = Some ttl
+      http = None
+      tcp = None
+      dockerContainerId = None
+      shell = None
+      status = None }
 
   static member FromJson (_: AgentCheckRegistration) =
     (fun id n nt si sc i t ttl http tcp dci sh st ->
@@ -615,123 +615,31 @@ type PortMapping =
     *> Json.write "Server" pm.server
 
 type ConfigData =
-  { boostrap : bool
-    server   : bool
-    datacenter : string
-    dataDir    : string
-    dnsRecursor : string
-    dnsRecursors : string list
-    domain : string
-    logLevel : string
-    nodeName : string
-    clientAddr : string
-    bindAddr : string
-    advertiseAddr : string
-    ports : PortMapping
-    leaveOnTerm : bool
-    skipLeaveOnInt : bool
-    //statsiteAddr : string
-    protocol : uint16
-    enableDebug : bool
-    verifyIncoming : bool
-    verifyOutgoing : bool
-    caFile : string option
-    certFile : string option
-    keyFile : string option
-    startJoin : string list
-    uiDir : string option
-    pidFile : string option
-    enableSyslog : bool
-    rejoinAfterLeave : bool }
-
+  { datacenter: string
+    nodeName: string
+    revision: string
+    server: bool
+    version: string
+  }
   static member FromJson (_: ConfigData) =
-    (fun boot srv dc ddir dnsrec dnsrecs d llvl node ca binda adva ps lot slot pr edeb vi vo caf certf kf stj udir pf esl ral ->
-      { boostrap = boot
-        server = srv
-        datacenter = dc
-        dataDir = ddir
-        dnsRecursor = dnsrec
-        dnsRecursors = dnsrecs
-        domain = d
-        logLevel = llvl
-        nodeName = node
-        clientAddr = ca
-        bindAddr = binda
-        advertiseAddr = adva
-        ports = ps
-        leaveOnTerm = lot
-        skipLeaveOnInt = slot
-        //statsiteAddr = statsa 
-        protocol = pr
-        enableDebug = edeb
-        verifyIncoming = vi
-        verifyOutgoing = vo
-        caFile = caf
-        certFile = certf
-        keyFile = kf
-        startJoin = stj
-        uiDir = udir
-        pidFile = pf
-        enableSyslog = esl
-        rejoinAfterLeave = ral})
-    <!> Json.read "Bootstrap"
-    <*> Json.read "Server"
-    <*> Json.read "Datacenter"
-    <*> Json.read "DataDir"
-    <*> Json.read "DNSRecursor"
-    <*> Json.read "DNSRecursors"
-    <*> Json.read "Domain"
-    <*> Json.read "LogLevel"
+        fun dc nn rev serv ver ->
+          { datacenter = dc
+            nodeName = nn
+            revision = rev
+            server = serv
+            version = ver }
+    <!> Json.read "Datacenter"
     <*> Json.read "NodeName"
-    <*> Json.read "ClientAddr"
-    <*> Json.read "BindAddr"
-    <*> Json.read "AdvertiseAddr"
-    <*> Json.read "Ports"
-    <*> Json.read "LeaveOnTerm"
-    <*> Json.read "SkipLeaveOnInt"
-    //<*> Json.read "StatsiteAddr"
-    <*> Json.read "Protocol"
-    <*> Json.read "EnableDebug"
-    <*> Json.read "VerifyIncoming"
-    <*> Json.read "VerifyOutgoing"
-    <*> Json.read "CAFile"
-    <*> Json.read "CertFile"
-    <*> Json.read "KeyFile"
-    <*> Json.read "StartJoin"
-    <*> Json.read "UiDir"
-    <*> Json.read "PidFile"
-    <*> Json.read "EnableSyslog"
-    <*> Json.read "RejoinAfterLeave"
+    <*> Json.read "Revision"
+    <*> Json.read "Server"
+    <*> Json.read "Version"
 
   static member ToJson (cd: ConfigData) =
-    Json.write "Bootstrap" cd.boostrap
-    *> Json.write "Server" cd.server
-    *> Json.write "Datacenter" cd.datacenter
-    *> Json.write "DataDir" cd.dataDir
-    *> Json.write "DNSRecursor" cd.dnsRecursor
-    *> Json.write "DNSRecursors" cd.dnsRecursors
-    *> Json.write "Domain" cd.domain
-    *> Json.write "LogLevel" cd.logLevel
+    Json.write "Datacenter" cd.datacenter
     *> Json.write "NodeName" cd.nodeName
-    *> Json.write "ClientAddr" cd.clientAddr
-    *> Json.write "BindAddr" cd.bindAddr
-    *> Json.write "AdvertiseAddr" cd.advertiseAddr
-    *> Json.write "Ports" cd.ports
-    *> Json.write "LeaveOnTerm" cd.leaveOnTerm
-    *> Json.write "SkipLeaveOnInt" cd.skipLeaveOnInt
-    //*> Json.write "StatsiteAddr" cd.statsiteAddr
-    *> Json.write "Protocol" cd.protocol
-    *> Json.write "EnableDebug" cd.enableDebug
-    *> Json.write "VerifyIncoming" cd.verifyIncoming
-    *> Json.write "VerifyOutgoing" cd.verifyOutgoing
-    *> Json.write "CAFile" cd.caFile
-    *> Json.write "CertFile" cd.certFile
-    *> Json.write "KeyFile" cd.keyFile
-    *> Json.write "StartJoin" cd.startJoin
-    *> Json.write "UiDir" cd.uiDir
-    *> Json.write "PidFile" cd.pidFile
-    *> Json.write "EnableSyslog" cd.enableSyslog
-    *> Json.write "RejoinAfterLeave" cd.rejoinAfterLeave
+    *> Json.write "revision" cd.revision
+    *> Json.write "server" cd.server
+    *> Json.write "version" cd.version
 
 type CoordData =
   { adjustment : int
@@ -804,24 +712,31 @@ type MemberData =
     *> Json.write "DelegateMax" md.delegateMax
     *> Json.write "DelegateCur" md.delegateCur
 
+type DebugConfigData = Chiron.Json
+
+type SelfMetaData =
+  { consulNetworkSegment: string }
+  static member ToJson m =
+    Json.write "consul-network-segment" m.consulNetworkSegment
+  static member FromJson (_: SelfMetaData) =
+    fun m -> { consulNetworkSegment = m }
+    <!> Json.read "consul-network-segment"
+
 type SelfData =
   { config : ConfigData
-    coord  : CoordData
-    ``member`` : MemberData }
+    debugConfig: DebugConfigData
+    meta: SelfMetaData }
 
   static member FromJson (_: SelfData) =
-    (fun conf coord mem ->
-      { config = conf
-        coord = coord
-        ``member`` = mem })
+        fun cfg dbg m -> { config = cfg; debugConfig = dbg; meta = m }
     <!> Json.read "Config"
-    <*> Json.read "Coord"
-    <*> Json.read "Member"
+    <*> Json.read "DebugConfig"
+    <*> Json.read "Meta"
 
   static member ToJson (s: SelfData) =
     Json.write "Config" s.config
-    *> Json.write "Coord" s.coord
-    *> Json.write "Member" s.``member``
+    *> Json.write "DebugConfig" s.debugConfig
+    *> Json.write "Meta" s.meta
 
 
 
@@ -1175,9 +1090,11 @@ type WriteOption =
 type WriteOptions = WriteOption list
 
 type Error =
-  | Message of string
+  | Message of responseCode:uint16 * message:string
+  | SchemaError of error:string
   | ResourceNotFound
   | KeyNotFound of Key
+  | InternalServerError of message:string
   | ConnectionFailed of System.Net.WebException
 
 type FaktaConfig =
@@ -1238,11 +1155,11 @@ let private defaultLogger =
   Log.create "Fakta"
 
 type FaktaState =
-  { config      : FaktaConfig
-    logger      : Logger
-    clock       : IClock
-    random      : Random
-    clientState : HttpFs.Client.HttpFsState }
+  { config: FaktaConfig
+    logger: Logger
+    clock: IClock
+    random: Random
+    clientState: HttpFs.Client.HttpFsState }
 
   static member emptyConsulConfig =
     { config      = FaktaConfig.consulEmpty
