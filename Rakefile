@@ -54,7 +54,7 @@ end
 directory 'build/pkg'
 
 desc 'package nugets - finds all projects and package them'
-nugets_pack :create_nugets => ['build/pkg', :versioning, :compile, :tests] do |p|
+nugets_pack :create_nugets_quick do |p|
   p.configuration = Configuration
   p.files   = FileList['src/**/*.{csproj,fsproj,nuspec}'].
     exclude(/Tests/)
@@ -69,6 +69,8 @@ nugets_pack :create_nugets => ['build/pkg', :versioning, :compile, :tests] do |p
     m.version     = ENV['NUGET_VERSION']
   end
 end
+
+task :create_nugets => ['build/pkg', :versioning, :compile]
 
 namespace :tests do
   task :unit do
@@ -90,8 +92,10 @@ task :ensure_nuget_key do
   raise 'missing env NUGET_KEY value' unless ENV['NUGET_KEY']
 end
 
-Albacore::Tasks::Release.new :release,
+Albacore::Tasks::Release.new :release_quick,
                              pkg_dir: 'build/pkg',
-                             depend_on: [:create_nugets, :ensure_nuget_key],
+                             depend_on: [:ensure_nuget_key],
                              nuget_exe: 'packages/NuGet.CommandLine/tools/NuGet.exe',
                              api_key: ENV['NUGET_KEY']
+
+task :release => [ :tests, :create_nugets, :release_quick ]
