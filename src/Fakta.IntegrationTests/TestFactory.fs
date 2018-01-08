@@ -9,6 +9,11 @@ open Hopac.Infixes
 open HttpFs.Client
 open Fakta
 open Fakta.Logging
+open Fakta.Logging.Message
+
+module Message =
+  let sprintf level =
+    Printf.kprintf (event level)
 
 type Microsoft.FSharp.Control.AsyncBuilder with
   member __.Bind(t: #Job<'T>, f:'T -> Async<'R>): Async<'R> =
@@ -17,19 +22,7 @@ type Microsoft.FSharp.Control.AsyncBuilder with
 let consulConfig = FaktaConfig.consulEmpty
 
 let logger =
-  { new Logger with
-      member x.name = [| "IntegrationTests"; "TestFactory" |]
-      member x.logWithAck logLevel msgFactory =
-        async { do printfn "%A" (msgFactory logLevel) }
-      member x.log level message =
-        async { do printfn "%A" message }
-    }
-
-module Message =
-  open Fakta.Logging.Message
-
-  let sprintf level =
-    Printf.kprintf (event level)
+  Log.create "Fakta.IntegrationTests"
 
 let initVault =
   let reqJson: InitRequest =
@@ -62,5 +55,18 @@ let ensureSuccess computation kontinue =
     kontinue x
   | Choice2Of2 err ->
     failtestf "Test failed with error %A" err
+let ensureSuccessB computation kontinue =
+  computation >>= function
+    | Choice1Of2 res ->
+      kontinue res
+    | Choice2Of2 err ->
+      failtestf "Test failed with error %A" err
+let ensureSuccessA computation kontinue =
+  ensureSuccessB computation (fun input -> Job.fromAsync (kontinue input))
 
 let given value = ensureSuccess value ignore
+
+let printResult (r: 'res) =
+  Job.fromAsync (
+    logger.logWithAck Info (eventX "Got {result}" >> setField "result" r)
+  )
